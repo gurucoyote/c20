@@ -621,7 +621,7 @@ bool LLAppViewer::init()
 
 	// Need to do this initialization before we do anything else, since anything
 	// that touches files should really go through the lldir API
-	gDirUtilp->initAppDirs("SecondLife");
+	gDirUtilp->initAppDirs("Coyote C20");
 	// set skin search path to default, will be overridden later
 	// this allows simple skinned file lookups to work
 	gDirUtilp->setSkinFolder("default");
@@ -1786,12 +1786,12 @@ bool LLAppViewer::initLogging()
 
 	// Remove the last ".old" log file.
 	std::string old_log_file = gDirUtilp->getExpandedFilename(LL_PATH_LOGS,
-							     "SecondLife.old");
+							     "CoyoteC20.old");
 	LLFile::remove(old_log_file);
 
 	// Rename current log file to ".old"
 	std::string log_file = gDirUtilp->getExpandedFilename(LL_PATH_LOGS,
-							     "SecondLife.log");
+							     "CoyoteC20.log");
 	LLFile::rename(log_file, old_log_file);
 
 	// Set the log file to SecondLife.log
@@ -2205,10 +2205,10 @@ bool LLAppViewer::initConfiguration()
 
     const LLControlVariable* skinfolder = gSavedSettings.getControl("SkinCurrent");
     if(skinfolder && LLStringUtil::null != skinfolder->getValue().asString())
-    {   
-		// hack to force the skin to default.
-        //gDirUtilp->setSkinFolder(skinfolder->getValue().asString());
-		gDirUtilp->setSkinFolder("default");
+    { 
+  	  gDirUtilp->setSkinFolder(skinfolder->getValue().asString());
+  	  // hack to force the skin to default.
+  	  // gDirUtilp->setSkinFolder("default");
     }
 
     mYieldTime = gSavedSettings.getS32("YieldTime");

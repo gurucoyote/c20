@@ -1,0 +1,65 @@
+# 
+# This file contains names (and wildcards) of files that
+# Git should ignore.
+# 
+# Since we only care about the actual source code files,
+# all the artwork and libraries are ignored, as are the
+# files that are created when you compile.
+# 
+
+# ARTWORK
+
+LICENSE-logos.txt
+indra/newview/skins/*/textures/
+indra/newview/skins/default/html/btn_purplepill_bg.png
+indra/newview/skins/default/html/en-us/loading/sl_logo_rotate_black.gif
+indra/newview/skins/default/html/en-us/loading/Thumbs.db
+indra/newview/skins/default/html/en-us/loading/imprudence_loading.png
+indra/newview/skins/default/html/unabletoconnect.png
+indra/newview/res/
+indra/newview/res-sdl/
+indra/newview/character/
+indra/newview/app_settings/*.db2
+indra/newview/app_settings/windlight/
+indra/newview/cursors_mac/
+
+
+# LIBRARIES
+
+LICENSES/
+LICENSE-libraries-*.txt
+libraries/
+indra/newview/app_settings/mozilla*/
+indra/newview/fonts/
+indra/newview/lib/
+indra/newview/dbghelp.dll
+indra/newview/linux_tools/client-readme-voice.txt
+indra/newview/vivox-runtime/
+indra/newview/*.lproj/
+indra/newview/mozilla-theme/
+indra/test_apps/
+indra/llwindow/glh/
+
+indra/newview/secondlife.icns
+indra/newview/secondlife_firstlook.icns
+
+# COMPILED STUFF
+
+indra/viewer-*
+indra/build-*
+installed.xml
+*.pyc
+
+
+# PATCHES
+
+*.diff*
+*.patch*
+
+
+# MISCELLANEOUS
+
+ChangeLog.txt
+.DS_Store
+*.zip
+*gz
