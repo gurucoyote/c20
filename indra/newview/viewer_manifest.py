@@ -143,7 +143,7 @@ class ViewerManifest(LLManifest):
         return self.args['branding_id']
     def installer_prefix(self):
         mapping={"secondlife":'SecondLife_',
-                 "snowglobe":'Snowglobe_'}
+                 "Coyote C20":'Coyote_C20_'}
         return mapping[self.viewer_branding_id()]
 
     def flags_list(self):
@@ -185,8 +185,8 @@ class WindowsManifest(ViewerManifest):
                 return "SecondLife.exe"
             else:
                 return "SecondLifePreview.exe"
-        elif(self.viewer_branding_id=="snowglobe"):
-            return "Snowglobe.exe"
+        elif(self.viewer_branding_id=="Coyote C20"):
+            return "Coyote C20.exe"
         else:
             return ''.join(self.channel().split()) + '.exe'
 
@@ -528,18 +528,18 @@ class WindowsManifest(ViewerManifest):
                 !define UNINSTALL_SETTINGS 1
                 Caption "Second Life %(grid)s ${VERSION}"
                 """
-        elif self.viewer_branding_id()=="snowglobe":
-                installer_file = "Snowglobe_%(version_dashes)s_Setup.exe"
+        elif self.viewer_branding_id()=="Coyote C20":
+                installer_file = "Coyote_C20_%(version_dashes)s_Setup.exe"
                 grid_vars_template = """
                 OutFile "%(installer_file)s"
-                !define VIEWERNAME "Snowglobe"
+                !define VIEWERNAME "Coyote C20"
                 !define INSTFLAGS "%(flags)s"
-                !define INSTNAME   "Snowglobe"
-                !define SHORTCUT   "Snowglobe"
+                !define INSTNAME   "Coyote C20"
+                !define SHORTCUT   "Coyote C20"
                 !define URLNAME   "secondlife"
-                !define INSTALL_ICON "install_icon_snowglobe.ico"
-                !define UNINSTALL_ICON "uninstall_icon_snowglobe.ico"
-                Caption "Snowglobe ${VERSION}"
+                !define INSTALL_ICON "install_icon_coyotec20.ico"
+                !define UNINSTALL_ICON "uninstall_icon_coyotec20.ico"
+                Caption "Coyote C20 ${VERSION}"
                 """
         else:
             # some other channel on some grid
@@ -629,8 +629,8 @@ class DarwinManifest(ViewerManifest):
                         self.path("secondlife.icns")
                     else:
                         self.path("secondlife_firstlook.icns", "secondlife.icns")
-                elif self.viewer_branding_id()=="snowglobe":
-                    self.path("snowglobe.icns")
+                elif self.viewer_branding_id()=="Coyote C20":
+                    self.path("Coyote C20.icns")
                 self.path("SecondLife.nib")
                 
                 # Translations
@@ -748,12 +748,12 @@ class DarwinManifest(ViewerManifest):
 
     def app_name(self):
         mapping={"secondlife":"Second Life",
-                 "snowglobe":"Snowglobe"}
+                 "Coyote C20":"Coyote C20"}
         return mapping[self.viewer_branding_id()]
         
     def info_plist_name(self):
         mapping={"secondlife":"Info-SecondLife.plist",
-                 "snowglobe":"Info-Snowglobe.plist"}
+                 "Coyote C20":"Info-Coyote C20.plist"}
         return mapping[self.viewer_branding_id()]
 
     def package_finish(self):
@@ -912,17 +912,17 @@ class LinuxManifest(ViewerManifest):
 
     def wrapper_name(self):
         mapping={"secondlife":"secondlife",
-                 "snowglobe":"snowglobe"}
+                 "Coyote C20":"snowglobe"}
         return mapping[self.viewer_branding_id()]
 
     def binary_name(self):
         mapping={"secondlife":"do-not-directly-run-secondlife-bin",
-                 "snowglobe":"snowglobe-do-not-run-directly"}
+                 "Coyote C20":"snowglobe-do-not-run-directly"}
         return mapping[self.viewer_branding_id()]
     
     def icon_name(self):
         mapping={"secondlife":"secondlife_icon.png",
-                 "snowglobe":"snowglobe_icon.png"}
+                 "Coyote C20":"snowglobe_icon.png"}
         return mapping[self.viewer_branding_id()]
 
     def package_finish(self):

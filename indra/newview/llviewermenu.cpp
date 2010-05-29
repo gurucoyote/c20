@@ -3005,7 +3005,7 @@ bool callback_eject(const LLSD& notification, const LLSD& response)
 	else if (ban_enabled)
 	{
 		// This is tricky. It is similar to say if it is not an 'Eject' button,
-		// and it is also not an 'Cancle' button, and ban_enabled==ture, 
+		// and it is also not a 'Cancel' button, and ban_enabled==true, 
 		// it should be the 'Eject and Ban' button.
 		LLMessageSystem* msg = gMessageSystem;
 		LLViewerObject* avatar = gObjectList.findObject(avatar_id);
@@ -5298,6 +5298,35 @@ class LLWorldCheckAlwaysRun : public view_listener_t
 		return new_value;
 	}
 };
+// S20
+class LLWorldSitOnGround : public view_listener_t
+{
+	bool handleEvent(const LLSD& userdata)
+	{
+		if (gAgent.getAvatarObject() && !gAgent.getAvatarObject()->isSitting())
+		{
+			gAgent.setControlFlags(AGENT_CONTROL_SIT_ON_GROUND);
+		} else
+		{
+			gAgent.setControlFlags(!AGENT_CONTROL_SIT_ON_GROUND);
+			gAgent.setControlFlags(AGENT_CONTROL_STAND_UP);
+		}
+		return true;
+	}
+};
+//S20
+class LLWorldCheckSitOnGround : public view_listener_t
+{
+	bool handleEvent(const LLSD& userdata)
+	{
+		bool sitting = FALSE;
+		if (gAgent.getAvatarObject())
+		{
+			sitting = gAgent.getAvatarObject()->isSitting();
+		}
+		return sitting;
+	}
+};
 
 class LLWorldSetAway : public view_listener_t
 {
@@ -5641,6 +5670,31 @@ class LLFloaterVisible : public view_listener_t
 			new_value = LLFloaterReg::instanceVisible(floater_name);
 		}
 		return new_value;
+	}
+};
+
+// S20 MS Floater.enableToggleConversations
+class LLFloaterEnableToggleConversations  : public view_listener_t
+{
+	bool handleEvent(const LLSD& userdata)
+	{
+		// ChatWindow for 'Separate Windows' is 0
+		// and 1 for Tabbed view
+		bool is_single_window = gSavedSettings.getS32("ChatWindow") == 1;		
+		
+		if (is_single_window) // only makes sense if it's tabbed view
+		{
+			// find if there actually are any IM sessions open
+			// otherwise the panel will open and close again right away
+			S32 num_im_sessions = LLIMModel::getInstance()->mId2SessionMap.size();
+			// llinfos << " num_im_sessions " << num_im_sessions << llendl;
+			if (num_im_sessions > 0)
+				return true;
+			else
+				return false;
+		}
+		// otherwise disable this for now
+		return false; 
 	}
 };
 
@@ -7677,6 +7731,18 @@ class LLWorldPostProcess : public view_listener_t
 	}
 };
 
+/// S20 Sky Menu callbacks added by Kirstenlee ^^
+class LLWorldSkySettings : public view_listener_t
+{	
+	bool handleEvent(const LLSD& userdata)
+	{
+	    
+      LLFloaterReg::showInstance("env_windlight"); // KL find the sky instance..
+	  return true;
+	  
+	}
+};
+
 /// Day Cycle callbacks
 class LLWorldDayCycle : public view_listener_t
 {
@@ -7877,6 +7943,10 @@ void initialize_menus()
 	view_listener_t::addMenu(new LLWorldPlaceProfile(), "World.PlaceProfile");
 	view_listener_t::addMenu(new LLWorldSetHomeLocation(), "World.SetHomeLocation");
 	view_listener_t::addMenu(new LLWorldTeleportHome(), "World.TeleportHome");
+    //S20
+	view_listener_t::addMenu(new LLWorldSitOnGround(), "World.SitOnGround");
+	view_listener_t::addMenu(new LLWorldCheckSitOnGround(), "World.CheckSitOnGround");
+    // S20
 	view_listener_t::addMenu(new LLWorldSetAway(), "World.SetAway");
 	view_listener_t::addMenu(new LLWorldSetBusy(), "World.SetBusy");
 
@@ -7891,6 +7961,7 @@ void initialize_menus()
 	view_listener_t::addMenu(new LLWorldWaterSettings(), "World.WaterSettings");
 	view_listener_t::addMenu(new LLWorldPostProcess(), "World.PostProcess");
 	view_listener_t::addMenu(new LLWorldDayCycle(), "World.DayCycle");
+    view_listener_t::addMenu(new LLWorldSkySettings(), "World.SkySettings"); // KL S20
 
 	view_listener_t::addMenu(new LLWorldToggleMovementControls(), "World.Toggle.MovementControls");
 	view_listener_t::addMenu(new LLWorldToggleCameraControls(), "World.Toggle.CameraControls");
@@ -8200,6 +8271,9 @@ void initialize_menus()
 	enable.add("VisibleBuild", boost::bind(&enable_object_build));
 
 	view_listener_t::addMenu(new LLFloaterVisible(), "FloaterVisible");
+	// S20 MS
+	view_listener_t::addMenu(new LLFloaterEnableToggleConversations(), "Floater.enableToggleConversations");
+	
 	view_listener_t::addMenu(new LLShowSidetrayPanel(), "ShowSidetrayPanel");
 	view_listener_t::addMenu(new LLSidetrayPanelVisible(), "SidetrayPanelVisible");
 	view_listener_t::addMenu(new LLSomethingSelected(), "SomethingSelected");

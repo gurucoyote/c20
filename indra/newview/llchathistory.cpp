@@ -59,6 +59,7 @@
 #include "llviewertexteditor.h"
 #include "llworld.h"
 #include "lluiconstants.h"
+#include "llviewerobjectlist.h" // S20 MS for zoom in visible
 
 
 #include "llsidetray.h"//for blocked objects panel
@@ -128,6 +129,11 @@ public:
 
 			LLFloaterReg::showInstance("inspect_object", params);
 		}
+		// S20 MS
+		else if (level == "zoom")
+		{
+			LLAvatarActions::zoomIn(getAvatarId());
+		}
 		else if (level == "block")
 		{
 			LLMuteList::getInstance()->add(LLMute(getAvatarId(), mFrom, LLMute::OBJECT));
@@ -143,6 +149,11 @@ public:
 		if (level == "profile")
 		{
 			LLAvatarActions::showProfile(getAvatarId());
+		}
+		// S20 MS
+		else if (level == "zoom")
+		{
+			LLAvatarActions::zoomIn(getAvatarId());
 		}
 		else if (level == "im")
 		{
@@ -345,7 +356,14 @@ protected:
 	{
 		LLMenuGL* menu = (LLMenuGL*)mPopupMenuHandleObject.get();
 		if(menu)
+		{
+			// S20 MS
+			if (!gObjectList.findObject(mAvatarID))
+			{
+				menu->setItemVisible("Zoom In", false);
+			}
 			LLMenuGL::showPopup(this, menu, x, y);
+		}
 	}
 	
 	void showAvatarContextMenu(S32 x,S32 y)
@@ -370,7 +388,13 @@ protected:
 			{
 				menu->setItemVisible("Send IM", false);
 			}
-
+			
+			// S20 MS
+			if (!gObjectList.findObject(mAvatarID))
+			{
+				menu->setItemVisible("Zoom In", false);
+			}
+			
 			menu->buildDrawLabels();
 			menu->updateParent(LLMenuGL::sMenuContainer);
 			LLMenuGL::showPopup(this, menu, x, y);

@@ -95,6 +95,16 @@ public:
 	static void startConference(const uuid_vec_t& ids);
 
 	/**
+	* Zoom in on avatar. S29 MS
+	*/
+	static void zoomIn(const LLUUID& id);
+
+	/**
+	* show / hide Zoom in on avatar. S29 MS
+	*/
+	static bool visibleZoomIn(const LLUUID& id);
+
+	/**
 	 * Show avatar profile.
 	 */
 	static void showProfile(const LLUUID& id);
