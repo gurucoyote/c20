@@ -87,6 +87,7 @@
 #include "llfontgl.h"
 #include "llrect.h"
 #include "llstring.h"
+#include "llsdserialize.h" //S20
 
 // project includes
 

@@ -75,11 +75,11 @@ class PlatformSetup(object):
     for t in ('Debug', 'Release', 'RelWithDebInfo'):
         build_types[t.lower()] = t
 
-    build_type = build_types['relwithdebinfo']
+    build_type = build_types['release']
     standalone = 'OFF'
     unattended = 'OFF'
     universal = 'OFF'
-    project_name = 'SecondLife'
+    project_name = 'CoyoteC20'
     distcc = True
     cmake_opts = []
     word_size = 32
@@ -670,9 +670,9 @@ class WindowsSetup(PlatformSetup):
             executable = os.path.join('tools','vstool','VSTool.exe')
             vstool_cmd = (executable +
                           ' --solution ' +
-                          os.path.join(build_dir,'SecondLife.sln') +
+                          os.path.join(build_dir,'CoyoteC20.sln') +
                           ' --config ' + self.build_type +
-                          ' --startup secondlife-bin')
+                          ' --startup coyotec20-bin')
             print 'Running %r in %r' % (vstool_cmd, getcwd())
             self.run(vstool_cmd, name=executable)        
             print >> open(stamp, 'w'), self.build_type
