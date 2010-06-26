@@ -153,7 +153,7 @@ std::string LLWeb::expandURLSubstitutions(const std::string &url,
 
 	// work out the current language
 	std::string lang = LLUI::getLanguage();
-	if (lang == "en-us")
+	if (lang.compare(0,5,"en-us") == 0)
 	{
 		// *HACK: the correct fix is to change English.lproj/language.txt,
 		// but we're late in the release cycle and this is a less risky fix
