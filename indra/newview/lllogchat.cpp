@@ -47,6 +47,13 @@
 #include <boost/regex.hpp>
 #include <boost/regex/v4/match_results.hpp>
 
+// begin includes for iostream so that datestamping in makeLogFileName works
+#include <iostream>
+#include <iomanip>
+#include <sstream>
+#include <string>
+// end includes for iostream
+
 #if LL_MSVC
 // disable warning about boost::lexical_cast unreachable code
 // when it fails to parse the string
@@ -189,6 +196,21 @@ private:
 //static
 std::string LLLogChat::makeLogFileName(std::string filename)
 {
+    if( gSavedPerAccountSettings.getBOOL("LogFileNamewithDate") )
+	{
+		time_t now;
+		time(&now);
+		char dbuffer[20];		/* Flawfinder: ignore */
+		if (filename == "chat")
+		{
+			strftime(dbuffer, 20, "-%Y-%m-%d", localtime(&now));
+		}
+		else
+		{
+			strftime(dbuffer, 20, "-%Y-%m", localtime(&now));
+		}
+		filename += dbuffer;
+	}
 	filename = cleanFileName(filename);
 	filename = gDirUtilp->getExpandedFilename(LL_PATH_PER_ACCOUNT_CHAT_LOGS,filename);
 	filename += ".txt";
