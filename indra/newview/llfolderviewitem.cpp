@@ -506,7 +506,7 @@ BOOL LLFolderViewItem::changeSelection(LLFolderViewItem* selection, BOOL selecte
 {
 	if (selection == this && mIsSelected != selected)
 	{
-	  	if (mIsSelected)
+		if (mIsSelected)
 		{
 			deselectItem();
 		}
@@ -1490,7 +1490,7 @@ BOOL LLFolderViewFolder::setSelection(LLFolderViewItem* selection, BOOL openitem
 	BOOL rv = FALSE;
 	if( selection == this )
 	{
-	  	if (!isSelected())
+		if (!isSelected())
 		{
 			selectItem();
 		}
@@ -1502,7 +1502,7 @@ BOOL LLFolderViewFolder::setSelection(LLFolderViewItem* selection, BOOL openitem
 	}
 	else
 	{
-	  	if (isSelected())
+		if (isSelected())
 		{
 			deselectItem();
 		}
@@ -1546,7 +1546,7 @@ BOOL LLFolderViewFolder::changeSelection(LLFolderViewItem* selection, BOOL selec
 	BOOL rv = FALSE;
 	if(selection == this)
 	{
-	  	if (isSelected() != selected)
+		if (isSelected() != selected)
 		{
 			rv = TRUE;
 			if (selected)
@@ -1702,7 +1702,7 @@ void LLFolderViewFolder::recursiveDeselect(BOOL deselect_self)
 {
 	if (isSelected() && deselect_self)
 	{
-  		deselectItem();
+		deselectItem();
 	}
 
 	if (0 == mNumDescendantsSelected)
