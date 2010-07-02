@@ -687,6 +687,7 @@ public:
 	{
 		if (tokens.size() < 2) return false;
 		S32 channel = tokens[0].asInteger();
+		if (channel < 1) return true; // SNOW-652 Restrict function to chat channels greater than 0.
 		std::string mesg = tokens[1].asString();
 		send_chat_from_viewer(mesg, CHAT_TYPE_NORMAL, channel);
 		return true;
