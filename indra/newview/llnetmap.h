@@ -76,6 +76,7 @@ public:
 	static const F32 MAP_SCALE_MAX;
 
 	/*virtual*/ void	draw();
+	/*virtual*/ BOOL	handleDoubleClick( S32 x, S32 y, MASK mask );
 	/*virtual*/ BOOL	handleScrollWheel(S32 x, S32 y, S32 clicks);
 	/*virtual*/ BOOL	handleToolTip( S32 x, S32 y, MASK mask);
 	/*virtual*/ void	reshape(S32 width, S32 height, BOOL called_from_parent = TRUE);

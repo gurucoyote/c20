@@ -52,6 +52,7 @@
 #include "llagent.h"
 #include "llappviewer.h" // for gDisconnected
 #include "llcallingcard.h" // LLAvatarTracker
+#include "llfloaterworldmap.h"
 #include "lltracker.h"
 #include "llsurface.h"
 #include "llviewercamera.h"
@@ -533,6 +534,29 @@ LLVector3d LLNetMap::viewPosToGlobal( S32 x, S32 y )
 	pos_global += gAgent.getCameraPositionGlobal();
 
 	return pos_global;
+}
+
+BOOL LLNetMap::handleDoubleClick(S32 x, S32 y, MASK mask)
+{
+	LLVector3d pos_global = viewPosToGlobal(x, y);
+	if (!LLTracker::isTracking(NULL))
+	{
+		LLFloaterWorldMap* world_map = LLFloaterWorldMap::getInstance();
+		if (world_map)
+		{
+			world_map->trackLocation(pos_global);
+		}
+	}
+
+	if (gSavedSettings.getBOOL("DoubleClickTeleport"))
+	{
+		gAgent.teleportViaLocationLookAt(pos_global);
+	}
+	else 
+	{
+		LLFloaterReg::showInstance("world_map", "center");
+	}
+	return TRUE;
 }
 
 BOOL LLNetMap::handleScrollWheel(S32 x, S32 y, S32 clicks)

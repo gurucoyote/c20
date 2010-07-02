@@ -121,12 +121,6 @@ BOOL LLFloaterMap::postBuild()
 	return TRUE;
 }
 
-BOOL LLFloaterMap::handleDoubleClick( S32 x, S32 y, MASK mask )
-{
-	LLFloaterReg::showInstance("world_map");
-	return TRUE;
-}
-
 BOOL LLFloaterMap::handleRightMouseDown(S32 x, S32 y, MASK mask)
 {
 	if (mPopupMenu)

@@ -50,7 +50,6 @@ public:
 	virtual ~LLFloaterMap();
 	
 	/*virtual*/ BOOL 	postBuild();
-	/*virtual*/ BOOL	handleDoubleClick( S32 x, S32 y, MASK mask );
 	/*virtual*/ BOOL	handleRightMouseDown( S32 x, S32 y, MASK mask );
 	/*virtual*/ void	reshape(S32 width, S32 height, BOOL called_from_parent = TRUE);
 	/*virtual*/ void	draw();
