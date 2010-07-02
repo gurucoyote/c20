@@ -558,7 +558,7 @@ public:
 				addText(xpos, ypos, "Viewing particle beacons (blue)");
 				ypos += y_inc;
 			}
-			if (LLPipeline::toggleRenderTypeControlNegated((void*)LLPipeline::RENDER_TYPE_PARTICLES))
+			if (!gPipeline.hasRenderType(RENDER_TYPE_PARTICLES))
 			{
 				addText(xpos, ypos, "Hiding particles");
 				ypos += y_inc;
@@ -1436,6 +1436,11 @@ LLViewerWindow::LLViewerWindow(
 	{
 		LLFeatureManager::getInstance()->applyRecommendedSettings();
 		gSavedSettings.setBOOL("ProbeHardwareOnStartup", FALSE);
+	}
+
+	if (!gGLManager.mHasDepthClamp)
+	{
+        LL_INFOS("RenderInit") << "Missing feature GL_ARB_depth_clamp. Void water might disappear in rare cases." << LL_ENDL;
 	}
 
 	// If we crashed while initializng GL stuff last time, disable certain features

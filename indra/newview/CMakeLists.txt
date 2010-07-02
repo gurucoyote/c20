@@ -861,6 +861,7 @@ set(viewer_HEADER_FILES
     llrecentpeople.h
     llregionposition.h
     llremoteparcelrequest.h
+    llrendertype.h
     llresourcedata.h
     llrootview.h
     llsavedsettingsglue.h

@@ -1229,7 +1229,7 @@ F32 LLSpatialPartition::calcDistance(LLSpatialGroup* group, LLCamera& camera)
 
 	F32 dist = 0.f;
 
-	if (group->mDrawMap.find(LLRenderPass::PASS_ALPHA) != group->mDrawMap.end())
+	if (group->mDrawMap.find(RENDER_TYPE_PASS_ALPHA) != group->mDrawMap.end())
 	{
 		LLVector3 v = eye;
 		dist = eye.normVec();
@@ -1561,7 +1561,11 @@ void LLSpatialGroup::doOcclusion(LLCamera* camera)
 {
 	if (mSpatialPartition->isOcclusionEnabled() && LLPipeline::sUseOcclusion > 1)
 	{
-		if (earlyFail(camera, this))
+		static LLCachedControl<bool> render_water_void_culling(gSavedSettings, "RenderWaterVoidCulling");
+		// Don't cull hole/edge water, unless RenderWaterVoidCulling is set and we have the GL_ARB_depth_clamp extension.
+		if ((mSpatialPartition->mDrawableType == RENDER_TYPE_POOL_VOIDWATER &&
+			 !(render_water_void_culling && gGLManager.mHasDepthClamp)) ||
+		    earlyFail(camera, this))
 		{
 			setOcclusionState(LLSpatialGroup::DISCARD_QUERY);
 			assert_states_valid(this);
@@ -1583,6 +1587,18 @@ void LLSpatialGroup::doOcclusion(LLCamera* camera)
 					buildOcclusion();
 				}
 
+				// Depth clamp all water to avoid it being culled as a result of being
+				// behind the far clip plane, and in the case of edge water to avoid
+				// it being culled while still visible.
+				bool const use_depth_clamp =
+					gGLManager.mHasDepthClamp &&
+					(mSpatialPartition->mDrawableType == RENDER_TYPE_POOL_WATER ||
+					 mSpatialPartition->mDrawableType == RENDER_TYPE_POOL_VOIDWATER);
+				if (use_depth_clamp)
+				{
+					glEnable(GL_DEPTH_CLAMP);
+				}
+
 				glBeginQueryARB(GL_SAMPLES_PASSED_ARB, mOcclusionQuery[LLViewerCamera::sCurCameraID]);					
 				glVertexPointer(3, GL_FLOAT, 0, mOcclusionVerts);
 				if (camera->getOrigin().isExactlyZero())
@@ -1598,6 +1614,11 @@ void LLSpatialGroup::doOcclusion(LLCamera* camera)
 								GL_UNSIGNED_BYTE, get_box_fan_indices(camera, mBounds[0]));
 				}
 				glEndQueryARB(GL_SAMPLES_PASSED_ARB);
+
+				if (use_depth_clamp)
+				{
+					glDisable(GL_DEPTH_CLAMP);
+				}
 			}
 
 			setOcclusionState(LLSpatialGroup::QUERY_PENDING);
@@ -1609,11 +1630,10 @@ void LLSpatialGroup::doOcclusion(LLCamera* camera)
 //==============================================
 
 LLSpatialPartition::LLSpatialPartition(U32 data_mask, BOOL render_by_group, U32 buffer_usage)
-: mRenderByGroup(render_by_group)
+: mRenderByGroup(render_by_group), mDrawableType(RENDER_TYPE_NONE)
 {
 	LLMemType mt(LLMemType::MTYPE_SPACE_PARTITION);
 	mOcclusionEnabled = TRUE;
-	mDrawableType = 0;
 	mPartitionType = LLViewerRegion::PARTITION_NONE;
 	mLODSeed = 0;
 	mLODPeriod = 1;
@@ -2600,9 +2620,10 @@ void renderBoundingBox(LLDrawable* drawable, BOOL set_color = TRUE)
 						gGL.color4f(0.5f,0.5f,0.5f,1.0f);
 						break;
 				case LLViewerObject::LL_VO_PART_GROUP:
-			case LLViewerObject::LL_VO_HUD_PART_GROUP:
+				case LLViewerObject::LL_VO_HUD_PART_GROUP:
 						gGL.color4f(0,0,1,1);
 						break;
+				case LLViewerObject::LL_VO_VOID_WATER:
 				case LLViewerObject::LL_VO_WATER:
 						gGL.color4f(0,0.5f,1,1);
 						break;
@@ -3430,7 +3451,7 @@ void LLCullResult::clear()
 	mVisibleListSize = 0;
 	mVisibleBridgeSize = 0;
 
-	for (U32 i = 0; i < LLRenderPass::NUM_RENDER_TYPES; i++)
+	for (U32 i = 0; i < NUM_RENDER_TYPES; i++)
 	{
 		for (U32 j = 0; j < mRenderMapSize[i]; j++)
 		{
@@ -3500,14 +3521,14 @@ LLCullResult::bridge_list_t::iterator LLCullResult::endVisibleBridge()
 	return mVisibleBridge.begin() + mVisibleBridgeSize;
 }
 
-LLCullResult::drawinfo_list_t::iterator LLCullResult::beginRenderMap(U32 type)
+LLCullResult::drawinfo_list_t::iterator LLCullResult::beginRenderMap(LLRenderType const& type)
 {
-	return mRenderMap[type].begin();
+	return mRenderMap[type.index()].begin();
 }
 
-LLCullResult::drawinfo_list_t::iterator LLCullResult::endRenderMap(U32 type)
+LLCullResult::drawinfo_list_t::iterator LLCullResult::endRenderMap(LLRenderType const& type)
 {
-	return mRenderMap[type].begin() + mRenderMapSize[type];
+	return mRenderMap[type.index()].begin() + mRenderMapSize[type.index()];
 }
 
 void LLCullResult::pushVisibleGroup(LLSpatialGroup* group)
@@ -3588,23 +3609,23 @@ void LLCullResult::pushBridge(LLSpatialBridge* bridge)
 	++mVisibleBridgeSize;
 }
 
-void LLCullResult::pushDrawInfo(U32 type, LLDrawInfo* draw_info)
+void LLCullResult::pushDrawInfo(LLRenderType const& type, LLDrawInfo* draw_info)
 {
-	if (mRenderMapSize[type] < mRenderMap[type].size())
+	if (mRenderMapSize[type.index()] < mRenderMap[type.index()].size())
 	{
-		mRenderMap[type][mRenderMapSize[type]] = draw_info;
+		mRenderMap[type.index()][mRenderMapSize[type.index()]] = draw_info;
 	}
 	else
 	{
-		mRenderMap[type].push_back(draw_info);
+		mRenderMap[type.index()].push_back(draw_info);
 	}
-	++mRenderMapSize[type];
+	++mRenderMapSize[type.index()];
 }
 
 
 void LLCullResult::assertDrawMapsEmpty()
 {
-	for (U32 i = 0; i < LLRenderPass::NUM_RENDER_TYPES; i++)
+	for (U32 i = 0; i < NUM_RENDER_TYPES; i++)
 	{
 		if (mRenderMapSize[i] != 0)
 		{

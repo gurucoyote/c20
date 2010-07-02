@@ -68,7 +68,7 @@ LLColor4 LLDrawPoolWater::sWaterFogColor = LLColor4(0.2f, 0.5f, 0.5f, 0.f);
 LLVector3 LLDrawPoolWater::sLightDir;
 
 LLDrawPoolWater::LLDrawPoolWater() :
-	LLFacePool(POOL_WATER)
+	LLFacePool(RENDER_TYPE_POOL_WATER)
 {
 	mHBTex[0] = LLViewerTextureManager::getFetchedTexture(gSunTextureID, TRUE, LLViewerTexture::BOOST_UI);
 	gGL.getTexUnit(0)->bind(mHBTex[0]) ;
@@ -539,6 +539,7 @@ void LLDrawPoolWater::shade()
 	glColor4fv(water_color.mV);
 
 	{
+		LLGLEnable depth_clamp(gGLManager.mHasDepthClamp ? GL_DEPTH_CLAMP : 0);
 		LLGLDisable cullface(GL_CULL_FACE);
 		for (std::vector<LLFace*>::iterator iter = mDrawFace.begin();
 			iter != mDrawFace.end(); iter++)
@@ -555,30 +556,19 @@ void LLDrawPoolWater::shade()
 
 			sNeedsReflectionUpdate = TRUE;
 			
-			if (water->getUseTexture())
+			if (water->getUseTexture() || !water->getIsEdgePatch())
 			{
 				sNeedsDistortionUpdate = TRUE;
 				face->renderIndexed();
 			}
+			else if (gGLManager.mHasDepthClamp || deferred_render)
+			{
+				face->renderIndexed();
+			}
 			else
-			{ //smash background faces to far clip plane
-				if (water->getIsEdgePatch())
-				{
-					if (deferred_render)
-					{
-						face->renderIndexed();
-					}
-					else
-					{
-						LLGLClampToFarClip far_clip(glh_get_current_projection());
-						face->renderIndexed();
-					}
-				}
-				else
-				{
-					sNeedsDistortionUpdate = TRUE;
-					face->renderIndexed();
-				}
+			{
+				LLGLSquashToFarClip far_clip(glh_get_current_projection());
+				face->renderIndexed();
 			}
 		}
 	}

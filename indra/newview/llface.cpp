@@ -149,7 +149,7 @@ void LLFace::init(LLDrawable* drawablep, LLViewerObject* objp)
 	mPixelArea = 16.f;
 	mState      = GLOBAL;
 	mDrawPoolp  = NULL;
-	mPoolType = 0;
+	mPoolType = RENDER_TYPE_NONE;
 	mCenterLocal = objp->getPosition();
 	mCenterAgent = drawablep->getPositionAgent();
 	mDistance	= 0.f;
@@ -434,9 +434,9 @@ void LLFace::renderForSelect(U32 data_mask)
 
 		if (!getPool())
 		{
-			switch (getPoolType())
+			switch (getPoolType().index())
 			{
-			case LLDrawPool::POOL_ALPHA:
+			case POOL_ALPHA:
 				gGL.getTexUnit(0)->bind(getTexture());
 				break;
 			default:
@@ -1119,7 +1119,7 @@ BOOL LLFace::getGeometryVolume(const LLVolume& volume,
 				0.75f
 			};
 			
-			if (getPoolType() != LLDrawPool::POOL_ALPHA && (LLPipeline::sRenderDeferred || (LLPipeline::sRenderBump && tep->getShiny())))
+			if (getPoolType() != RENDER_TYPE_POOL_ALPHA && (LLPipeline::sRenderDeferred || (LLPipeline::sRenderBump && tep->getShiny())))
 			{
 				color.mV[3] = U8 (alpha[tep->getShiny()] * 255);
 			}

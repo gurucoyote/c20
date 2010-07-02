@@ -96,7 +96,7 @@ void LLDrawable::init()
 {
 	// mXform
 	mParent = NULL;
-	mRenderType = 0;
+	mRenderType = RENDER_TYPE_NONE;
 	mCurrentScale = LLVector3(1,1,1);
 	mDistanceWRTCamera = 0.0f;
 
@@ -365,6 +365,7 @@ void LLDrawable::makeActive()
 	{
 		U32 pcode = mVObjp->getPCode();
 		if (pcode == LLViewerObject::LL_VO_WATER ||
+			pcode == LLViewerObject::LL_VO_VOID_WATER ||
 			pcode == LLViewerObject::LL_VO_SURFACE_PATCH ||
 			pcode == LLViewerObject::LL_VO_PART_GROUP ||
 			pcode == LLViewerObject::LL_VO_HUD_PART_GROUP ||
@@ -703,7 +704,7 @@ void LLDrawable::updateDistance(LLCamera& camera, bool force_update)
 				for (S32 i = 0; i < getNumFaces(); i++)
 				{
 					LLFace* facep = getFace(i);
-					if (force_update || facep->getPoolType() == LLDrawPool::POOL_ALPHA)
+					if (force_update || facep->getPoolType() == RENDER_TYPE_POOL_ALPHA)
 					{
 						LLVector3 box = (facep->mExtents[1] - facep->mExtents[0]) * 0.25f;
 						LLVector3 v = (facep->mCenterLocal-camera.getOrigin());
@@ -1482,7 +1483,7 @@ void LLDrawable::updateFaceSize(S32 idx)
 LLBridgePartition::LLBridgePartition()
 : LLSpatialPartition(0, FALSE, 0) 
 { 
-	mDrawableType = LLPipeline::RENDER_TYPE_AVATAR; 
+	mDrawableType = RENDER_TYPE_POOL_AVATAR;
 	mPartitionType = LLViewerRegion::PARTITION_BRIDGE;
 	mLODPeriod = 16;
 	mSlopRatio = 0.25f;
@@ -1491,7 +1492,7 @@ LLBridgePartition::LLBridgePartition()
 LLHUDBridge::LLHUDBridge(LLDrawable* drawablep)
 : LLVolumeBridge(drawablep)
 {
-	mDrawableType = LLPipeline::RENDER_TYPE_HUD;
+	mDrawableType = RENDER_TYPE_HUD;
 	mPartitionType = LLViewerRegion::PARTITION_HUD;
 	mSlopRatio = 0.0f;
 }

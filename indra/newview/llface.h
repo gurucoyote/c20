@@ -79,7 +79,7 @@ public:
 	static void initClass();
 
 public:
-	LLFace(LLDrawable* drawablep, LLViewerObject* objp)   { init(drawablep, objp); }
+	LLFace(LLDrawable* drawablep, LLViewerObject* objp) : mPoolType(RENDER_TYPE_NONE) { init(drawablep, objp); }
 	~LLFace()  { destroy(); }
 
 	const LLMatrix4& getWorldMatrix()	const	{ return mVObjp->getWorldMatrix(mXform); }
@@ -122,12 +122,12 @@ public:
 	const LLTextureEntry* getTextureEntry()	const { return mVObjp->getTE(mTEOffset); }
 
 	LLFacePool*		getPool()			const	{ return mDrawPoolp; }
-	U32				getPoolType()		const	{ return mPoolType; }
+	LLRenderType	getPoolType()		const	{ return mPoolType; }
 	LLDrawable*		getDrawable()		const	{ return mDrawablep; }
 	LLViewerObject*	getViewerObject()	const	{ return mVObjp; }
 	S32				getLOD()			const	{ return mVObjp.notNull() ? mVObjp->getLOD() : 0; }
 	LLVertexBuffer* getVertexBuffer()	const	{ return mVertexBuffer; }
-	void			setPoolType(U32 type)		{ mPoolType = type; }
+	void			setPoolType(LLRenderType const& type)	{ mPoolType = type; }
 	S32				getTEOffset()				{ return mTEOffset; }
 	LLViewerTexture*	getTexture() const;
 
@@ -239,7 +239,7 @@ private:
 
 	U32			mState;
 	LLFacePool*	mDrawPoolp;
-	U32			mPoolType;
+	LLRenderType mPoolType;
 	LLColor4	mFaceColor;			// overrides material color if state |= USE_FACE_COLOR
 	
 	U16			mGeomCount;			// vertex count for this face

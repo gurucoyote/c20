@@ -676,63 +676,63 @@ class LLAdvancedClearGroupCache : public view_listener_t
 /////////////////
 // RENDER TYPE //
 /////////////////
-U32 render_type_from_string(std::string render_type)
+LLRenderType render_type_from_string(std::string render_type)
 {
 	if ("simple" == render_type)
 	{
-		return LLPipeline::RENDER_TYPE_SIMPLE;
+		return RENDER_TYPE_POOL_SIMPLE;
 	}
 	else if ("alpha" == render_type)
 	{
-		return LLPipeline::RENDER_TYPE_ALPHA;
+		return RENDER_TYPE_POOL_ALPHA;
 	}
 	else if ("tree" == render_type)
 	{
-		return LLPipeline::RENDER_TYPE_TREE;
+		return RENDER_TYPE_POOL_TREE;
 	}
 	else if ("character" == render_type)
 	{
-		return LLPipeline::RENDER_TYPE_AVATAR;
+		return RENDER_TYPE_POOL_AVATAR;
 	}
 	else if ("surfacePath" == render_type)
 	{
-		return LLPipeline::RENDER_TYPE_TERRAIN;
+		return RENDER_TYPE_POOL_TERRAIN;
 	}
 	else if ("sky" == render_type)
 	{
-		return LLPipeline::RENDER_TYPE_SKY;
+		return RENDER_TYPE_POOL_SKY;
 	}
 	else if ("water" == render_type)
 	{
-		return LLPipeline::RENDER_TYPE_WATER;
+		return RENDER_TYPE_POOL_WATER;
 	}
 	else if ("ground" == render_type)
 	{
-		return LLPipeline::RENDER_TYPE_GROUND;
+		return RENDER_TYPE_POOL_GROUND;
 	}
 	else if ("volume" == render_type)
 	{
-		return LLPipeline::RENDER_TYPE_VOLUME;
+		return RENDER_TYPE_VOLUME;
 	}
 	else if ("grass" == render_type)
 	{
-		return LLPipeline::RENDER_TYPE_GRASS;
+		return RENDER_TYPE_POOL_GRASS;
 	}
 	else if ("clouds" == render_type)
 	{
-		return LLPipeline::RENDER_TYPE_CLOUDS;
+		return RENDER_TYPE_CLOUDS;
 	}
 	else if ("particles" == render_type)
 	{
-		return LLPipeline::RENDER_TYPE_PARTICLES;
+		return RENDER_TYPE_PARTICLES;
 	}
 	else if ("bump" == render_type)
 	{
-		return LLPipeline::RENDER_TYPE_BUMP;
+		return RENDER_TYPE_POOL_BUMP;
 	}
 	else
 	{
-		return 0;
+		return RENDER_TYPE_NONE;
 	}
 }
 
@@ -741,10 +741,10 @@ class LLAdvancedToggleRenderType : public view_listener_t
 {
 	bool handleEvent(const LLSD& userdata)
 	{
-		U32 render_type = render_type_from_string( userdata.asString() );
-		if ( render_type != 0 )
+		LLRenderType render_type = render_type_from_string( userdata.asString() );
+		if ( render_type != RENDER_TYPE_NONE )
 		{
-			LLPipeline::toggleRenderTypeControl( (void*)render_type );
+			LLPipeline::toggleRenderTypeControl( render_type );
 		}
 		return true;
 	}
@@ -755,12 +755,12 @@ class LLAdvancedCheckRenderType : public view_listener_t
 {
 	bool handleEvent(const LLSD& userdata)
 	{
-		U32 render_type = render_type_from_string( userdata.asString() );
+		LLRenderType render_type = render_type_from_string( userdata.asString() );
 		bool new_value = false;
 
-		if ( render_type != 0 )
+		if ( render_type != RENDER_TYPE_NONE )
 		{
-			new_value = LLPipeline::hasRenderTypeControl( (void*)render_type );
+			new_value = gPipeline.hasRenderType(render_type);
 		}
 
 		return new_value;
@@ -6524,7 +6524,7 @@ void handle_dump_attachments(void*)
 			LLViewerObject *attached_object = (*attachment_iter);
 			BOOL visible = (attached_object != NULL &&
 							attached_object->mDrawable.notNull() && 
-							!attached_object->mDrawable->isRenderType(0));
+							!attached_object->mDrawable->isRenderType(RENDER_TYPE_NONE));
 			LLVector3 pos;
 			if (visible) pos = attached_object->mDrawable->getPosition();
 			llinfos << "ATTACHMENT " << key << ": item_id=" << attached_object->getItemID()
@@ -7458,7 +7458,7 @@ class LLViewToggleRenderType : public view_listener_t
 		std::string type = userdata.asString();
 		if (type == "hideparticles")
 		{
-			LLPipeline::toggleRenderType(LLPipeline::RENDER_TYPE_PARTICLES);
+			LLPipeline::toggleRenderType(RENDER_TYPE_PARTICLES);
 		}
 		return true;
 	}
@@ -7472,7 +7472,7 @@ class LLViewCheckRenderType : public view_listener_t
 		bool new_value = false;
 		if (type == "hideparticles")
 		{
-			new_value = LLPipeline::toggleRenderTypeControlNegated((void *)LLPipeline::RENDER_TYPE_PARTICLES);
+			new_value = !gPipeline.hasRenderType(RENDER_TYPE_PARTICLES);
 		}
 		return new_value;
 	}

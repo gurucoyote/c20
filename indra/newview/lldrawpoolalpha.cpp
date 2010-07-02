@@ -59,7 +59,7 @@ BOOL LLDrawPoolAlpha::sShowDebugAlpha = FALSE;
 
 static BOOL deferred_render = FALSE;
 
-LLDrawPoolAlpha::LLDrawPoolAlpha(U32 type) :
+LLDrawPoolAlpha::LLDrawPoolAlpha(LLRenderType const& type) :
 		LLRenderPass(type), current_shader(NULL), target_shader(NULL),
 		simple_shader(NULL), fullbright_shader(NULL)
 {
@@ -99,7 +99,7 @@ void LLDrawPoolAlpha::renderDeferred(S32 pass)
 		gDeferredTreeProgram.bind();
 		LLGLEnable test(GL_ALPHA_TEST);
 		//render alpha masked objects
-		LLRenderPass::renderTexture(LLRenderPass::PASS_ALPHA_MASK, getVertexDataMask());
+		LLRenderPass::renderTexture(RENDER_TYPE_PASS_ALPHA_MASK, getVertexDataMask());
 		gDeferredTreeProgram.unbind();
 	}			
 	gGL.setAlphaRejectSettings(LLRender::CF_DEFAULT);
@@ -188,18 +188,18 @@ void LLDrawPoolAlpha::render(S32 pass)
 			if (!LLPipeline::sRenderDeferred)
 			{
 				simple_shader->bind();
-				pushBatches(LLRenderPass::PASS_ALPHA_MASK, getVertexDataMask());
+				pushBatches(RENDER_TYPE_PASS_ALPHA_MASK, getVertexDataMask());
 			}
 			fullbright_shader->bind();
-			pushBatches(LLRenderPass::PASS_FULLBRIGHT_ALPHA_MASK, getVertexDataMask());
+			pushBatches(RENDER_TYPE_PASS_FULLBRIGHT_ALPHA_MASK, getVertexDataMask());
 			LLGLSLShader::bindNoShader();
 		}
 		else
 		{
 			gPipeline.enableLightsFullbright(LLColor4(1,1,1,1));
-			pushBatches(LLRenderPass::PASS_FULLBRIGHT_ALPHA_MASK, getVertexDataMask());
+			pushBatches(RENDER_TYPE_PASS_FULLBRIGHT_ALPHA_MASK, getVertexDataMask());
 			gPipeline.enableLightsDynamic();
-			pushBatches(LLRenderPass::PASS_ALPHA_MASK, getVertexDataMask());
+			pushBatches(RENDER_TYPE_PASS_ALPHA_MASK, getVertexDataMask());
 		}
 		gGL.setAlphaRejectSettings(LLRender::CF_DEFAULT);
 	}
@@ -235,7 +235,7 @@ void LLDrawPoolAlpha::renderAlphaHighlight(U32 mask)
 		if (group->mSpatialPartition->mRenderByGroup &&
 			!group->isDead())
 		{
-			LLSpatialGroup::drawmap_elem_t& draw_info = group->mDrawMap[LLRenderPass::PASS_ALPHA];	
+			LLSpatialGroup::drawmap_elem_t& draw_info = group->mDrawMap[RENDER_TYPE_PASS_ALPHA];
 
 			for (LLSpatialGroup::drawmap_elem_t::iterator k = draw_info.begin(); k != draw_info.end(); ++k)	
 			{
@@ -287,7 +287,7 @@ void LLDrawPoolAlpha::renderAlpha(U32 mask)
 		if (group->mSpatialPartition->mRenderByGroup &&
 			!group->isDead())
 		{
-			LLSpatialGroup::drawmap_elem_t& draw_info = group->mDrawMap[LLRenderPass::PASS_ALPHA];
+			LLSpatialGroup::drawmap_elem_t& draw_info = group->mDrawMap[RENDER_TYPE_PASS_ALPHA];
 
 			for (LLSpatialGroup::drawmap_elem_t::iterator k = draw_info.begin(); k != draw_info.end(); ++k)	
 			{

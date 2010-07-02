@@ -430,7 +430,7 @@ void LLSky::updateCull()
 
 void LLSky::updateSky()
 {
-	if (!gPipeline.hasRenderType(LLPipeline::RENDER_TYPE_SKY))
+	if (!gPipeline.hasRenderType(RENDER_TYPE_POOL_SKY))
 	{
 		return;
 	}

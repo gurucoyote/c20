@@ -78,7 +78,7 @@ void LLDrawPoolClouds::prerender()
 void LLDrawPoolClouds::render(S32 pass)
 {
 	LLFastTimer ftm(LLFastTimer::FTM_RENDER_CLOUDS);
- 	if (!(gPipeline.hasRenderType(LLPipeline::RENDER_TYPE_CLOUDS)))
+ 	if (!(gPipeline.hasRenderType(RENDER_TYPE_CLOUDS)))
 	{
 		return;
 	}

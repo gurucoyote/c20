@@ -38,6 +38,7 @@
 #include "v2math.h"
 #include "v3math.h"
 #include "llvertexbuffer.h"
+#include "llrendertype.h"
 
 class LLFace;
 class LLViewerTexture;
@@ -50,38 +51,13 @@ class LLDrawPool
 public:
 	static S32 sNumDrawPools;
 
-	enum
-	{
-		// Correspond to LLPipeline render type
-		POOL_SIMPLE = 1,
-		POOL_TERRAIN,	
-		POOL_TREE,
-		POOL_SKY,
-		POOL_WL_SKY,
-		POOL_GROUND,
-		POOL_GRASS,
-		POOL_FULLBRIGHT,
-		POOL_BUMP,
-		POOL_INVISIBLE, // see below *
-		POOL_AVATAR,
-		POOL_WATER,
-		POOL_GLOW,
-		POOL_ALPHA,
-		NUM_POOL_TYPES,
-		// * invisiprims work by rendering to the depth buffer but not the color buffer, occluding anything rendered after them
-		// - and the LLDrawPool types enum controls what order things are rendered in
-		// - so, it has absolute control over what invisprims block
-		// ...invisiprims being rendered in pool_invisible
-		// ...shiny/bump mapped objects in rendered in POOL_BUMP
-	};
-	
-	LLDrawPool(const U32 type);
+	LLDrawPool(LLRenderType const& type);
 	virtual ~LLDrawPool();
 
 	virtual BOOL isDead() = 0;
 
 	S32 getId() const { return mId; }
-	U32 getType() const { return mType; }
+	LLRenderType getType() const { return mType; }
 
 	virtual LLViewerTexture *getDebugTexture();
 	virtual void beginRenderPass( S32 pass );
@@ -109,7 +85,7 @@ public:
 	virtual BOOL verify() const { return TRUE; }		// Verify that all data in the draw pool is correct!
 	virtual S32 getVertexShaderLevel() const { return mVertexShaderLevel; }
 	
-	static LLDrawPool* createPool(const U32 type, LLViewerTexture *tex0 = NULL);
+	static LLDrawPool* createPool(LLRenderType const& type, LLViewerTexture *tex0 = NULL);
 	virtual LLDrawPool *instancePool() = 0;	// Create an empty new instance of the pool.
 	virtual LLViewerTexture* getTexture() = 0;
 	virtual BOOL isFacePool() { return FALSE; }
@@ -118,31 +94,13 @@ public:
 protected:
 	S32 mVertexShaderLevel;
 	S32	mId;
-	U32 mType;				// Type of draw pool
+	LLRenderType mType;				// Type of draw pool
 };
 
 class LLRenderPass : public LLDrawPool
 {
 public:
-	enum
-	{
-		PASS_SIMPLE = NUM_POOL_TYPES,
-		PASS_GRASS,
-		PASS_FULLBRIGHT,
-		PASS_INVISIBLE,
-		PASS_INVISI_SHINY,
-		PASS_FULLBRIGHT_SHINY,
-		PASS_SHINY,
-		PASS_BUMP,
-		PASS_GLOW,
-		PASS_ALPHA,
-		PASS_ALPHA_MASK,
-		PASS_FULLBRIGHT_ALPHA_MASK,
-		PASS_ALPHA_SHADOW,
-		NUM_RENDER_TYPES,
-	};
-
-	LLRenderPass(const U32 type);
+	LLRenderPass(LLRenderType const& type);
 	virtual ~LLRenderPass();
 	/*virtual*/ LLDrawPool* instancePool();
 	/*virtual*/ LLViewerTexture* getDebugTexture() { return NULL; }
@@ -151,11 +109,11 @@ public:
 	void resetDrawOrders() { }
 
 	static void applyModelMatrix(LLDrawInfo& params);
-	virtual void pushBatches(U32 type, U32 mask, BOOL texture = TRUE);
+	virtual void pushBatches(LLRenderType const& type, U32 mask, BOOL texture = TRUE);
 	virtual void pushBatch(LLDrawInfo& params, U32 mask, BOOL texture);
-	virtual void renderGroup(LLSpatialGroup* group, U32 type, U32 mask, BOOL texture = TRUE);
-	virtual void renderGroups(U32 type, U32 mask, BOOL texture = TRUE);
-	virtual void renderTexture(U32 type, U32 mask);
+	virtual void renderGroup(LLSpatialGroup* group, LLRenderType const& type, U32 mask, BOOL texture = TRUE);
+	virtual void renderGroups(LLRenderType const& type, U32 mask, BOOL texture = TRUE);
+	virtual void renderTexture(LLRenderType const& type, U32 mask);
 
 };
 
@@ -170,7 +128,7 @@ public:
 	};
 
 public:
-	LLFacePool(const U32 type);
+	LLFacePool(LLRenderType const& type);
 	virtual ~LLFacePool();
 	
 	virtual void renderForSelect() = 0;

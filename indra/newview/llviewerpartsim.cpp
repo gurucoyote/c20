@@ -645,7 +645,7 @@ void LLViewerPartSim::updateSimulation()
 
 	const F32 dt = llmin(update_timer.getElapsedTimeAndResetF32(), 0.1f);
 
- 	if (!(gPipeline.hasRenderType(LLPipeline::RENDER_TYPE_PARTICLES)))
+ 	if (!(gPipeline.hasRenderType(RENDER_TYPE_PARTICLES)))
 	{
 		return;
 	}

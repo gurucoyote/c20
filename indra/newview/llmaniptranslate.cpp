@@ -1655,7 +1655,7 @@ void LLManipTranslate::highlightIntersection(LLVector3 normal,
 		return;
 	}
 	
-	U32 types[] = { LLRenderPass::PASS_SIMPLE, LLRenderPass::PASS_ALPHA, LLRenderPass::PASS_FULLBRIGHT, LLRenderPass::PASS_SHINY };
+	LLRenderType types[] = { RENDER_TYPE_PASS_SIMPLE, RENDER_TYPE_PASS_ALPHA, RENDER_TYPE_PASS_FULLBRIGHT, RENDER_TYPE_PASS_SHINY };
 	U32 num_types = LL_ARRAY_SIZE(types);
 
 	GLuint stencil_mask = 0xFFFFFFFF;
@@ -1684,16 +1684,16 @@ void LLManipTranslate::highlightIntersection(LLVector3 normal,
 		LLGLEnable clip(GL_CLIP_PLANE0);
 		glClipPlane(GL_CLIP_PLANE0, plane);
 
-		BOOL particles = gPipeline.hasRenderType(LLPipeline::RENDER_TYPE_PARTICLES);
-		BOOL clouds = gPipeline.hasRenderType(LLPipeline::RENDER_TYPE_CLOUDS);
+		BOOL particles = gPipeline.hasRenderType(RENDER_TYPE_PARTICLES);
+		BOOL clouds = gPipeline.hasRenderType(RENDER_TYPE_CLOUDS);
 		
 		if (particles)
 		{
-			LLPipeline::toggleRenderType(LLPipeline::RENDER_TYPE_PARTICLES);
+			LLPipeline::toggleRenderType(RENDER_TYPE_PARTICLES);
 		}
 		if (clouds)
 		{
-			LLPipeline::toggleRenderType(LLPipeline::RENDER_TYPE_CLOUDS);
+			LLPipeline::toggleRenderType(RENDER_TYPE_CLOUDS);
 		}
 		
 		//stencil in volumes
@@ -1713,11 +1713,11 @@ void LLManipTranslate::highlightIntersection(LLVector3 normal,
 		
 		if (particles)
 		{
-			LLPipeline::toggleRenderType(LLPipeline::RENDER_TYPE_PARTICLES);
+			LLPipeline::toggleRenderType(RENDER_TYPE_PARTICLES);
 		}
 		if (clouds)
 		{
-			LLPipeline::toggleRenderType(LLPipeline::RENDER_TYPE_CLOUDS);
+			LLPipeline::toggleRenderType(RENDER_TYPE_CLOUDS);
 		}
 
 		gGL.setColorMask(true, false);

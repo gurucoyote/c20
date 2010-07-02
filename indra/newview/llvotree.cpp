@@ -339,7 +339,7 @@ BOOL LLVOTree::idleUpdate(LLAgent &agent, LLWorld &world, const F64 &time)
 	const F32 TREE_WIND_SENSITIVITY = 0.005f;
 	const F32 TREE_TRUNK_STIFFNESS = 0.1f;
 
- 	if (mDead || !(gPipeline.hasRenderType(LLPipeline::RENDER_TYPE_TREE)))
+ 	if (mDead || !(gPipeline.hasRenderType(RENDER_TYPE_POOL_TREE)))
 	{
 		return TRUE;
 	}
@@ -483,9 +483,9 @@ LLDrawable* LLVOTree::createDrawable(LLPipeline *pipeline)
 	pipeline->allocDrawable(this);
 	mDrawable->setLit(FALSE);
 
-	mDrawable->setRenderType(LLPipeline::RENDER_TYPE_TREE);
+	mDrawable->setRenderType(RENDER_TYPE_POOL_TREE);
 
-	LLDrawPoolTree *poolp = (LLDrawPoolTree*) gPipeline.getPool(LLDrawPool::POOL_TREE, mTreeImagep);
+	LLDrawPoolTree *poolp = (LLDrawPoolTree*) gPipeline.getPool(RENDER_TYPE_POOL_TREE, mTreeImagep);
 
 	// Just a placeholder for an actual object...
 	LLFace *facep = mDrawable->addFace(poolp, mTreeImagep);
@@ -1304,7 +1304,7 @@ U32 LLVOTree::getPartitionType() const
 LLTreePartition::LLTreePartition()
 : LLSpatialPartition(0, FALSE, 0)
 {
-	mDrawableType = LLPipeline::RENDER_TYPE_TREE;
+	mDrawableType = RENDER_TYPE_POOL_TREE;
 	mPartitionType = LLViewerRegion::PARTITION_TREE;
 	mSlopRatio = 0.f;
 	mLODPeriod = 1;

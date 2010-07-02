@@ -87,7 +87,7 @@ public:
 //============================================================================
 
 LLVOSurfacePatch::LLVOSurfacePatch(const LLUUID &id, const LLPCode pcode, LLViewerRegion *regionp)
-	:	LLStaticViewerObject(id, LL_VO_SURFACE_PATCH, regionp),
+	:	LLStaticViewerObject(id, pcode, regionp),
 		mDirtiedPatch(FALSE),
 		mPool(NULL),
 		mBaseComp(0),
@@ -142,7 +142,7 @@ void LLVOSurfacePatch::updateTextures()
 
 LLFacePool *LLVOSurfacePatch::getPool()
 {
-	mPool = (LLDrawPoolTerrain*) gPipeline.getPool(LLDrawPool::POOL_TERRAIN, mPatchp->getSurface()->getSTexture());
+	mPool = (LLDrawPoolTerrain*) gPipeline.getPool(RENDER_TYPE_POOL_TERRAIN, mPatchp->getSurface()->getSTexture());
 
 	return mPool;
 }
@@ -152,7 +152,7 @@ LLDrawable *LLVOSurfacePatch::createDrawable(LLPipeline *pipeline)
 {
 	pipeline->allocDrawable(this);
 
-	mDrawable->setRenderType(LLPipeline::RENDER_TYPE_TERRAIN);
+	mDrawable->setRenderType(RENDER_TYPE_POOL_TERRAIN);
 	
 	mBaseComp = llfloor(mPatchp->getMinComposition());
 	S32 min_comp, max_comp, range;
@@ -1027,7 +1027,7 @@ LLTerrainPartition::LLTerrainPartition()
 {
 	mOcclusionEnabled = FALSE;
 	mInfiniteFarClip = TRUE;
-	mDrawableType = LLPipeline::RENDER_TYPE_TERRAIN;
+	mDrawableType = RENDER_TYPE_POOL_TERRAIN;
 	mPartitionType = LLViewerRegion::PARTITION_TERRAIN;
 }
 

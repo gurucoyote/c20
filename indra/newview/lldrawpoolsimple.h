@@ -120,7 +120,7 @@ public:
 class LLDrawPoolGlow : public LLRenderPass
 {
 public:
-	LLDrawPoolGlow(): LLRenderPass(LLDrawPool::POOL_GLOW) { }
+	LLDrawPoolGlow(): LLRenderPass(RENDER_TYPE_POOL_GLOW) { }
 	
 	enum
 	{

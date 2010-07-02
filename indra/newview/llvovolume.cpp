@@ -661,7 +661,7 @@ void LLVOVolume::updateTextureVirtualSize()
 		return ;
 	}
 
-	if (!gPipeline.hasRenderType(LLPipeline::RENDER_TYPE_SIMPLE))
+	if (!gPipeline.hasRenderType(RENDER_TYPE_POOL_SIMPLE))
 	{
 		return;
 	}
@@ -874,7 +874,7 @@ LLDrawable *LLVOVolume::createDrawable(LLPipeline *pipeline)
 {
 	pipeline->allocDrawable(this);
 		
-	mDrawable->setRenderType(LLPipeline::RENDER_TYPE_VOLUME);
+	mDrawable->setRenderType(RENDER_TYPE_VOLUME);
 
 	S32 max_tes_to_set = getNumTEs();
 	for (S32 i = 0; i < max_tes_to_set; i++)
@@ -2788,7 +2788,7 @@ U32 LLVOVolume::getRenderCost(std::set<LLUUID> &textures) const
 			textures.insert(img->getID());
 		}
 
-		if (face->getPoolType() == LLDrawPool::POOL_ALPHA)
+		if (face->getPoolType() == RENDER_TYPE_POOL_ALPHA)
 		{
 			alpha++;
 		}
@@ -2910,7 +2910,7 @@ F32 LLVOVolume::getBinRadius()
 		for (S32 i = 0; i < mDrawable->getNumFaces(); i++)
 		{
 			LLFace* face = mDrawable->getFace(i);
-			if (face->getPoolType() == LLDrawPool::POOL_ALPHA &&
+			if (face->getPoolType() == RENDER_TYPE_POOL_ALPHA &&
 				(!LLPipeline::sFastAlpha || 
 				face->getFaceColor().mV[3] != 1.f ||
 				!face->getTexture()->getIsAlphaMask()))
@@ -3156,7 +3156,7 @@ LLVolumePartition::LLVolumePartition()
 {
 	mLODPeriod = 32;
 	mDepthMask = FALSE;
-	mDrawableType = LLPipeline::RENDER_TYPE_VOLUME;
+	mDrawableType = RENDER_TYPE_VOLUME;
 	mPartitionType = LLViewerRegion::PARTITION_VOLUME;
 	mSlopRatio = 0.25f;
 	mBufferUsage = GL_DYNAMIC_DRAW_ARB;
@@ -3167,7 +3167,7 @@ LLVolumeBridge::LLVolumeBridge(LLDrawable* drawablep)
 {
 	mDepthMask = FALSE;
 	mLODPeriod = 32;
-	mDrawableType = LLPipeline::RENDER_TYPE_VOLUME;
+	mDrawableType = RENDER_TYPE_VOLUME;
 	mPartitionType = LLViewerRegion::PARTITION_BRIDGE;
 	
 	mBufferUsage = GL_DYNAMIC_DRAW_ARB;
@@ -3175,7 +3175,7 @@ LLVolumeBridge::LLVolumeBridge(LLDrawable* drawablep)
 	mSlopRatio = 0.25f;
 }
 
-void LLVolumeGeometryManager::registerFace(LLSpatialGroup* group, LLFace* facep, U32 type)
+void LLVolumeGeometryManager::registerFace(LLSpatialGroup* group, LLFace* facep, LLRenderType const& type)
 {
 	LLMemType mt(LLMemType::MTYPE_SPACE_PARTITION);
 
@@ -3190,11 +3190,11 @@ void LLVolumeGeometryManager::registerFace(LLSpatialGroup* group, LLFace* facep,
 	S32 idx = draw_vec.size()-1;
 
 
-	BOOL fullbright = (type == LLRenderPass::PASS_FULLBRIGHT) ||
-					  (type == LLRenderPass::PASS_INVISIBLE) ||
-					  (type == LLRenderPass::PASS_ALPHA ? facep->isState(LLFace::FULLBRIGHT) : FALSE);
+	BOOL fullbright = (type == RENDER_TYPE_PASS_FULLBRIGHT) ||
+					  (type == RENDER_TYPE_PASS_INVISIBLE) ||
+					  (type == RENDER_TYPE_PASS_ALPHA ? facep->isState(LLFace::FULLBRIGHT) : FALSE);
 
-	if (!fullbright && type != LLRenderPass::PASS_GLOW && !facep->mVertexBuffer->hasDataType(LLVertexBuffer::TYPE_NORMAL))
+	if (!fullbright && type != RENDER_TYPE_PASS_GLOW && !facep->mVertexBuffer->hasDataType(LLVertexBuffer::TYPE_NORMAL))
 	{
 		llwarns << "Non fullbright face has no normals!" << llendl;
 		return;
@@ -3218,13 +3218,13 @@ void LLVolumeGeometryManager::registerFace(LLSpatialGroup* group, LLFace* facep,
 		model_mat = &(drawable->getRegion()->mRenderMatrix);
 	}
 
-	U8 bump = (type == LLRenderPass::PASS_BUMP ? facep->getTextureEntry()->getBumpmap() : 0);
+	U8 bump = (type == RENDER_TYPE_PASS_BUMP ? facep->getTextureEntry()->getBumpmap() : 0);
 	
 	LLViewerTexture* tex = facep->getTexture();
 
 	U8 glow = 0;
 		
-	if (type == LLRenderPass::PASS_GLOW)
+	if (type == RENDER_TYPE_PASS_GLOW)
 	{
 		glow = (U8) (facep->getTextureEntry()->getGlow() * 255);
 	}
@@ -3269,7 +3269,7 @@ void LLVolumeGeometryManager::registerFace(LLSpatialGroup* group, LLFace* facep,
 		draw_info->mTextureMatrix = tex_mat;
 		draw_info->mModelMatrix = model_mat;
 		draw_info->mGlowColor.setVec(0,0,0,glow);
-		if (type == LLRenderPass::PASS_ALPHA)
+		if (type == RENDER_TYPE_PASS_ALPHA)
 		{ //for alpha sorting
 			facep->setDrawInfo(draw_info);
 		}
@@ -3387,10 +3387,10 @@ void LLVolumeGeometryManager::rebuildGeom(LLSpatialGroup* group)
 				}
 
 				BOOL force_simple = (facep->mPixelArea < FORCE_SIMPLE_RENDER_AREA);
-				U32 type = gPipeline.getPoolTypeFromTE(te, tex);
-				if (type != LLDrawPool::POOL_ALPHA && force_simple)
+				LLRenderType type = gPipeline.getPoolTypeFromTE(te, tex);
+				if (type != RENDER_TYPE_POOL_ALPHA && force_simple)
 				{
-					type = LLDrawPool::POOL_SIMPLE;
+					type = RENDER_TYPE_POOL_SIMPLE;
 				}
 				facep->setPoolType(type);
 
@@ -3415,7 +3415,7 @@ void LLVolumeGeometryManager::rebuildGeom(LLSpatialGroup* group)
 					}
 				}
 
-				if (type == LLDrawPool::POOL_ALPHA)
+				if (type == RENDER_TYPE_POOL_ALPHA)
 				{
 					if (LLPipeline::sFastAlpha &&
 					    (te->getColor().mV[VW] == 1.0f) &&
@@ -3761,7 +3761,7 @@ void LLVolumeGeometryManager::genDrawInfo(LLSpatialGroup* group, U32 mask, std::
 
 			const LLTextureEntry* te = facep->getTextureEntry();
 
-			BOOL is_alpha = facep->getPoolType() == LLDrawPool::POOL_ALPHA ? TRUE : FALSE;
+			BOOL is_alpha = facep->getPoolType() == RENDER_TYPE_POOL_ALPHA ? TRUE : FALSE;
 		
 			if (is_alpha)
 			{
@@ -3773,21 +3773,21 @@ void LLVolumeGeometryManager::genDrawInfo(LLSpatialGroup* group, U32 mask, std::
 				{
 					if (te->getFullbright())
 					{
-						registerFace(group, facep, LLRenderPass::PASS_FULLBRIGHT_ALPHA_MASK);
+						registerFace(group, facep, RENDER_TYPE_PASS_FULLBRIGHT_ALPHA_MASK);
 					}
 					else
 					{
-						registerFace(group, facep, LLRenderPass::PASS_ALPHA_MASK);
+						registerFace(group, facep, RENDER_TYPE_PASS_ALPHA_MASK);
 					}
 				}
 				else
 				{
-					registerFace(group, facep, LLRenderPass::PASS_ALPHA);
+					registerFace(group, facep, RENDER_TYPE_PASS_ALPHA);
 				}
 
 				if (LLPipeline::sRenderDeferred)
 				{
-					registerFace(group, facep, LLRenderPass::PASS_ALPHA_SHADOW);
+					registerFace(group, facep, RENDER_TYPE_PASS_ALPHA_SHADOW);
 				}
 			}
 			else if (gPipeline.canUseVertexShaders()
@@ -3797,77 +3797,77 @@ void LLVolumeGeometryManager::genDrawInfo(LLSpatialGroup* group, U32 mask, std::
 			{
 				if (tex->getPrimaryFormat() == GL_ALPHA)
 				{
-					registerFace(group, facep, LLRenderPass::PASS_INVISI_SHINY);
-					registerFace(group, facep, LLRenderPass::PASS_INVISIBLE);
+					registerFace(group, facep, RENDER_TYPE_PASS_INVISI_SHINY);
+					registerFace(group, facep, RENDER_TYPE_PASS_INVISIBLE);
 				}
 				else if (LLPipeline::sRenderDeferred)
 				{
 					if (te->getBumpmap())
 					{
-						registerFace(group, facep, LLRenderPass::PASS_BUMP);
+						registerFace(group, facep, RENDER_TYPE_PASS_BUMP);
 					}
 					else if (te->getFullbright())
 					{
-						registerFace(group, facep, LLRenderPass::PASS_FULLBRIGHT_SHINY);
+						registerFace(group, facep, RENDER_TYPE_PASS_FULLBRIGHT_SHINY);
 					}
 					else
 					{
 						llassert(mask & LLVertexBuffer::MAP_NORMAL);
-						registerFace(group, facep, LLRenderPass::PASS_SIMPLE);
+						registerFace(group, facep, RENDER_TYPE_PASS_SIMPLE);
 					}
 				}
 				else if (fullbright)
 				{						
-					registerFace(group, facep, LLRenderPass::PASS_FULLBRIGHT_SHINY);
+					registerFace(group, facep, RENDER_TYPE_PASS_FULLBRIGHT_SHINY);
 				}
 				else
 				{
-					registerFace(group, facep, LLRenderPass::PASS_SHINY);
+					registerFace(group, facep, RENDER_TYPE_PASS_SHINY);
 				}
 			}
 			else
 			{
 				if (!is_alpha && tex->getPrimaryFormat() == GL_ALPHA)
 				{
-					registerFace(group, facep, LLRenderPass::PASS_INVISIBLE);
+					registerFace(group, facep, RENDER_TYPE_PASS_INVISIBLE);
 				}
 				else if (fullbright)
 				{
-					registerFace(group, facep, LLRenderPass::PASS_FULLBRIGHT);
+					registerFace(group, facep, RENDER_TYPE_PASS_FULLBRIGHT);
 				}
 				else
 				{
 					if (LLPipeline::sRenderDeferred && te->getBumpmap())
 					{
-						registerFace(group, facep, LLRenderPass::PASS_BUMP);
+						registerFace(group, facep, RENDER_TYPE_PASS_BUMP);
 					}
 					else
 					{
 						llassert(mask & LLVertexBuffer::MAP_NORMAL);
-						registerFace(group, facep, LLRenderPass::PASS_SIMPLE);
+						registerFace(group, facep, RENDER_TYPE_PASS_SIMPLE);
 					}
 				}
 				
 				if (!is_alpha && te->getShiny() && LLPipeline::sRenderBump)
 				{
-					registerFace(group, facep, LLRenderPass::PASS_SHINY);
+					registerFace(group, facep, RENDER_TYPE_PASS_SHINY);
 				}
 			}
 			
 			if (!is_alpha && !LLPipeline::sRenderDeferred)
 			{
 				llassert((mask & LLVertexBuffer::MAP_NORMAL) || fullbright);
-				facep->setPoolType((fullbright) ? LLDrawPool::POOL_FULLBRIGHT : LLDrawPool::POOL_SIMPLE);
+				facep->setPoolType((fullbright) ? RENDER_TYPE_POOL_FULLBRIGHT : RENDER_TYPE_POOL_SIMPLE);
 				
 				if (!force_simple && te->getBumpmap() && LLPipeline::sRenderBump)
 				{
-					registerFace(group, facep, LLRenderPass::PASS_BUMP);
+					registerFace(group, facep, RENDER_TYPE_PASS_BUMP);
 				}
 			}
 
 			if (LLPipeline::sRenderGlow && te->getGlow() > 0.f)
 			{
-				registerFace(group, facep, LLRenderPass::PASS_GLOW);
+				registerFace(group, facep, RENDER_TYPE_PASS_GLOW);
 			}
 						
 			++face_iter;
@@ -3934,7 +3934,7 @@ void LLGeometryManager::addGeometryCount(LLSpatialGroup* group, U32 &vertex_coun
 LLHUDPartition::LLHUDPartition()
 {
 	mPartitionType = LLViewerRegion::PARTITION_HUD;
-	mDrawableType = LLPipeline::RENDER_TYPE_HUD;
+	mDrawableType = RENDER_TYPE_HUD;
 	mSlopRatio = 0.f;
 	mLODPeriod = 1;
 }

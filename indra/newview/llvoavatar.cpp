@@ -2132,7 +2132,7 @@ BOOL LLVOAvatar::idleUpdate(LLAgent &agent, LLWorld &world, const F64 &time)
 		return TRUE;
 	}
 
- 	if (!(gPipeline.hasRenderType(LLPipeline::RENDER_TYPE_AVATAR)))
+ 	if (!(gPipeline.hasRenderType(RENDER_TYPE_POOL_AVATAR)))
 	{
 		return TRUE;
 	}
@@ -5249,13 +5249,13 @@ LLDrawable *LLVOAvatar::createDrawable(LLPipeline *pipeline)
 	pipeline->allocDrawable(this);
 	mDrawable->setLit(FALSE);
 
-	LLDrawPoolAvatar *poolp = (LLDrawPoolAvatar*) gPipeline.getPool(LLDrawPool::POOL_AVATAR);
+	LLDrawPoolAvatar *poolp = (LLDrawPoolAvatar*) gPipeline.getPool(RENDER_TYPE_POOL_AVATAR);
 
 	// Only a single face (one per avatar)
 	//this face will be splitted into several if its vertex buffer is too long.
 	mDrawable->setState(LLDrawable::ACTIVE);
 	mDrawable->addFace(poolp, NULL);
-	mDrawable->setRenderType(LLPipeline::RENDER_TYPE_AVATAR);
+	mDrawable->setRenderType(RENDER_TYPE_POOL_AVATAR);
 	
 	LLFace *facep;
 
@@ -5289,7 +5289,7 @@ static LLFastTimer::DeclareTimer FTM_UPDATE_AVATAR("Update Avatar");
 BOOL LLVOAvatar::updateGeometry(LLDrawable *drawable)
 {
 	LLFastTimer ftm(FTM_UPDATE_AVATAR);
- 	if (!(gPipeline.hasRenderType(LLPipeline::RENDER_TYPE_AVATAR)))
+ 	if (!(gPipeline.hasRenderType(RENDER_TYPE_POOL_AVATAR)))
 	{
 		return TRUE;
 	}

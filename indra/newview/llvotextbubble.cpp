@@ -141,7 +141,7 @@ LLDrawable *LLVOTextBubble::createDrawable(LLPipeline *pipeline)
 {
 	pipeline->allocDrawable(this);
 	mDrawable->setLit(FALSE);
-	mDrawable->setRenderType(LLPipeline::RENDER_TYPE_VOLUME);
+	mDrawable->setRenderType(RENDER_TYPE_VOLUME);
 	
 	for (U32 i = 0; i < getNumTEs(); i++)
 	{
@@ -178,7 +178,7 @@ BOOL LLVOTextBubble::updateLOD()
 
 BOOL LLVOTextBubble::updateGeometry(LLDrawable *drawable)
 {
- 	if (!(gPipeline.hasRenderType(LLPipeline::RENDER_TYPE_VOLUME)))
+ 	if (!(gPipeline.hasRenderType(RENDER_TYPE_VOLUME)))
 		return TRUE;
 	
 	if (mVolumeChanged)

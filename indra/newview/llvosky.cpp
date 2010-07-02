@@ -1049,7 +1049,7 @@ BOOL LLVOSky::idleUpdate(LLAgent &agent, LLWorld &world, const F64 &time)
 
 BOOL LLVOSky::updateSky()
 {
-	if (mDead || !(gPipeline.hasRenderType(LLPipeline::RENDER_TYPE_SKY)))
+	if (mDead || !(gPipeline.hasRenderType(RENDER_TYPE_POOL_SKY)))
 	{
 		return TRUE;
 	}
@@ -1199,9 +1199,9 @@ LLDrawable *LLVOSky::createDrawable(LLPipeline *pipeline)
 	pipeline->allocDrawable(this);
 	mDrawable->setLit(FALSE);
 
-	LLDrawPoolSky *poolp = (LLDrawPoolSky*) gPipeline.getPool(LLDrawPool::POOL_SKY);
+	LLDrawPoolSky *poolp = (LLDrawPoolSky*) gPipeline.getPool(RENDER_TYPE_POOL_SKY);
 	poolp->setSkyTex(mSkyTex);
-	mDrawable->setRenderType(LLPipeline::RENDER_TYPE_SKY);
+	mDrawable->setRenderType(RENDER_TYPE_POOL_SKY);
 	
 	for (S32 i = 0; i < 6; ++i)
 	{
@@ -1224,7 +1224,7 @@ void LLVOSky::createDummyVertexBuffer()
 {
 	if(!mFace[FACE_DUMMY])
 	{
-		LLDrawPoolSky *poolp = (LLDrawPoolSky*) gPipeline.getPool(LLDrawPool::POOL_SKY);
+		LLDrawPoolSky *poolp = (LLDrawPoolSky*) gPipeline.getPool(RENDER_TYPE_POOL_SKY);
 		mFace[FACE_DUMMY] = mDrawable->addFace(poolp, NULL);
 	}
 
@@ -1268,8 +1268,8 @@ BOOL LLVOSky::updateGeometry(LLDrawable *drawable)
 	LLFastTimer ftm(FTM_GEO_SKY);
 	if (mFace[FACE_REFLECTION] == NULL)
 	{
-		LLDrawPoolWater *poolp = (LLDrawPoolWater*) gPipeline.getPool(LLDrawPool::POOL_WATER);
-		if (gPipeline.getPool(LLDrawPool::POOL_WATER)->getVertexShaderLevel() != 0)
+		LLDrawPoolWater *poolp = (LLDrawPoolWater*) gPipeline.getPool(RENDER_TYPE_POOL_WATER);
+		if (gPipeline.getPool(RENDER_TYPE_POOL_WATER)->getVertexShaderLevel() != 0)
 		{
 			mFace[FACE_REFLECTION] = drawable->addFace(poolp, NULL);
 		}
@@ -1375,7 +1375,7 @@ BOOL LLVOSky::updateGeometry(LLDrawable *drawable)
 	
 	if (height_above_water > 0)
 	{
-		BOOL render_ref = gPipeline.getPool(LLDrawPool::POOL_WATER)->getVertexShaderLevel() == 0;
+		BOOL render_ref = gPipeline.getPool(RENDER_TYPE_POOL_WATER)->getVertexShaderLevel() == 0;
 
 		if (sun_flag)
 		{

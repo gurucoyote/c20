@@ -71,7 +71,7 @@ void LLDrawPoolGlow::render(S32 pass)
 
 	LLGLDepthTest depth(GL_TRUE, GL_FALSE);
 	gGL.setColorMask(false, true);
-	renderTexture(LLRenderPass::PASS_GLOW, getVertexDataMask());
+	renderTexture(RENDER_TYPE_PASS_GLOW, getVertexDataMask());
 	
 	gGL.setColorMask(true, false);
 	gGL.setSceneBlendType(LLRender::BT_ALPHA);
@@ -90,7 +90,7 @@ void LLDrawPoolGlow::pushBatch(LLDrawInfo& params, U32 mask, BOOL texture)
 
 
 LLDrawPoolSimple::LLDrawPoolSimple() :
-	LLRenderPass(POOL_SIMPLE)
+	LLRenderPass(RENDER_TYPE_POOL_SIMPLE)
 {
 }
 
@@ -145,11 +145,11 @@ void LLDrawPoolSimple::render(S32 pass)
 	{ //render simple
 		LLFastTimer t(FTM_RENDER_SIMPLE);
 		gPipeline.enableLightsDynamic();
-		renderTexture(LLRenderPass::PASS_SIMPLE, getVertexDataMask());
+		renderTexture(RENDER_TYPE_PASS_SIMPLE, getVertexDataMask());
 
 		if (LLPipeline::sRenderDeferred)
 		{
-			renderTexture(LLRenderPass::PASS_BUMP, getVertexDataMask());
+			renderTexture(RENDER_TYPE_PASS_BUMP, getVertexDataMask());
 		}
 	}
 }
@@ -179,13 +179,13 @@ void LLDrawPoolSimple::renderDeferred(S32 pass)
 
 	{ //render simple
 		LLFastTimer t(FTM_RENDER_SIMPLE_DEFERRED);
-		renderTexture(LLRenderPass::PASS_SIMPLE, getVertexDataMask());
+		renderTexture(RENDER_TYPE_PASS_SIMPLE, getVertexDataMask());
 	}
 }
 
 // grass drawpool
 LLDrawPoolGrass::LLDrawPoolGrass() :
- LLRenderPass(POOL_GRASS)
+ LLRenderPass(RENDER_TYPE_POOL_GRASS)
 {
 
 }
@@ -244,7 +244,7 @@ void LLDrawPoolGrass::render(S32 pass)
 		LLGLEnable test(GL_ALPHA_TEST);
 		gGL.setSceneBlendType(LLRender::BT_ALPHA);
 		//render grass
-		LLRenderPass::renderTexture(LLRenderPass::PASS_GRASS, getVertexDataMask());
+		LLRenderPass::renderTexture(RENDER_TYPE_PASS_GRASS, getVertexDataMask());
 	}			
 
 	gGL.setAlphaRejectSettings(LLRender::CF_DEFAULT);
@@ -269,7 +269,7 @@ void LLDrawPoolGrass::renderDeferred(S32 pass)
 		gDeferredTreeProgram.bind();
 		LLGLEnable test(GL_ALPHA_TEST);
 		//render grass
-		LLRenderPass::renderTexture(LLRenderPass::PASS_GRASS, getVertexDataMask());
+		LLRenderPass::renderTexture(RENDER_TYPE_PASS_GRASS, getVertexDataMask());
 	}			
 
 	gGL.setAlphaRejectSettings(LLRender::CF_DEFAULT);
@@ -278,7 +278,7 @@ void LLDrawPoolGrass::renderDeferred(S32 pass)
 
 // Fullbright drawpool
 LLDrawPoolFullbright::LLDrawPoolFullbright() :
-	LLRenderPass(POOL_FULLBRIGHT)
+	LLRenderPass(RENDER_TYPE_POOL_FULLBRIGHT)
 {
 }
 
@@ -331,7 +331,7 @@ void LLDrawPoolFullbright::render(S32 pass)
 	//LLGLEnable blend(GL_BLEND);
 	gGL.setSceneBlendType(LLRender::BT_ALPHA);
 	U32 fullbright_mask = LLVertexBuffer::MAP_VERTEX | LLVertexBuffer::MAP_TEXCOORD0 | LLVertexBuffer::MAP_COLOR;
-	renderTexture(LLRenderPass::PASS_FULLBRIGHT, fullbright_mask);
+	renderTexture(RENDER_TYPE_PASS_FULLBRIGHT, fullbright_mask);
 
 	//gGL.setAlphaRejectSettings(LLRender::CF_DEFAULT);
 }

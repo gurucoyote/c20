@@ -127,7 +127,7 @@ LLSurface::~LLSurface()
 	mNumberOfPatches = 0;
 	destroyPatchData();
 
-	LLDrawPoolTerrain *poolp = (LLDrawPoolTerrain*) gPipeline.findPool(LLDrawPool::POOL_TERRAIN, mSTexturep);
+	LLDrawPoolTerrain *poolp = (LLDrawPoolTerrain*) gPipeline.findPool(RENDER_TYPE_POOL_TERRAIN, mSTexturep);
 	if (!poolp)
 	{
 		llwarns << "No pool for terrain on destruction!" << llendl;
@@ -628,7 +628,7 @@ void LLSurface::updatePatchVisibilities(LLAgent &agent)
 BOOL LLSurface::idleUpdate(F32 max_update_time)
 {
 	LLMemType mt_ius(LLMemType::MTYPE_IDLE_UPDATE_SURFACE);
-	if (!gPipeline.hasRenderType(LLPipeline::RENDER_TYPE_TERRAIN))
+	if (!gPipeline.hasRenderType(RENDER_TYPE_POOL_TERRAIN))
 	{
 		return FALSE;
 	}
@@ -1166,8 +1166,13 @@ void LLSurface::setWaterHeight(F32 height)
 	if (!mWaterObjp.isNull())
 	{
 		LLVector3 water_pos_region = mWaterObjp->getPositionRegion();
+		bool changed = water_pos_region.mV[VZ] != height;
 		water_pos_region.mV[VZ] = height;
 		mWaterObjp->setPositionRegion(water_pos_region);
+		if (changed)
+		{
+			LLWorld::getInstance()->updateWaterObjects();
+		}
 	}
 	else
 	{

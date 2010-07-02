@@ -119,7 +119,7 @@ LLDrawable* LLVOPartGroup::createDrawable(LLPipeline *pipeline)
 {
 	pipeline->allocDrawable(this);
 	mDrawable->setLit(FALSE);
-	mDrawable->setRenderType(LLPipeline::RENDER_TYPE_PARTICLES);
+	mDrawable->setRenderType(RENDER_TYPE_PARTICLES);
 	return mDrawable;
 }
 
@@ -172,7 +172,7 @@ BOOL LLVOPartGroup::updateGeometry(LLDrawable *drawable)
 		return TRUE;
 	}
 
- 	if (!(gPipeline.hasRenderType(LLPipeline::RENDER_TYPE_PARTICLES)))
+ 	if (!(gPipeline.hasRenderType(RENDER_TYPE_PARTICLES)))
 	{
 		return TRUE;
 	}
@@ -365,10 +365,10 @@ U32 LLVOPartGroup::getPartitionType() const
 }
 
 LLParticlePartition::LLParticlePartition()
-: LLSpatialPartition(LLDrawPoolAlpha::VERTEX_DATA_MASK, TRUE, GL_DYNAMIC_DRAW_ARB)
+: LLSpatialPartition(LLDrawPoolAlpha::VERTEX_DATA_MASK, TRUE, GL_DYNAMIC_DRAW_ARB),
+  mRenderPass(RENDER_TYPE_PASS_ALPHA)
 {
-	mRenderPass = LLRenderPass::PASS_ALPHA;
-	mDrawableType = LLPipeline::RENDER_TYPE_PARTICLES;
+    mDrawableType = RENDER_TYPE_PARTICLES;
 	mPartitionType = LLViewerRegion::PARTITION_PARTICLE;
 	mSlopRatio = 0.f;
 	mLODPeriod = 1;
@@ -377,7 +377,7 @@ LLParticlePartition::LLParticlePartition()
 LLHUDParticlePartition::LLHUDParticlePartition() :
 	LLParticlePartition()
 {
-	mDrawableType = LLPipeline::RENDER_TYPE_HUD_PARTICLES;
+	mDrawableType = RENDER_TYPE_HUD_PARTICLES;
 	mPartitionType = LLViewerRegion::PARTITION_HUD_PARTICLE;
 }
 
@@ -435,7 +435,7 @@ static LLFastTimer::DeclareTimer FTM_REBUILD_PARTICLE_VB("Particle VB");
 void LLParticlePartition::getGeometry(LLSpatialGroup* group)
 {
 	LLMemType mt(LLMemType::MTYPE_SPACE_PARTITION);
-	LLFastTimer ftm(mDrawableType == LLPipeline::RENDER_TYPE_GRASS ?
+	LLFastTimer ftm(mDrawableType == RENDER_TYPE_POOL_GRASS ?
 					FTM_REBUILD_GRASS_VB :
 					FTM_REBUILD_PARTICLE_VB);
 
@@ -469,7 +469,7 @@ void LLParticlePartition::getGeometry(LLSpatialGroup* group)
 		facep->setGeomIndex(vertex_count);
 		facep->setIndicesIndex(index_count);
 		facep->mVertexBuffer = buffer;
-		facep->setPoolType(LLDrawPool::POOL_ALPHA);
+		facep->setPoolType(RENDER_TYPE_POOL_ALPHA);
 		object->getGeometry(facep->getTEOffset(), verticesp, normalsp, texcoordsp, colorsp, indicesp);
 		
 		vertex_count += facep->getGeomCount();
@@ -527,7 +527,7 @@ LLDrawable* LLVOHUDPartGroup::createDrawable(LLPipeline *pipeline)
 {
 	pipeline->allocDrawable(this);
 	mDrawable->setLit(FALSE);
-	mDrawable->setRenderType(LLPipeline::RENDER_TYPE_HUD_PARTICLES);
+	mDrawable->setRenderType(RENDER_TYPE_HUD_PARTICLES);
 	return mDrawable;
 }
 

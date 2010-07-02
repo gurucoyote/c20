@@ -114,9 +114,9 @@ LLDrawable * LLVOWLSky::createDrawable(LLPipeline * pipeline)
 	pipeline->allocDrawable(this);
 
 	//LLDrawPoolWLSky *poolp = static_cast<LLDrawPoolWLSky *>(
-		gPipeline.getPool(LLDrawPool::POOL_WL_SKY);
+		gPipeline.getPool(RENDER_TYPE_POOL_WL_SKY);
 
-	mDrawable->setRenderType(LLPipeline::RENDER_TYPE_WL_SKY);
+	mDrawable->setRenderType(RENDER_TYPE_POOL_WL_SKY);
 
 	return mDrawable;
 }

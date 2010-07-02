@@ -284,7 +284,7 @@ BOOL LLVOGrass::isActive() const
 
 BOOL LLVOGrass::idleUpdate(LLAgent &agent, LLWorld &world, const F64 &time)
 {
- 	if (mDead || !(gPipeline.hasRenderType(LLPipeline::RENDER_TYPE_GRASS)))
+ 	if (mDead || !(gPipeline.hasRenderType(RENDER_TYPE_POOL_GRASS)))
 	{
 		return TRUE;
 	}
@@ -378,7 +378,7 @@ BOOL LLVOGrass::updateLOD()
 LLDrawable* LLVOGrass::createDrawable(LLPipeline *pipeline)
 {
 	pipeline->allocDrawable(this);
-	mDrawable->setRenderType(LLPipeline::RENDER_TYPE_GRASS);
+	mDrawable->setRenderType(RENDER_TYPE_POOL_GRASS);
 	
 	return mDrawable;
 }
@@ -546,12 +546,12 @@ U32 LLVOGrass::getPartitionType() const
 
 LLGrassPartition::LLGrassPartition()
 {
-	mDrawableType = LLPipeline::RENDER_TYPE_GRASS;
+	mDrawableType = RENDER_TYPE_POOL_GRASS;
 	mPartitionType = LLViewerRegion::PARTITION_GRASS;
 	mLODPeriod = 16;
 	mDepthMask = TRUE;
 	mSlopRatio = 0.1f;
-	mRenderPass = LLRenderPass::PASS_GRASS;
+	mRenderPass = RENDER_TYPE_PASS_GRASS;
 	mBufferUsage = GL_DYNAMIC_DRAW_ARB;
 }
 

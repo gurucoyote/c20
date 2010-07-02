@@ -542,14 +542,14 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 	{
 		LLMemType mt_du(LLMemType::MTYPE_DISPLAY_UPDATE);
 		LLAppViewer::instance()->pingMainloopTimeout("Display:Update");
-		if (gPipeline.hasRenderType(LLPipeline::RENDER_TYPE_HUD))
+		if (gPipeline.hasRenderType(RENDER_TYPE_HUD))
 		{ //don't draw hud objects in this frame
-			gPipeline.toggleRenderType(LLPipeline::RENDER_TYPE_HUD);
+			gPipeline.toggleRenderType(RENDER_TYPE_HUD);
 		}
 
-		if (gPipeline.hasRenderType(LLPipeline::RENDER_TYPE_HUD_PARTICLES))
+		if (gPipeline.hasRenderType(RENDER_TYPE_HUD_PARTICLES))
 		{ //don't draw hud particles in this frame
-			gPipeline.toggleRenderType(LLPipeline::RENDER_TYPE_HUD_PARTICLES);
+			gPipeline.toggleRenderType(RENDER_TYPE_HUD_PARTICLES);
 		}
 
 		//upkeep gl name pools
@@ -580,7 +580,8 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 
 		S32 water_clip = 0;
 		if ((LLViewerShaderMgr::instance()->getVertexShaderLevel(LLViewerShaderMgr::SHADER_ENVIRONMENT) > 1) &&
-			 gPipeline.hasRenderType(LLPipeline::RENDER_TYPE_WATER))
+			 (gPipeline.hasRenderType(RENDER_TYPE_POOL_WATER) ||
+			  gPipeline.hasRenderType(RENDER_TYPE_POOL_VOIDWATER)))
 		{
 			if (LLViewerCamera::getInstance()->cameraUnderWater())
 			{
@@ -946,22 +947,22 @@ void render_hud_attachments()
 		hud_cam.setAxes(LLVector3(1,0,0), LLVector3(0,1,0), LLVector3(0,0,1));
 		LLViewerCamera::updateFrustumPlanes(hud_cam, TRUE);
 
-		bool render_particles = gPipeline.hasRenderType(LLPipeline::RENDER_TYPE_PARTICLES) && gSavedSettings.getBOOL("RenderHUDParticles");
+		bool render_particles = gPipeline.hasRenderType(RENDER_TYPE_PARTICLES) && gSavedSettings.getBOOL("RenderHUDParticles");
 		
 		//only render hud objects
-		U32 mask = gPipeline.getRenderTypeMask();
+		LLRenderTypeMask mask = gPipeline.getRenderTypeMask();
 		// turn off everything
-		gPipeline.setRenderTypeMask(0);
+		gPipeline.clearRenderTypeMask();
 		// turn on HUD
-		gPipeline.toggleRenderType(LLPipeline::RENDER_TYPE_HUD);
+		gPipeline.toggleRenderType(RENDER_TYPE_HUD);
 		// turn on HUD particles
-		gPipeline.toggleRenderType(LLPipeline::RENDER_TYPE_HUD_PARTICLES);
+		gPipeline.toggleRenderType(RENDER_TYPE_HUD_PARTICLES);
 
 		// if particles are off, turn off hud-particles as well
 		if (!render_particles)
 		{
 			// turn back off HUD particles
-			gPipeline.toggleRenderType(LLPipeline::RENDER_TYPE_HUD_PARTICLES);
+			gPipeline.toggleRenderType(RENDER_TYPE_HUD_PARTICLES);
 		}
 
 		bool has_ui = gPipeline.hasRenderDebugFeatureMask(LLPipeline::RENDER_DEBUG_FEATURE_UI);
@@ -981,20 +982,20 @@ void render_hud_attachments()
 		LLViewerCamera::sCurCameraID = LLViewerCamera::CAMERA_WORLD;
 		gPipeline.updateCull(hud_cam, result);
 
-		gPipeline.toggleRenderType(LLPipeline::RENDER_TYPE_BUMP);
-		gPipeline.toggleRenderType(LLPipeline::RENDER_TYPE_SIMPLE);
-		gPipeline.toggleRenderType(LLPipeline::RENDER_TYPE_VOLUME);
-		gPipeline.toggleRenderType(LLPipeline::RENDER_TYPE_ALPHA);
-		gPipeline.toggleRenderType(LLPipeline::RENDER_TYPE_FULLBRIGHT);
-		gPipeline.toggleRenderType(LLPipeline::RENDER_TYPE_PASS_ALPHA);
-		gPipeline.toggleRenderType(LLPipeline::RENDER_TYPE_PASS_ALPHA_MASK);
-		gPipeline.toggleRenderType(LLPipeline::RENDER_TYPE_PASS_BUMP);
-		gPipeline.toggleRenderType(LLPipeline::RENDER_TYPE_PASS_FULLBRIGHT);
-		gPipeline.toggleRenderType(LLPipeline::RENDER_TYPE_PASS_FULLBRIGHT_ALPHA_MASK);
-		gPipeline.toggleRenderType(LLPipeline::RENDER_TYPE_PASS_FULLBRIGHT_SHINY);
-		gPipeline.toggleRenderType(LLPipeline::RENDER_TYPE_PASS_SHINY);
-		gPipeline.toggleRenderType(LLPipeline::RENDER_TYPE_PASS_INVISIBLE);
-		gPipeline.toggleRenderType(LLPipeline::RENDER_TYPE_PASS_INVISI_SHINY);
+		gPipeline.toggleRenderType(RENDER_TYPE_POOL_BUMP);
+		gPipeline.toggleRenderType(RENDER_TYPE_POOL_SIMPLE);
+		gPipeline.toggleRenderType(RENDER_TYPE_VOLUME);
+		gPipeline.toggleRenderType(RENDER_TYPE_POOL_ALPHA);
+		gPipeline.toggleRenderType(RENDER_TYPE_POOL_FULLBRIGHT);
+		gPipeline.toggleRenderType(RENDER_TYPE_PASS_ALPHA);
+		gPipeline.toggleRenderType(RENDER_TYPE_PASS_ALPHA_MASK);
+		gPipeline.toggleRenderType(RENDER_TYPE_PASS_BUMP);
+		gPipeline.toggleRenderType(RENDER_TYPE_PASS_FULLBRIGHT);
+		gPipeline.toggleRenderType(RENDER_TYPE_PASS_FULLBRIGHT_ALPHA_MASK);
+		gPipeline.toggleRenderType(RENDER_TYPE_PASS_FULLBRIGHT_SHINY);
+		gPipeline.toggleRenderType(RENDER_TYPE_PASS_SHINY);
+		gPipeline.toggleRenderType(RENDER_TYPE_PASS_INVISIBLE);
+		gPipeline.toggleRenderType(RENDER_TYPE_PASS_INVISI_SHINY);
 		
 		gPipeline.stateSort(hud_cam, result);
 

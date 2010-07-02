@@ -172,7 +172,7 @@ void LLStandardBumpmap::destroyGL()
 ////////////////////////////////////////////////////////////////
 
 LLDrawPoolBump::LLDrawPoolBump() 
-:  LLRenderPass(LLDrawPool::POOL_BUMP)
+:  LLRenderPass(RENDER_TYPE_POOL_BUMP)
 {
 	mShiny = FALSE;
 }
@@ -250,7 +250,7 @@ void LLDrawPoolBump::render(S32 pass)
 {
 	LLFastTimer t(FTM_RENDER_BUMP);
 	
-	if (!gPipeline.hasRenderType(LLDrawPool::POOL_SIMPLE))
+	if (!gPipeline.hasRenderType(RENDER_TYPE_POOL_SIMPLE))
 	{
 		return;
 	}
@@ -310,8 +310,8 @@ void LLDrawPoolBump::endRenderPass(S32 pass)
 void LLDrawPoolBump::beginShiny(bool invisible)
 {
 	LLFastTimer t(FTM_RENDER_SHINY);
-	if ((!invisible && !gPipeline.hasRenderBatches(LLRenderPass::PASS_SHINY))|| 
-		(invisible && !gPipeline.hasRenderBatches(LLRenderPass::PASS_INVISI_SHINY)))
+	if ((!invisible && !gPipeline.hasRenderBatches(PASS_SHINY))||
+		(invisible && !gPipeline.hasRenderBatches(PASS_INVISI_SHINY)))
 	{
 		return;
 	}
@@ -385,8 +385,8 @@ void LLDrawPoolBump::beginShiny(bool invisible)
 void LLDrawPoolBump::renderShiny(bool invisible)
 {
 	LLFastTimer t(FTM_RENDER_SHINY);
-	if ((!invisible && !gPipeline.hasRenderBatches(LLRenderPass::PASS_SHINY))|| 
-		(invisible && !gPipeline.hasRenderBatches(LLRenderPass::PASS_INVISI_SHINY)))
+	if ((!invisible && !gPipeline.hasRenderBatches(PASS_SHINY))||
+		(invisible && !gPipeline.hasRenderBatches(PASS_INVISI_SHINY)))
 	{
 		return;
 	}
@@ -396,15 +396,15 @@ void LLDrawPoolBump::renderShiny(bool invisible)
 		LLGLEnable blend_enable(GL_BLEND);
 		if (!invisible && mVertexShaderLevel > 1)
 		{
-			LLRenderPass::renderTexture(LLRenderPass::PASS_SHINY, sVertexMask);
+			LLRenderPass::renderTexture(RENDER_TYPE_PASS_SHINY, sVertexMask);
 		}
 		else if (!invisible)
 		{
-			renderGroups(LLRenderPass::PASS_SHINY, sVertexMask);
+			renderGroups(RENDER_TYPE_PASS_SHINY, sVertexMask);
 		}
 		else // invisible
 		{
-			renderGroups(LLRenderPass::PASS_INVISI_SHINY, sVertexMask);
+			renderGroups(RENDER_TYPE_PASS_INVISI_SHINY, sVertexMask);
 		}
 	}
 }
@@ -412,8 +412,8 @@ void LLDrawPoolBump::renderShiny(bool invisible)
 void LLDrawPoolBump::endShiny(bool invisible)
 {
 	LLFastTimer t(FTM_RENDER_SHINY);
-	if ((!invisible && !gPipeline.hasRenderBatches(LLRenderPass::PASS_SHINY))|| 
-		(invisible && !gPipeline.hasRenderBatches(LLRenderPass::PASS_INVISI_SHINY)))
+	if ((!invisible && !gPipeline.hasRenderBatches(PASS_SHINY))||
+		(invisible && !gPipeline.hasRenderBatches(PASS_INVISI_SHINY)))
 	{
 		return;
 	}
@@ -452,7 +452,7 @@ void LLDrawPoolBump::endShiny(bool invisible)
 void LLDrawPoolBump::beginFullbrightShiny()
 {
 	LLFastTimer t(FTM_RENDER_SHINY);
-	if (!gPipeline.hasRenderBatches(LLRenderPass::PASS_FULLBRIGHT_SHINY))
+	if (!gPipeline.hasRenderBatches(PASS_FULLBRIGHT_SHINY))
 	{
 		return;
 	}
@@ -501,7 +501,7 @@ void LLDrawPoolBump::beginFullbrightShiny()
 void LLDrawPoolBump::renderFullbrightShiny()
 {
 	LLFastTimer t(FTM_RENDER_SHINY);
-	if (!gPipeline.hasRenderBatches(LLRenderPass::PASS_FULLBRIGHT_SHINY))
+	if (!gPipeline.hasRenderBatches(PASS_FULLBRIGHT_SHINY))
 	{
 		return;
 	}
@@ -509,14 +509,14 @@ void LLDrawPoolBump::renderFullbrightShiny()
 	if( gSky.mVOSkyp->getCubeMap() )
 	{
 		LLGLEnable blend_enable(GL_BLEND);
-		LLRenderPass::renderTexture(LLRenderPass::PASS_FULLBRIGHT_SHINY, sVertexMask);
+		LLRenderPass::renderTexture(RENDER_TYPE_PASS_FULLBRIGHT_SHINY, sVertexMask);
 	}
 }
 
 void LLDrawPoolBump::endFullbrightShiny()
 {
 	LLFastTimer t(FTM_RENDER_SHINY);
-	if (!gPipeline.hasRenderBatches(LLRenderPass::PASS_FULLBRIGHT_SHINY))
+	if (!gPipeline.hasRenderBatches(PASS_FULLBRIGHT_SHINY))
 	{
 		return;
 	}
@@ -546,7 +546,7 @@ void LLDrawPoolBump::endFullbrightShiny()
 	mShiny = FALSE;
 }
 
-void LLDrawPoolBump::renderGroup(LLSpatialGroup* group, U32 type, U32 mask, BOOL texture = TRUE)
+void LLDrawPoolBump::renderGroup(LLSpatialGroup* group, LLRenderType const& type, U32 mask, BOOL texture = TRUE)
 {					
 	LLSpatialGroup::drawmap_elem_t& draw_info = group->mDrawMap[type];	
 	
@@ -621,7 +621,7 @@ BOOL LLDrawPoolBump::bindBumpMap(LLDrawInfo& params, S32 channel)
 //static
 void LLDrawPoolBump::beginBump()
 {	
-	if (!gPipeline.hasRenderBatches(LLRenderPass::PASS_BUMP))
+	if (!gPipeline.hasRenderBatches(PASS_BUMP))
 	{
 		return;
 	}
@@ -666,7 +666,7 @@ void LLDrawPoolBump::beginBump()
 //static
 void LLDrawPoolBump::renderBump()
 {
-	if (!gPipeline.hasRenderBatches(LLRenderPass::PASS_BUMP))
+	if (!gPipeline.hasRenderBatches(PASS_BUMP))
 	{
 		return;
 	}
@@ -679,13 +679,13 @@ void LLDrawPoolBump::renderBump()
 	/// Get rid of z-fighting with non-bump pass.
 	LLGLEnable polyOffset(GL_POLYGON_OFFSET_FILL);
 	glPolygonOffset(-1.0f, -1.0f);
-	renderBump(LLRenderPass::PASS_BUMP, sVertexMask);
+	renderBump(RENDER_TYPE_PASS_BUMP, sVertexMask);
 }
 
 //static
 void LLDrawPoolBump::endBump()
 {
-	if (!gPipeline.hasRenderBatches(LLRenderPass::PASS_BUMP))
+	if (!gPipeline.hasRenderBatches(PASS_BUMP))
 	{
 		return;
 	}
@@ -704,7 +704,7 @@ void LLDrawPoolBump::endBump()
 
 void LLDrawPoolBump::beginDeferredPass(S32 pass)
 {
-	if (!gPipeline.hasRenderBatches(LLRenderPass::PASS_BUMP))
+	if (!gPipeline.hasRenderBatches(PASS_BUMP))
 	{
 		return;
 	}
@@ -719,7 +719,7 @@ void LLDrawPoolBump::beginDeferredPass(S32 pass)
 
 void LLDrawPoolBump::endDeferredPass(S32 pass)
 {
-	if (!gPipeline.hasRenderBatches(LLRenderPass::PASS_BUMP))
+	if (!gPipeline.hasRenderBatches(PASS_BUMP))
 	{
 		return;
 	}
@@ -733,13 +733,13 @@ void LLDrawPoolBump::endDeferredPass(S32 pass)
 
 void LLDrawPoolBump::renderDeferred(S32 pass)
 {
-	if (!gPipeline.hasRenderBatches(LLRenderPass::PASS_BUMP))
+	if (!gPipeline.hasRenderBatches(PASS_BUMP))
 	{
 		return;
 	}
 	LLFastTimer ftm(FTM_RENDER_BUMP);
 
-	U32 type = LLRenderPass::PASS_BUMP;
+	LLRenderType type = RENDER_TYPE_PASS_BUMP;
 	LLCullResult::drawinfo_list_t::iterator begin = gPipeline.beginRenderMap(type);
 	LLCullResult::drawinfo_list_t::iterator end = gPipeline.endRenderMap(type);
 
@@ -1171,7 +1171,7 @@ void LLBumpImageList::onSourceLoaded( BOOL success, LLViewerTexture *src_vi, LLI
 	}
 }
 
-void LLDrawPoolBump::renderBump(U32 type, U32 mask)
+void LLDrawPoolBump::renderBump(LLRenderType const& type, U32 mask)
 {	
 	LLCullResult::drawinfo_list_t::iterator begin = gPipeline.beginRenderMap(type);
 	LLCullResult::drawinfo_list_t::iterator end = gPipeline.endRenderMap(type);
@@ -1255,11 +1255,11 @@ void LLDrawPoolInvisible::render(S32 pass)
 	U32 invisi_mask = LLVertexBuffer::MAP_VERTEX;
 	glStencilMask(0);
 	gGL.setColorMask(false, false);
-	pushBatches(LLRenderPass::PASS_INVISIBLE, invisi_mask, FALSE);
+	pushBatches(RENDER_TYPE_PASS_INVISIBLE, invisi_mask, FALSE);
 	gGL.setColorMask(true, false);
 	glStencilMask(0xFFFFFFFF);
 
-	if (gPipeline.hasRenderBatches(LLRenderPass::PASS_INVISI_SHINY))
+	if (gPipeline.hasRenderBatches(PASS_INVISI_SHINY))
 	{
 		beginShiny(true);
 		renderShiny(true);
@@ -1285,12 +1285,12 @@ void LLDrawPoolInvisible::renderDeferred( S32 pass )
 	glStencilMask(0);
 	glStencilOp(GL_ZERO, GL_KEEP, GL_REPLACE);
 	gGL.setColorMask(false, false);
-	pushBatches(LLRenderPass::PASS_INVISIBLE, invisi_mask, FALSE);
+	pushBatches(RENDER_TYPE_PASS_INVISIBLE, invisi_mask, FALSE);
 	gGL.setColorMask(true, true);
 	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 	glStencilMask(0xFFFFFFFF);
 	
-	if (gPipeline.hasRenderBatches(LLRenderPass::PASS_INVISI_SHINY))
+	if (gPipeline.hasRenderBatches(PASS_INVISI_SHINY))
 	{
 		beginShiny(true);
 		renderShiny(true);

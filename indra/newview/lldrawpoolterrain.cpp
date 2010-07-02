@@ -66,7 +66,7 @@ static LLFastTimer::DeclareTimer FTM_SHADOW_TERRAIN("Terrain Shadow");
 
 
 LLDrawPoolTerrain::LLDrawPoolTerrain(LLViewerTexture *texturep) :
-	LLFacePool(POOL_TERRAIN),
+	LLFacePool(RENDER_TYPE_POOL_TERRAIN),
 	mTexturep(texturep)
 {
 	// Hack!

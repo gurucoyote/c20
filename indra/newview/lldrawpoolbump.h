@@ -47,7 +47,7 @@ class LLViewerFetchedTexture;
 class LLDrawPoolBump : public LLRenderPass
 {
 protected :
-	LLDrawPoolBump(const U32 type):LLRenderPass(type) { mShiny = FALSE; }
+	LLDrawPoolBump(LLRenderType const& type) : LLRenderPass(type) { mShiny = FALSE; }
 public:
 	static U32 sVertexMask;
 	BOOL mShiny;
@@ -63,8 +63,8 @@ public:
 	/*virtual*/ void prerender();
 	/*virtual*/ void pushBatch(LLDrawInfo& params, U32 mask, BOOL texture);
 
-	void renderBump(U32 type, U32 mask);
-	void renderGroup(LLSpatialGroup* group, U32 type, U32 mask, BOOL texture);
+	void renderBump(LLRenderType const& type, U32 mask);
+	void renderGroup(LLSpatialGroup* group, LLRenderType const& type, U32 mask, BOOL texture);
 		
 	S32 numBumpPasses();
 	
@@ -165,7 +165,7 @@ extern LLBumpImageList gBumpImageList;
 class LLDrawPoolInvisible : public LLDrawPoolBump
 {
 public:
-	LLDrawPoolInvisible() : LLDrawPoolBump(LLDrawPool::POOL_INVISIBLE) { }
+	LLDrawPoolInvisible() : LLDrawPoolBump(RENDER_TYPE_POOL_INVISIBLE) { }
 
 	enum
 	{

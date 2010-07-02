@@ -50,7 +50,7 @@ static LLGLSLShader* shader = NULL;
 static LLFastTimer::DeclareTimer FTM_SHADOW_TREE("Tree Shadow");
 
 LLDrawPoolTree::LLDrawPoolTree(LLViewerTexture *texturep) :
-	LLFacePool(POOL_TREE),
+	LLFacePool(RENDER_TYPE_POOL_TREE),
 	mTexturep(texturep)
 {
 	mTexturep->setAddressMode(LLTexUnit::TAM_WRAP);

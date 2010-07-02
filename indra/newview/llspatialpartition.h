@@ -169,7 +169,7 @@ public:
 	typedef std::list<LLPointer<LLSpatialGroup> > sg_list_t;
 	typedef std::vector<LLPointer<LLSpatialBridge> > bridge_list_t;
 	typedef std::vector<LLPointer<LLDrawInfo> > drawmap_elem_t; 
-	typedef std::map<U32, drawmap_elem_t > draw_map_t;	
+	typedef std::map<LLRenderType, drawmap_elem_t > draw_map_t;
 	typedef std::vector<LLPointer<LLVertexBuffer> > buffer_list_t;
 	typedef std::map<LLPointer<LLViewerTexture>, buffer_list_t> buffer_texture_map_t;
 	typedef std::map<U32, buffer_texture_map_t> buffer_map_t;
@@ -441,7 +441,7 @@ public:
 	U32 mVertexDataMask;
 	F32 mSlopRatio; //percentage distance must change before drawables receive LOD update (default is 0.25);
 	BOOL mDepthMask; //if TRUE, objects in this partition will be written to depth during alpha rendering
-	U32 mDrawableType;
+	LLRenderType mDrawableType;
 	U32 mPartitionType;
 };
 
@@ -505,8 +505,8 @@ public:
 	bridge_list_t::iterator beginVisibleBridge();
 	bridge_list_t::iterator endVisibleBridge();
 
-	drawinfo_list_t::iterator beginRenderMap(U32 type);
-	drawinfo_list_t::iterator endRenderMap(U32 type);
+	drawinfo_list_t::iterator beginRenderMap(LLRenderType const& type);
+	drawinfo_list_t::iterator endRenderMap(LLRenderType const& type);
 
 	void pushVisibleGroup(LLSpatialGroup* group);
 	void pushAlphaGroup(LLSpatialGroup* group);
@@ -514,7 +514,7 @@ public:
 	void pushDrawableGroup(LLSpatialGroup* group);
 	void pushDrawable(LLDrawable* drawable);
 	void pushBridge(LLSpatialBridge* bridge);
-	void pushDrawInfo(U32 type, LLDrawInfo* draw_info);
+	void pushDrawInfo(LLRenderType const& type, LLDrawInfo* draw_info);
 	
 	U32 getVisibleGroupsSize()		{ return mVisibleGroupsSize; }
 	U32	getAlphaGroupsSize()		{ return mAlphaGroupsSize; }
@@ -532,7 +532,7 @@ private:
 	U32					mDrawableGroupsSize;
 	U32					mVisibleListSize;
 	U32					mVisibleBridgeSize;
-	U32					mRenderMapSize[LLRenderPass::NUM_RENDER_TYPES];
+	U32					mRenderMapSize[NUM_RENDER_TYPES];
 
 	sg_list_t			mVisibleGroups;
 	sg_list_t			mAlphaGroups;
@@ -540,9 +540,8 @@ private:
 	sg_list_t			mDrawableGroups;
 	drawable_list_t		mVisibleList;
 	bridge_list_t		mVisibleBridge;
-	drawinfo_list_t		mRenderMap[LLRenderPass::NUM_RENDER_TYPES];
+	drawinfo_list_t		mRenderMap[NUM_RENDER_TYPES];
 };
-
 
 //spatial partition for water (implemented in LLVOWater.cpp)
 class LLWaterPartition : public LLSpatialPartition
@@ -551,6 +550,13 @@ public:
 	LLWaterPartition();
 	virtual void getGeometry(LLSpatialGroup* group) {  }
 	virtual void addGeometryCount(LLSpatialGroup* group, U32 &vertex_count, U32& index_count) { }
+};
+
+//spatial partition for hole and edge water (implemented in LLVOWater.cpp)
+class LLVoidWaterPartition : public LLWaterPartition
+{
+public:
+	LLVoidWaterPartition();
 };
 
 //spatial partition for terrain (impelmented in LLVOSurfacePatch.cpp)
@@ -581,7 +587,7 @@ public:
 	virtual void addGeometryCount(LLSpatialGroup* group, U32 &vertex_count, U32& index_count);
 	virtual F32 calcPixelArea(LLSpatialGroup* group, LLCamera& camera);
 protected:
-	U32 mRenderPass;
+	LLRenderType mRenderPass;
 };
 
 class LLHUDParticlePartition : public LLParticlePartition
@@ -613,7 +619,7 @@ public:
 	virtual void rebuildMesh(LLSpatialGroup* group);
 	virtual void getGeometry(LLSpatialGroup* group);
 	void genDrawInfo(LLSpatialGroup* group, U32 mask, std::vector<LLFace*>& faces, BOOL distance_sort = FALSE);
-	void registerFace(LLSpatialGroup* group, LLFace* facep, U32 type);
+	void registerFace(LLSpatialGroup* group, LLFace* facep, LLRenderType const& type);
 
 };
 

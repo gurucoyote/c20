@@ -326,11 +326,11 @@ void LLViewerJointAttachment::setAttachmentVisibility(BOOL visible)
 			// Hack to make attachments not visible by disabling their type mask!
 			// This will break if you can ever attach non-volumes! - djs 02/14/03
 			attached_obj->mDrawable->getSpatialBridge()->mDrawableType = 
-				attached_obj->isHUDAttachment() ? LLPipeline::RENDER_TYPE_HUD : LLPipeline::RENDER_TYPE_VOLUME;
+				attached_obj->isHUDAttachment() ? RENDER_TYPE_HUD : RENDER_TYPE_VOLUME;
 		}
 		else
 		{
-			attached_obj->mDrawable->getSpatialBridge()->mDrawableType = 0;
+			attached_obj->mDrawable->getSpatialBridge()->mDrawableType = RENDER_TYPE_NONE;
 		}
 	}
 }

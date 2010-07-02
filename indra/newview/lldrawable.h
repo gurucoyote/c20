@@ -69,7 +69,7 @@ class LLDrawable : public LLRefCount
 public:
 	static void initClass();
 
-	LLDrawable()				{ init(); }
+	LLDrawable() : mRenderType(RENDER_TYPE_NONE) { init(); }
 	MEM_TYPE_NEW(LLMemType::MTYPE_DRAWABLE);
 	
 	void markDead();			// Mark this drawable as dead
@@ -179,9 +179,9 @@ public:
 	void setPositionGroup(const LLVector3d& pos);
 	void setPositionGroup(const LLVector3& pos) { setPositionGroup(LLVector3d(pos)); }
 
-	void setRenderType(S32 type) 				{ mRenderType = type; }
-	BOOL isRenderType(S32 type) 				{ return mRenderType == type; }
-	S32  getRenderType()						{ return mRenderType; }
+	void setRenderType(LLRenderType const& type) 		{ mRenderType = type; }
+	BOOL isRenderType(LLRenderType const& type) 		{ return mRenderType == type; }
+	LLRenderType getRenderType()						{ return mRenderType; }
 	
 	// Debugging methods
 	S32 findReferences(LLDrawable *drawablep); // Not const because of @#$! iterators...
@@ -290,7 +290,7 @@ private:
 	typedef std::vector<LLFace*> face_list_t;
 	
 	U32				mState;
-	S32				mRenderType;
+	LLRenderType	mRenderType;
 	LLPointer<LLViewerObject> mVObjp;
 	face_list_t     mFaces;
 	LLSpatialGroup* mSpatialGroupp;

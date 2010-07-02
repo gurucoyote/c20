@@ -61,10 +61,10 @@ S32 LLDrawPool::sNumDrawPools = 0;
 //=============================
 // Draw Pool Implementation
 //=============================
-LLDrawPool *LLDrawPool::createPool(const U32 type, LLViewerTexture *tex0)
+LLDrawPool *LLDrawPool::createPool(LLRenderType const& type, LLViewerTexture *tex0)
 {
 	LLDrawPool *poolp = NULL;
-	switch (type)
+	switch (type.index())
 	{
 	case POOL_SIMPLE:
 		poolp = new LLDrawPoolSimple();
@@ -96,6 +96,7 @@ LLDrawPool *LLDrawPool::createPool(const U32 type, LLViewerTexture *tex0)
 	case POOL_SKY:
 		poolp = new LLDrawPoolSky();
 		break;
+	case POOL_VOIDWATER:
 	case POOL_WATER:
 		poolp = new LLDrawPoolWater();
 		break;
@@ -117,9 +118,8 @@ LLDrawPool *LLDrawPool::createPool(const U32 type, LLViewerTexture *tex0)
 	return poolp;
 }
 
-LLDrawPool::LLDrawPool(const U32 type)
+LLDrawPool::LLDrawPool(LLRenderType const& type) : mType(type)
 {
-	mType = type;
 	sNumDrawPools++;
 	mId = sNumDrawPools;
 	mVertexShaderLevel = 0;
@@ -226,7 +226,7 @@ void LLDrawPool::renderShadow(S32 pass)
 //=============================
 // Face Pool Implementation
 //=============================
-LLFacePool::LLFacePool(const U32 type)
+LLFacePool::LLFacePool(LLRenderType const& type)
 : LLDrawPool(type)
 {
 	resetDrawOrders();
@@ -402,7 +402,7 @@ void LLFacePool::LLOverrideFaceColor::setColor(F32 r, F32 g, F32 b, F32 a)
 //=============================
 // Render Pass Implementation
 //=============================
-LLRenderPass::LLRenderPass(const U32 type)
+LLRenderPass::LLRenderPass(LLRenderType const& type)
 : LLDrawPool(type)
 {
 
@@ -423,7 +423,7 @@ LLDrawPool* LLRenderPass::instancePool()
 	return NULL;
 }
 
-void LLRenderPass::renderGroup(LLSpatialGroup* group, U32 type, U32 mask, BOOL texture)
+void LLRenderPass::renderGroup(LLSpatialGroup* group, LLRenderType const& type, U32 mask, BOOL texture)
 {					
 	LLSpatialGroup::drawmap_elem_t& draw_info = group->mDrawMap[type];
 	
@@ -436,12 +436,12 @@ void LLRenderPass::renderGroup(LLSpatialGroup* group, U32 type, U32 mask, BOOL t
 	}
 }
 
-void LLRenderPass::renderTexture(U32 type, U32 mask)
+void LLRenderPass::renderTexture(LLRenderType const& type, U32 mask)
 {
 	pushBatches(type, mask, TRUE);
 }
 
-void LLRenderPass::pushBatches(U32 type, U32 mask, BOOL texture)
+void LLRenderPass::pushBatches(LLRenderType const& type, U32 mask, BOOL texture)
 {
 	for (LLCullResult::drawinfo_list_t::iterator i = gPipeline.beginRenderMap(type); i != gPipeline.endRenderMap(type); ++i)	
 	{
@@ -507,7 +507,7 @@ void LLRenderPass::pushBatch(LLDrawInfo& params, U32 mask, BOOL texture)
 	}
 }
 
-void LLRenderPass::renderGroups(U32 type, U32 mask, BOOL texture)
+void LLRenderPass::renderGroups(LLRenderType const& type, U32 mask, BOOL texture)
 {
 	gPipeline.renderGroups(this, type, mask, texture);
 }

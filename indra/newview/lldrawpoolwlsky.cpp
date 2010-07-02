@@ -54,7 +54,7 @@ LLPointer<LLImageRaw> LLDrawPoolWLSky::sCloudNoiseRawImage = NULL;
 
 
 LLDrawPoolWLSky::LLDrawPoolWLSky(void) :
-	LLDrawPool(POOL_WL_SKY)
+	LLDrawPool(RENDER_TYPE_POOL_WL_SKY)
 {
 	const std::string cloudNoiseFilename(gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS, "windlight", "clouds2.tga"));
 	llinfos << "loading WindLight cloud noise from " << cloudNoiseFilename << llendl;
@@ -133,7 +133,7 @@ void LLDrawPoolWLSky::renderDome(F32 camHeightLocal, LLGLSLShader * shader) cons
 
 void LLDrawPoolWLSky::renderSkyHaze(F32 camHeightLocal) const
 {
-	if (gPipeline.canUseWindLightShaders() && gPipeline.hasRenderType(LLPipeline::RENDER_TYPE_SKY))
+	if (gPipeline.canUseWindLightShaders() && gPipeline.hasRenderType(RENDER_TYPE_POOL_SKY))
 	{
 		LLGLSLShader* shader =
 			LLPipeline::sUnderWaterRender ?
@@ -191,7 +191,7 @@ void LLDrawPoolWLSky::renderStars(void) const
 
 void LLDrawPoolWLSky::renderSkyClouds(F32 camHeightLocal) const
 {
-	if (gPipeline.canUseWindLightShaders() && gPipeline.hasRenderType(LLPipeline::RENDER_TYPE_CLOUDS))
+	if (gPipeline.canUseWindLightShaders() && gPipeline.hasRenderType(RENDER_TYPE_CLOUDS))
 	{
 		LLGLSLShader* shader =
 			LLPipeline::sUnderWaterRender ?
@@ -255,7 +255,7 @@ void LLDrawPoolWLSky::renderHeavenlyBodies()
 
 void LLDrawPoolWLSky::render(S32 pass)
 {
-	if (!gPipeline.hasRenderType(LLPipeline::RENDER_TYPE_SKY))
+	if (!gPipeline.hasRenderType(RENDER_TYPE_POOL_SKY))
 	{
 		return;
 	}
@@ -267,7 +267,7 @@ void LLDrawPoolWLSky::render(S32 pass)
 	LLGLDepthTest depth(GL_TRUE, GL_FALSE);
 	LLGLDisable clip(GL_CLIP_PLANE0);
 
-	LLGLClampToFarClip far_clip(glh_get_current_projection());
+	LLGLSquashToFarClip far_clip(glh_get_current_projection());
 
 	renderSkyHaze(camHeightLocal);
 

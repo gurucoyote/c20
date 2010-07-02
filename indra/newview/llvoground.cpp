@@ -58,7 +58,7 @@ LLVOGround::~LLVOGround()
 
 BOOL LLVOGround::idleUpdate(LLAgent &agent, LLWorld &world, const F64 &time)
 {
- 	if (mDead || !(gPipeline.hasRenderType(LLPipeline::RENDER_TYPE_GROUND)))
+ 	if (mDead || !(gPipeline.hasRenderType(RENDER_TYPE_POOL_GROUND)))
 	{
 		return TRUE;
 	}
@@ -81,8 +81,8 @@ LLDrawable *LLVOGround::createDrawable(LLPipeline *pipeline)
 	pipeline->allocDrawable(this);
 	mDrawable->setLit(FALSE);
 
-	mDrawable->setRenderType(LLPipeline::RENDER_TYPE_GROUND);
-	LLDrawPoolGround *poolp = (LLDrawPoolGround*) gPipeline.getPool(LLDrawPool::POOL_GROUND);
+	mDrawable->setRenderType(RENDER_TYPE_POOL_GROUND);
+	LLDrawPoolGround *poolp = (LLDrawPoolGround*) gPipeline.getPool(RENDER_TYPE_POOL_GROUND);
 
 	mDrawable->addFace(poolp, NULL);
 
@@ -98,7 +98,7 @@ BOOL LLVOGround::updateGeometry(LLDrawable *drawable)
 	S32 index_offset;
 	LLFace *face;	
 
-	LLDrawPoolGround *poolp = (LLDrawPoolGround*) gPipeline.getPool(LLDrawPool::POOL_GROUND);
+	LLDrawPoolGround *poolp = (LLDrawPoolGround*) gPipeline.getPool(RENDER_TYPE_POOL_GROUND);
 
 	if (drawable->getNumFaces() < 1)
 		drawable->addFace(poolp, NULL);

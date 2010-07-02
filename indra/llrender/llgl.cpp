@@ -599,41 +599,46 @@ void LLGLManager::shutdownGL()
 void LLGLManager::initExtensions()
 {
 #if LL_MESA_HEADLESS
-# if GL_ARB_multitexture
+# ifdef GL_ARB_multitexture
 	mHasMultitexture = TRUE;
 # else
 	mHasMultitexture = FALSE;
 # endif
-# if GL_ARB_texture_env_combine
+# ifdef GL_ARB_texture_env_combine
 	mHasARBEnvCombine = TRUE;	
 # else
 	mHasARBEnvCombine = FALSE;
 # endif
-# if GL_ARB_texture_compression
+# ifdef GL_ARB_texture_compression
 	mHasCompressedTextures = TRUE;
 # else
 	mHasCompressedTextures = FALSE;
 # endif
-# if GL_ARB_vertex_buffer_object
+# ifdef GL_ARB_vertex_buffer_object
 	mHasVertexBufferObject = TRUE;
 # else
 	mHasVertexBufferObject = FALSE;
 # endif
-# if GL_EXT_framebuffer_object
+# ifdef GL_EXT_framebuffer_object
 	mHasFramebufferObject = TRUE;
 # else
 	mHasFramebufferObject = FALSE;
 # endif
-# if GL_EXT_framebuffer_multisample
+# ifdef GL_EXT_framebuffer_multisample
 	mHasFramebufferMultisample = TRUE;
 # else
 	mHasFramebufferMultisample = FALSE;
 # endif
-# if GL_ARB_draw_buffers
+# ifdef GL_ARB_draw_buffers
 	mHasDrawBuffers = TRUE;
 #else
 	mHasDrawBuffers = FALSE;
 # endif
+# if defined(GL_NV_depth_clamp) || defined(GL_ARB_depth_clamp)
+	mHasDepthClamp = TRUE;
+#else
+	mHasDepthClamp = FALSE;
+#endif
 	mHasMipMapGeneration = FALSE;
 	mHasSeparateSpecularColor = FALSE;
 	mHasAnisotropic = FALSE;
@@ -660,6 +665,7 @@ void LLGLManager::initExtensions()
 		&& ExtensionExists("GL_EXT_packed_depth_stencil", gGLHExts.mSysExts);
 	mHasFramebufferMultisample = mHasFramebufferObject && ExtensionExists("GL_EXT_framebuffer_multisample", gGLHExts.mSysExts);
 	mHasDrawBuffers = ExtensionExists("GL_ARB_draw_buffers", gGLHExts.mSysExts);
+	mHasDepthClamp = ExtensionExists("GL_ARB_depth_clamp", gGLHExts.mSysExts) || ExtensionExists("GL_NV_depth_clamp", gGLHExts.mSysExts);
 	mHasTextureRectangle = ExtensionExists("GL_ARB_texture_rectangle", gGLHExts.mSysExts);
 #if !LL_DARWIN
 	mHasPointParameters = !mIsATI && ExtensionExists("GL_ARB_point_parameters", gGLHExts.mSysExts);
@@ -683,6 +689,7 @@ void LLGLManager::initExtensions()
 		mHasFramebufferObject = FALSE;
 		mHasFramebufferMultisample = FALSE;
 		mHasDrawBuffers = FALSE;
+		mHasDepthClamp = FALSE;
 		mHasMipMapGeneration = FALSE;
 		mHasSeparateSpecularColor = FALSE;
 		mHasAnisotropic = FALSE;
@@ -735,10 +742,11 @@ void LLGLManager::initExtensions()
 		if (strchr(blacklist,'r')) mHasDrawBuffers = FALSE;//S
 		if (strchr(blacklist,'s')) mHasFramebufferMultisample = FALSE;
 		if (strchr(blacklist,'t')) mHasTextureRectangle = FALSE;
+		if (strchr(blacklist,'u')) mHasDepthClamp = FALSE;
 
 	}
 #endif // LL_LINUX || LL_SOLARIS
-	
+
 	if (!mHasMultitexture)
 	{
 		LL_INFOS("RenderInit") << "Couldn't initialize multitexturing" << LL_ENDL;
@@ -2003,7 +2011,7 @@ void LLGLDepthTest::checkState()
 	}
 }
 
-LLGLClampToFarClip::LLGLClampToFarClip(glh::matrix4f P)
+LLGLSquashToFarClip::LLGLSquashToFarClip(glh::matrix4f P)
 {
 	for (U32 i = 0; i < 4; i++)
 	{
@@ -2016,7 +2024,7 @@ LLGLClampToFarClip::LLGLClampToFarClip(glh::matrix4f P)
 	glMatrixMode(GL_MODELVIEW);
 }
 
-LLGLClampToFarClip::~LLGLClampToFarClip()
+LLGLSquashToFarClip::~LLGLSquashToFarClip()
 {
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
