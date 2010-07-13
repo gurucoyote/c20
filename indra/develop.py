@@ -843,6 +843,7 @@ For example: develop.py configure -DSERVER:BOOL=OFF"""
         elif cmd == 'build':
             for d in setup.build_dirs():
                 if not os.path.exists(d):
+                    print >> sys.stderr, 'Error: Path does not exist: ./%s' % (d)
                     raise CommandError('run "develop.py cmake" first')
             setup.run_cmake()
             opts, targets = setup.parse_build_opts(args)
