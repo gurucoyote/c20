@@ -24,29 +24,24 @@ top=`cd "$here/../../.." && pwd`
 # Make sure command worked and bail out if not, reporting failure to parabuild
 fail()
 {
-  release_lock
   echo "BUILD FAILED" $@
   exit 1
 }
   
 pass() 
 { 
-  release_lock
   echo "BUILD SUCCESSFUL"
   exit 0
 }
 
 # Locking to avoid contention with u-s-c
-LOCK_CREATE=/usr/bin/lockfile-create
-LOCK_TOUCH=/usr/bin/lockfile-touch
-LOCK_REMOVE=/usr/bin/lockfile-remove
 LOCK_PROCESS=
 
 locking_available()
 {
-  test -x "$LOCK_CREATE"\
-    -a -x "$LOCK_TOUCH"\
-    -a -x "$LOCK_REMOVE"
+  test -n "$LOCK_CREATE" -a -x "$LOCK_CREATE"\
+    -a -n "$LOCK_TOUCH"  -a -x "$LOCK_TOUCH"\
+    -a -n "$LOCK_REMOVE" -a -x "$LOCK_REMOVE"
 }
 
 acquire_lock()
@@ -217,7 +212,6 @@ Linux)
 	  fi
 	fi
   fi
-  acquire_lock
   variants="Debug RelWithDebInfo Release"
   #variants="Release"
   cmake_generator="Unix Makefiles"
@@ -267,6 +261,9 @@ Linux)
 
 *) fail undefined $arch ;;
 esac
+
+acquire_lock
+trap release_lock EXIT
 
 get_asset "http://www.fmod.org/files/fmod3/$fmod_tar"
 
