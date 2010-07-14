@@ -888,7 +888,8 @@ BOOL LLImageRaw::scaleDownWithoutBlending( S32 new_width, S32 new_height)
 BOOL LLImageRaw::scale( S32 new_width, S32 new_height, BOOL scale_image_data )
 {
 	LLMemType mt1(mMemType);
-	llassert((1 == getComponents()) || (3 == getComponents()) || (4 == getComponents()) );
+	// llassert((1 == getComponents()) || (3 == getComponents()) || (4 == getComponents()) );
+	if (! ((1 == getComponents()) || (3 == getComponents()) || (4 == getComponents()) ) ) return FALSE;
 
 	S32 old_width = getWidth();
 	S32 old_height = getHeight();
