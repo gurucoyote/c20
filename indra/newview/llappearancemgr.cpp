@@ -2540,8 +2540,8 @@ bool LLAppearanceMgr::moveWearable(LLViewerInventoryItem* item, bool closer_to_b
 	gInventory.updateItem(swap_item);
 
 	//to cause appearance of the agent to be updated
-	bool result = false;
-	if (result = gAgentWearables.moveWearable(item, closer_to_body))
+	bool result = gAgentWearables.moveWearable(item, closer_to_body);
+	if (result)
 	{
 		gAgentAvatarp->wearableUpdated(item->getWearableType(), FALSE);
 	}
