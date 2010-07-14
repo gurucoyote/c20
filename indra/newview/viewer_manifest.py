@@ -871,7 +871,7 @@ class LinuxManifest(ViewerManifest):
         super(LinuxManifest, self).construct()
         self.path("licenses-linux.txt","licenses.txt")
         
-        self.path("res/"+self.icon_name(),self.icon_name())
+        self.path(self.icon_name(),self.icon_name())
         if self.prefix("linux_tools", dst=""):
             self.path("client-readme.txt","README-linux.txt")
             self.path("client-readme-voice.txt","README-linux-voice.txt")
