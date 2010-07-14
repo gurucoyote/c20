@@ -9048,7 +9048,7 @@ void LLPipeline::setRenderTypeMask(LLRenderType type, ...)
 	while (type < RENDER_TYPE_END_RENDER_TYPES)
 	{
 		mRenderTypeEnabled[type.index()] = TRUE;
-		type = LLRenderType(va_arg(args, LLRenderType));
+		type = LLRenderType(va_arg(args, LLRenderTypePOD));
 	}
 	va_end(args);
 
@@ -9069,7 +9069,7 @@ BOOL LLPipeline::hasAnyRenderType(LLRenderType type, ...) const
 		{
 			return TRUE;
 		}
-		type = LLRenderType(va_arg(args, LLRenderType));
+		type = LLRenderType(va_arg(args, LLRenderTypePOD));
 	}
 	va_end(args);
 
@@ -9117,7 +9117,7 @@ void LLPipeline::andRenderTypeMask(LLRenderType type, ...)
 			tmp[type.index()] = TRUE;
 		}
 
-		type = LLRenderType(va_arg(args, LLRenderType));
+		type = LLRenderType(va_arg(args, LLRenderTypePOD));
 	}
 	va_end(args);
 
@@ -9142,7 +9142,7 @@ void LLPipeline::clearRenderTypeMask(LLRenderType type, ...)
 	{
 		mRenderTypeEnabled[type.index()] = FALSE;
 		
-		type = LLRenderType(va_arg(args, LLRenderType));
+		type = LLRenderType(va_arg(args, LLRenderTypePOD));
 	}
 	va_end(args);
 
