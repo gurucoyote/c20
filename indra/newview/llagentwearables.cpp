@@ -968,7 +968,7 @@ void LLAgentWearables::processAgentInitialWearablesUpdate(LLMessageSystem* mesgs
 		const LLUUID current_outfit_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_CURRENT_OUTFIT);
 		LLInitialWearablesFetch* outfit = new LLInitialWearablesFetch(current_outfit_id);
 		
-		//lldebugs << "processAgentInitialWearablesUpdate()" << llendl;
+		llinfos << "processAgentInitialWearablesUpdate()" << llendl;
 		// Add wearables
 		// MULTI-WEARABLE: DEPRECATED: Message only supports one wearable per type, will be ignored in future.
 		gAgentWearables.mItemsAwaitingWearableUpdate.clear();
@@ -1007,7 +1007,7 @@ void LLAgentWearables::processAgentInitialWearablesUpdate(LLMessageSystem* mesgs
 				outfit->add(wearable_data);
 			}
 			
-			lldebugs << "       " << LLWearableType::getTypeLabel(type) << llendl;
+			llinfos << "       " << LLWearableDictionary::getTypeLabel(type) << llendl;
 		}
 		
 		// Get the complete information on the items in the inventory and set up an observer
@@ -1016,12 +1016,14 @@ void LLAgentWearables::processAgentInitialWearablesUpdate(LLMessageSystem* mesgs
 		if(outfit->isFinished())
 		{
 			// everything is already here - call done.
+			llwarns << " : all done" << llendl;
 			outfit->done();
 		}
 		else
 		{
 			// it's all on it's way - add an observer, and the inventory
 			// will call done for us when everything is here.
+			llwarns << " : adding gInventory.addObserver" << llendl;
 			gInventory.addObserver(outfit);
 		}
 		
