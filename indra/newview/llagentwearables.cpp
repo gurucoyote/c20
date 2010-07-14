@@ -1007,7 +1007,7 @@ void LLAgentWearables::processAgentInitialWearablesUpdate(LLMessageSystem* mesgs
 				outfit->add(wearable_data);
 			}
 			
-			llinfos << "       " << LLWearableDictionary::getTypeLabel(type) << llendl;
+			// llinfos << "       " << LLWearableDictionary::getTypeLabel(type) << llendl;
 		}
 		
 		// Get the complete information on the items in the inventory and set up an observer

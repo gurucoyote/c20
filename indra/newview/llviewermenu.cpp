@@ -5303,7 +5303,7 @@ class LLWorldSitOnGround : public view_listener_t
 {
 	bool handleEvent(const LLSD& userdata)
 	{
-		if (gAgent.getAvatarObject() && !gAgent.getAvatarObject()->isSitting())
+		if (isAgentAvatarValid() && !gAgentAvatarp->isSitting() && !gAgent.getFlying())
 		{
 			gAgent.setControlFlags(AGENT_CONTROL_SIT_ON_GROUND);
 		} else
@@ -5320,9 +5320,9 @@ class LLWorldCheckSitOnGround : public view_listener_t
 	bool handleEvent(const LLSD& userdata)
 	{
 		bool sitting = FALSE;
-		if (gAgent.getAvatarObject())
+		if (isAgentAvatarValid())
 		{
-			sitting = gAgent.getAvatarObject()->isSitting();
+			sitting = gAgentAvatarp->isSitting();
 		}
 		return sitting;
 	}
