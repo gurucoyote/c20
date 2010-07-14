@@ -88,6 +88,7 @@ public:
 	BOOL mHasCompressedTextures;
 	BOOL mHasFramebufferObject;
 	BOOL mHasFramebufferMultisample;
+	BOOL mHasBlendFuncSeparate;
 	
 	// ARB Extensions
 	BOOL mHasVertexBufferObject;

@@ -347,11 +347,11 @@ public:
 	F32 mBuilt;
 	OctreeNode* mOctreeNode;
 	LLSpatialPartition* mSpatialPartition;
-	LLVector3 mBounds[2];
-	LLVector3 mExtents[2];
+	LLVector3 mBounds[2]; // bounding box (center, size) of this node and all its children (tight fit to objects)
+	LLVector3 mExtents[2]; // extents (min, max) of this node and all its children
 	
-	LLVector3 mObjectExtents[2];
-	LLVector3 mObjectBounds[2];
+	LLVector3 mObjectExtents[2]; // extents (min, max) of objects in this node
+	LLVector3 mObjectBounds[2]; // bounding box (center, size) of objects in this node
 
 	LLPointer<LLVertexBuffer> mVertexBuffer;
 	F32*					mOcclusionVerts;
@@ -532,15 +532,22 @@ private:
 	U32					mDrawableGroupsSize;
 	U32					mVisibleListSize;
 	U32					mVisibleBridgeSize;
-	U32					mRenderMapSize[NUM_RENDER_TYPES];
+	U32					mRenderMapSize[END_RENDER_TYPES];
 
 	sg_list_t			mVisibleGroups;
+	sg_list_t::iterator mVisibleGroupsEnd;
 	sg_list_t			mAlphaGroups;
+	sg_list_t::iterator mAlphaGroupsEnd;
 	sg_list_t			mOcclusionGroups;
+	sg_list_t::iterator	mOcclusionGroupsEnd;
 	sg_list_t			mDrawableGroups;
+	sg_list_t::iterator mDrawableGroupsEnd;
 	drawable_list_t		mVisibleList;
+	drawable_list_t::iterator mVisibleListEnd;
 	bridge_list_t		mVisibleBridge;
-	drawinfo_list_t		mRenderMap[NUM_RENDER_TYPES];
+	bridge_list_t::iterator mVisibleBridgeEnd;
+	drawinfo_list_t		mRenderMap[END_RENDER_TYPES];
+	drawinfo_list_t::iterator mRenderMapEnd[END_RENDER_TYPES];
 };
 
 //spatial partition for water (implemented in LLVOWater.cpp)
@@ -613,14 +620,13 @@ public:
 //class for wrangling geometry out of volumes (implemented in LLVOVolume.cpp)
 class LLVolumeGeometryManager: public LLGeometryManager
 {
-public:
+ public:
 	virtual ~LLVolumeGeometryManager() { }
 	virtual void rebuildGeom(LLSpatialGroup* group);
 	virtual void rebuildMesh(LLSpatialGroup* group);
 	virtual void getGeometry(LLSpatialGroup* group);
 	void genDrawInfo(LLSpatialGroup* group, U32 mask, std::vector<LLFace*>& faces, BOOL distance_sort = FALSE);
 	void registerFace(LLSpatialGroup* group, LLFace* facep, LLRenderType const& type);
-
 };
 
 //spatial partition that uses volume geometry manager (implemented in LLVOVolume.cpp)

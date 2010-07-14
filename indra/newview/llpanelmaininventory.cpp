@@ -35,12 +35,14 @@
 #include "llpanelmaininventory.h"
 
 #include "llagent.h"
+#include "llavataractions.h"
 #include "lldndbutton.h"
 #include "lleconomy.h"
 #include "llfilepicker.h"
 #include "llfloaterinventory.h"
 #include "llinventorybridge.h"
 #include "llinventoryfunctions.h"
+#include "llinventorymodelbackgroundfetch.h"
 #include "llinventorypanel.h"
 #include "llfiltereditor.h"
 #include "llfloaterreg.h"
@@ -116,6 +118,7 @@ LLPanelMainInventory::LLPanelMainInventory()
 	mCommitCallbackRegistrar.add("Inventory.ShowFilters", boost::bind(&LLPanelMainInventory::toggleFindOptions, this));
 	mCommitCallbackRegistrar.add("Inventory.ResetFilters", boost::bind(&LLPanelMainInventory::resetFilters, this));
 	mCommitCallbackRegistrar.add("Inventory.SetSortBy", boost::bind(&LLPanelMainInventory::setSortBy, this, _2));
+	mCommitCallbackRegistrar.add("Inventory.Share",  boost::bind(&LLAvatarActions::shareWithAvatars));
 
 	// Controls
 	// *TODO: Just use persistant settings for each of these
@@ -165,7 +168,7 @@ BOOL LLPanelMainInventory::postBuild()
 	// Now load the stored settings from disk, if available.
 	std::ostringstream filterSaveName;
 	filterSaveName << gDirUtilp->getExpandedFilename(LL_PATH_PER_SL_ACCOUNT, FILTERS_FILENAME);
-	llinfos << "LLPanelMainInventory::init: reading from " << filterSaveName << llendl;
+	llinfos << "LLPanelMainInventory::init: reading from " << filterSaveName.str() << llendl;
 	llifstream file(filterSaveName.str());
 	LLSD savedFilterState;
 	if (file.is_open())
@@ -390,6 +393,7 @@ void LLPanelMainInventory::onClearSearch()
 	{
 		mActivePanel->setFilterSubString(LLStringUtil::null);
 		mActivePanel->setFilterTypes(0xffffffff);
+		mActivePanel->setFilterLinks(LLInventoryFilter::FILTERLINK_INCLUDE_LINKS);
 	}
 
 	if (finder)
@@ -420,7 +424,7 @@ void LLPanelMainInventory::onFilterEdit(const std::string& search_string )
 		return;
 	}
 
-	gInventory.startBackgroundFetch();
+	LLInventoryModelBackgroundFetch::instance().start();
 
 	mFilterSubString = search_string;
 	if (mActivePanel->getFilterSubString().empty() && mFilterSubString.empty())
@@ -490,6 +494,10 @@ void LLPanelMainInventory::onFilterSelected()
 	{
 		return;
 	}
+
+	BOOL recent_active = ("Recent Items" == mActivePanel->getName());
+	childSetVisible("add_btn_panel", !recent_active);
+
 	setFilterSubString(mFilterSubString);
 	LLInventoryFilter* filter = mActivePanel->getFilter();
 	LLFloaterInventoryFinder *finder = getFinder();
@@ -500,7 +508,7 @@ void LLPanelMainInventory::onFilterSelected()
 	if (filter->isActive())
 	{
 		// If our filter is active we may be the first thing requiring a fetch so we better start it here.
-		gInventory.startBackgroundFetch();
+		LLInventoryModelBackgroundFetch::instance().start();
 	}
 	setFilterTextFromFilter();
 }
@@ -567,11 +575,11 @@ void LLPanelMainInventory::updateItemcountText()
 
 	std::string text = "";
 
-	if (LLInventoryModel::backgroundFetchActive())
+	if (LLInventoryModelBackgroundFetch::instance().backgroundFetchActive())
 	{
 		text = getString("ItemcountFetching", string_args);
 	}
-	else if (LLInventoryModel::isEverythingFetched())
+	else if (LLInventoryModelBackgroundFetch::instance().isEverythingFetched())
 	{
 		text = getString("ItemcountCompleted", string_args);
 	}
@@ -598,10 +606,10 @@ void LLPanelMainInventory::toggleFindOptions()
 		finder->openFloater();
 
 		LLFloater* parent_floater = gFloaterView->getParentFloater(this);
-		if (parent_floater) // Seraph: Fix this, shouldn't be null even for sidepanel
+		if (parent_floater)
 			parent_floater->addDependentFloater(mFinderHandle);
 		// start background fetch of folders
-		gInventory.startBackgroundFetch();
+		LLInventoryModelBackgroundFetch::instance().start();
 	}
 	else
 	{
@@ -894,14 +902,12 @@ void LLFloaterInventoryFinder::selectNoTypes(void* user_data)
 
 void LLPanelMainInventory::initListCommandsHandlers()
 {
-	mListCommands = getChild<LLPanel>("bottom_panel");
+	childSetAction("options_gear_btn", boost::bind(&LLPanelMainInventory::onGearButtonClick, this));
+	childSetAction("trash_btn", boost::bind(&LLPanelMainInventory::onTrashButtonClick, this));
+	childSetAction("add_btn", boost::bind(&LLPanelMainInventory::onAddButtonClick, this));
 
-	mListCommands->childSetAction("options_gear_btn", boost::bind(&LLPanelMainInventory::onGearButtonClick, this));
-	mListCommands->childSetAction("trash_btn", boost::bind(&LLPanelMainInventory::onTrashButtonClick, this));
-	mListCommands->childSetAction("add_btn", boost::bind(&LLPanelMainInventory::onAddButtonClick, this));
-
-	LLDragAndDropButton* trash_btn = mListCommands->getChild<LLDragAndDropButton>("trash_btn");
-	trash_btn->setDragAndDropHandler(boost::bind(&LLPanelMainInventory::handleDragAndDropToTrash, this
+	mTrashButton = getChild<LLDragAndDropButton>("trash_btn");
+	mTrashButton->setDragAndDropHandler(boost::bind(&LLPanelMainInventory::handleDragAndDropToTrash, this
 			,	_4 // BOOL drop
 			,	_5 // EDragAndDropType cargo_type
 			,	_7 // EAcceptance* accept
@@ -917,7 +923,7 @@ void LLPanelMainInventory::updateListCommands()
 {
 	bool trash_enabled = isActionEnabled("delete");
 
-	mListCommands->childSetEnabled("trash_btn", trash_enabled);
+	mTrashButton->setEnabled(trash_enabled);
 }
 
 void LLPanelMainInventory::onGearButtonClick()
@@ -1044,7 +1050,7 @@ void LLPanelMainInventory::onCustomAction(const LLSD& userdata)
 		{
 			return;
 		}
-		current_item->getListener()->performAction(getActivePanel()->getRootFolder(), getActivePanel()->getModel(), "goto");
+		current_item->getListener()->performAction(getActivePanel()->getModel(), "goto");
 	}
 
 	if (command_name == "find_links")
@@ -1064,6 +1070,7 @@ void LLPanelMainInventory::onCustomAction(const LLSD& userdata)
 		mFilterEditor->setFocus(TRUE);
 		filter->setFilterUUID(item_id);
 		filter->setShowFolderState(LLInventoryFilter::SHOW_NON_EMPTY_FOLDERS);
+		filter->setFilterLinks(LLInventoryFilter::FILTERLINK_ONLY_LINKS);
 	}
 }
 
@@ -1089,19 +1096,18 @@ BOOL LLPanelMainInventory::isActionEnabled(const LLSD& userdata)
 	if (command_name == "delete")
 	{
 		BOOL can_delete = FALSE;
-		LLFolderView *folder = getActivePanel()->getRootFolder();
-		if (folder)
+		LLFolderView* root = getActivePanel()->getRootFolder();
+		if (root)
 		{
 			can_delete = TRUE;
-			std::set<LLUUID> selection_set;
-			folder->getSelectionList(selection_set);
+			std::set<LLUUID> selection_set = root->getSelectionList();
 			if (selection_set.empty()) return FALSE;
 			for (std::set<LLUUID>::iterator iter = selection_set.begin();
 				 iter != selection_set.end();
 				 ++iter)
 			{
 				const LLUUID &item_id = (*iter);
-				LLFolderViewItem *item = folder->getItemByID(item_id);
+				LLFolderViewItem *item = root->getItemByID(item_id);
 				const LLFolderViewEventListener *listener = item->getListener();
 				llassert(listener);
 				if (!listener) return FALSE;
@@ -1131,7 +1137,10 @@ BOOL LLPanelMainInventory::isActionEnabled(const LLSD& userdata)
 
 	if (command_name == "find_links")
 	{
-		LLFolderViewItem* current_item = getActivePanel()->getRootFolder()->getCurSelectedItem();
+		LLFolderView* root = getActivePanel()->getRootFolder();
+		std::set<LLUUID> selection_set = root->getSelectionList();
+		if (selection_set.size() != 1) return FALSE;
+		LLFolderViewItem* current_item = root->getCurSelectedItem();
 		if (!current_item) return FALSE;
 		const LLUUID& item_id = current_item->getListener()->getUUID();
 		const LLInventoryObject *obj = gInventory.getObject(item_id);
@@ -1184,7 +1193,7 @@ void LLPanelMainInventory::setUploadCostIfNeeded()
 		LLMenuItemBranchGL* upload_menu = mMenuAdd->findChild<LLMenuItemBranchGL>("upload");
 		if(upload_menu)
 		{
-			S32 upload_cost = -1;//LLGlobalEconomy::Singleton::getInstance()->getPriceUpload();
+			S32 upload_cost = LLGlobalEconomy::Singleton::getInstance()->getPriceUpload();
 			std::string cost_str;
 
 			// getPriceUpload() returns -1 if no data available yet.

@@ -93,9 +93,7 @@ public:
 	virtual bool restoreErrorTrap() = 0; // Require platform specific override to reset error handling mechanism.
 	                                     // return false if the error trap needed restoration.
 	virtual void handleCrashReporting(bool reportFreeze = false) = 0; // What to do with crash report?
-	virtual void handleSyncCrashTrace() = 0; // any low-level crash-prep that has to happen in the context of the crashing thread before the crash report is delivered.
 	static void handleViewerCrash(); // Hey! The viewer crashed. Do this, soon.
-	static void handleSyncViewerCrash(); // Hey! The viewer crashed. Do this right NOW in the context of the crashing thread.
     void checkForCrash();
     
 	// Thread accessors
@@ -194,7 +192,6 @@ private:
 
 	bool initThreads(); // Initialize viewer threads, return false on failure.
 	bool initConfiguration(); // Initialize settings from the command line/config file.
-	void initGridChoice();
 
 	bool initCache(); // Initialize local client cache.
 

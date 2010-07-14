@@ -16,12 +16,18 @@
 		ha entrado en un chat de voz en multiconferencia.
 	</floater.string>
 	<floater.string name="VoiceInviteGroup">
-		ha hecho una llamada de voz al grupo [GROUP].
+		acaba de entrar en el canal de voz &apos;[GROUP]&apos;.
+	</floater.string>
+	<floater.string name="VoiceInviteQuestionGroup">
+		¿Quieres dejar [CURRENT_CHAT] e incorporarte a la llamada con &apos;[GROUP]&apos;?
+	</floater.string>
+	<floater.string name="VoiceInviteQuestionDefault">
+		¿Quieres dejar [CURRENT_CHAT] y entrar en este chat de voz?
 	</floater.string>
 	<text name="question">
 		¿Quieres dejar [CURRENT_CHAT] y entrar a este chat de voz?
 	</text>
 	<button label="Aceptar" label_selected="Aceptar" name="Accept"/>
-	<button label="Expulsar" label_selected="Expulsar" name="Reject"/>
+	<button label="Rechazar" label_selected="Rechazar" name="Reject"/>
 	<button label="Comenzar un MI" name="Start IM"/>
 </floater>

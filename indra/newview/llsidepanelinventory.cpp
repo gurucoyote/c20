@@ -35,6 +35,7 @@
 #include "llsidepanelinventory.h"
 
 #include "llagent.h"
+#include "llavataractions.h"
 #include "llbutton.h"
 #include "llinventorybridge.h"
 #include "llinventorypanel.h"
@@ -43,6 +44,7 @@
 #include "llsidepaneltaskinfo.h"
 #include "lltabcontainer.h"
 #include "llselectmgr.h"
+#include "llweb.h"
 
 static LLRegisterPanelClassWrapper<LLSidepanelInventory> t_inventory("sidepanel_inventory");
 
@@ -71,6 +73,9 @@ BOOL LLSidepanelInventory::postBuild()
 		mShareBtn = mInventoryPanel->getChild<LLButton>("share_btn");
 		mShareBtn->setClickedCallback(boost::bind(&LLSidepanelInventory::onShareButtonClicked, this));
 		
+		mShopBtn = mInventoryPanel->getChild<LLButton>("shop_btn");
+		mShopBtn->setClickedCallback(boost::bind(&LLSidepanelInventory::onShopButtonClicked, this));
+
 		mWearBtn = mInventoryPanel->getChild<LLButton>("wear_btn");
 		mWearBtn->setClickedCallback(boost::bind(&LLSidepanelInventory::onWearButtonClicked, this));
 		
@@ -85,6 +90,8 @@ BOOL LLSidepanelInventory::postBuild()
 		
 		mPanelMainInventory = mInventoryPanel->getChild<LLPanelMainInventory>("panel_main_inventory");
 		mPanelMainInventory->setSelectCallback(boost::bind(&LLSidepanelInventory::onSelectionChange, this, _1, _2));
+		LLTabContainer* tabs = mPanelMainInventory->getChild<LLTabContainer>("inventory filter tabs");
+		tabs->setCommitCallback(boost::bind(&LLSidepanelInventory::updateVerbs, this));
 
 		/* 
 		   EXT-4846 : "Can we suppress the "Landmarks" and "My Favorites" folder since they have their own Task Panel?"
@@ -153,6 +160,12 @@ void LLSidepanelInventory::onInfoButtonClicked()
 
 void LLSidepanelInventory::onShareButtonClicked()
 {
+	LLAvatarActions::shareWithAvatars();
+}
+
+void LLSidepanelInventory::onShopButtonClicked()
+{
+	LLWeb::loadURLExternal(gSavedSettings.getString("MarketplaceURL"));
 }
 
 void LLSidepanelInventory::performActionOnSelection(const std::string &action)
@@ -163,7 +176,7 @@ void LLSidepanelInventory::performActionOnSelection(const std::string &action)
 	{
 		return;
 	}
-	current_item->getListener()->performAction(panel_main_inventory->getActivePanel()->getRootFolder(), panel_main_inventory->getActivePanel()->getModel(), action);
+	current_item->getListener()->performAction(panel_main_inventory->getActivePanel()->getModel(), action);
 }
 
 void LLSidepanelInventory::onWearButtonClicked()
@@ -254,7 +267,10 @@ void LLSidepanelInventory::updateVerbs()
 	mPlayBtn->setEnabled(FALSE);
  	mTeleportBtn->setVisible(FALSE);
  	mTeleportBtn->setEnabled(FALSE);
-	
+ 	mShopBtn->setVisible(TRUE);
+
+	mShareBtn->setEnabled(canShare());
+
 	const LLInventoryItem *item = getSelectedItem();
 	if (!item)
 		return;
@@ -262,7 +278,6 @@ void LLSidepanelInventory::updateVerbs()
 	bool is_single_selection = getSelectedCount() == 1;
 
 	mInfoBtn->setEnabled(is_single_selection);
-	mShareBtn->setEnabled(is_single_selection);
 
 	switch(item->getInventoryType())
 	{
@@ -271,20 +286,42 @@ void LLSidepanelInventory::updateVerbs()
 		case LLInventoryType::IT_ATTACHMENT:
 			mWearBtn->setVisible(TRUE);
 			mWearBtn->setEnabled(TRUE);
+		 	mShopBtn->setVisible(FALSE);
 			break;
 		case LLInventoryType::IT_SOUND:
 		case LLInventoryType::IT_GESTURE:
 		case LLInventoryType::IT_ANIMATION:
 			mPlayBtn->setVisible(TRUE);
 			mPlayBtn->setEnabled(TRUE);
+		 	mShopBtn->setVisible(FALSE);
 			break;
 		case LLInventoryType::IT_LANDMARK:
 			mTeleportBtn->setVisible(TRUE);
 			mTeleportBtn->setEnabled(TRUE);
+		 	mShopBtn->setVisible(FALSE);
 			break;
 		default:
 			break;
 	}
+}
+
+bool LLSidepanelInventory::canShare()
+{
+	LLPanelMainInventory* panel_main_inventory =
+		mInventoryPanel->getChild<LLPanelMainInventory>("panel_main_inventory");
+
+	LLFolderView* root_folder =
+		panel_main_inventory->getActivePanel()->getRootFolder();
+
+	LLFolderViewItem* current_item = root_folder->hasVisibleChildren()
+		? root_folder->getCurSelectedItem()
+		: NULL;
+
+	LLInvFVBridge* bridge = current_item
+		? dynamic_cast <LLInvFVBridge*> (current_item->getListener())
+		: NULL;
+
+	return bridge ? bridge->canShare() : false;
 }
 
 LLInventoryItem *LLSidepanelInventory::getSelectedItem()
@@ -303,8 +340,7 @@ LLInventoryItem *LLSidepanelInventory::getSelectedItem()
 U32 LLSidepanelInventory::getSelectedCount()
 {
 	LLPanelMainInventory *panel_main_inventory = mInventoryPanel->getChild<LLPanelMainInventory>("panel_main_inventory");
-	std::set<LLUUID> selection_list;
-	panel_main_inventory->getActivePanel()->getRootFolder()->getSelectionList(selection_list);
+	std::set<LLUUID> selection_list = panel_main_inventory->getActivePanel()->getRootFolder()->getSelectionList();
 	return selection_list.size();
 }
 

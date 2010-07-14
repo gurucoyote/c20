@@ -2,8 +2,7 @@
 <floater
  legacy_header_height="18"
  can_resize="true"
- center_horiz="true"
- center_vert="true"
+ open_centered="true"
  height="600"
  layout="topleft"
  min_height="520"
@@ -179,29 +178,6 @@
      width="90">
         Land Sale
     </text>
-    <icon
-     color="1 1 0.25 1"
-     follows="top|right"
-     height="16"
-     image_name="legend.tga"
-     layout="topleft"
-     mouse_opaque="true"
-     name="square2"
-     left="41"
-     top_pad="-2"
-     width="16" />
-    <text
-     type="string"
-     length="1"
-     follows="top|right"
-     height="16"
-     layout="topleft"
-     left_pad="0"
-     name="by_owner_label"
-     top_delta="3"
-     width="100">
-       by owner
-    </text>
         <icon
      color="0.5 0.25 1 1"
      follows="top|right"
@@ -210,8 +186,8 @@
      layout="topleft"
      mouse_opaque="true"
      name="square2"
-     left="41"
-     top_pad="-3"
+     left="20"
+     top_pad="2"
      width="16" />
     <text
      type="string"
@@ -224,6 +200,29 @@
      top_delta="3"
      width="170">
         land auction
+    </text>
+    <icon
+     color="1 1 0.25 1"
+     follows="top|right"
+     height="16"
+     image_name="legend.tga"
+     layout="topleft"
+     mouse_opaque="true"
+     name="square2"
+     left="20"
+     top_pad="-5"
+     width="16" />
+    <text
+     type="string"
+     length="1"
+     follows="top|right"
+     height="16"
+     layout="topleft"
+     left_pad="0"
+     name="by_owner_label"
+     top_delta="3"
+     width="100">
+       by owner
     </text>
 
     <button
@@ -307,7 +306,7 @@
      initial_value="true"
      layout="topleft"
      left="135"
-     name="event_mature_chk"
+     name="events_mature_chk"
      top_pad="3"
      width="22" />
     <icon
@@ -329,7 +328,7 @@
      top_delta="2"
      left_pad="3"
      layout="topleft"
-     name="mature_label"
+     name="events_mature_label"
      width="66">
         Moderate
     </text>
@@ -340,7 +339,7 @@
      height="16"
      layout="topleft"
      left="135"
-     name="event_adult_chk"
+     name="events_adult_chk"
      top_pad="3"
      width="22" />
     <icon
@@ -362,7 +361,7 @@
      top_delta="2"
      left_pad="3"
      layout="topleft"
-     name="adult_label"
+     name="events_adult_label"
      width="66">
         Adult
     </text>
@@ -496,7 +495,7 @@
      top_delta="-1"
      name="DoSearch"
      tool_tip="Search for region"
-     width="58">
+     width="62">
 		<button.commit_callback
 		function="WMap.Location" />
     </button>
@@ -538,6 +537,7 @@
     <button
      follows="right|bottom"
      height="23"
+     image_unselected="PushButton_On"
      label="Teleport"
      layout="topleft"
      left="25"

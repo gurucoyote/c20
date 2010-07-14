@@ -44,7 +44,8 @@
 #include "llagent.h"			// for agent id
 #include "llinventorymodel.h"	// for gInventory
 #include "llfloaterreg.h"
-#include "llfloaterinventory.h"	// for get_item_icon
+#include "llinventoryicon.h"
+#include "llinventorydefines.h"
 #include "llinventoryfunctions.h"
 #include "llnotificationsutil.h"
 #include "llselectmgr.h"
@@ -152,9 +153,8 @@ void LLFloaterBuy::show(const LLSaleInfo& sale_info)
 	LLSD row;
 
 	// Compute icon for this item
-	std::string icon_name = get_item_icon_name(LLAssetType::AT_OBJECT, 
-									 LLInventoryType::IT_OBJECT,
-									 0x0, FALSE);
+	std::string icon_name = LLInventoryIcon::getIconName(LLAssetType::AT_OBJECT, 
+									 LLInventoryType::IT_OBJECT);
 
 	row["columns"][0]["column"] = "icon";
 	row["columns"][0]["type"] = "icon";
@@ -196,7 +196,7 @@ void LLFloaterBuy::show(const LLSaleInfo& sale_info)
 }
 
 void LLFloaterBuy::inventoryChanged(LLViewerObject* obj,
-								 InventoryObjectList* inv,
+								 LLInventoryObject::object_list_t* inv,
 								 S32 serial_num,
 								 void* data)
 {
@@ -221,8 +221,8 @@ void LLFloaterBuy::inventoryChanged(LLViewerObject* obj,
 		return;
 	}
 
-	InventoryObjectList::const_iterator it = inv->begin();
-	InventoryObjectList::const_iterator end = inv->end();
+	LLInventoryObject::object_list_t::const_iterator it = inv->begin();
+	LLInventoryObject::object_list_t::const_iterator end = inv->end();
 	for ( ; it != end; ++it )
 	{
 		LLInventoryObject* obj = (LLInventoryObject*)(*it);
@@ -247,13 +247,13 @@ void LLFloaterBuy::inventoryChanged(LLViewerObject* obj,
 
 		// Compute icon for this item
 		BOOL item_is_multi = FALSE;
-		if ( inv_item->getFlags() & LLInventoryItem::II_FLAGS_LANDMARK_VISITED 
-			|| inv_item->getFlags() & LLInventoryItem::II_FLAGS_OBJECT_HAS_MULTIPLE_ITEMS)
+		if ( inv_item->getFlags() & LLInventoryItemFlags::II_FLAGS_LANDMARK_VISITED 
+			|| inv_item->getFlags() & LLInventoryItemFlags::II_FLAGS_OBJECT_HAS_MULTIPLE_ITEMS)
 		{
 			item_is_multi = TRUE;
 		}
 
-		std::string icon_name = get_item_icon_name(inv_item->getType(), 
+		std::string icon_name = LLInventoryIcon::getIconName(inv_item->getType(), 
 							 inv_item->getInventoryType(),
 							 inv_item->getFlags(),
 							 item_is_multi);

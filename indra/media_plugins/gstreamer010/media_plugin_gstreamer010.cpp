@@ -143,6 +143,7 @@ private:
 	// Very GStreamer-specific
 	GMainLoop *mPump; // event pump for this media
 	GstElement *mPlaybin;
+	GstElement *mVisualizer;
 	GstSLVideo *mVideoSink;
 };
 
@@ -161,6 +162,7 @@ MediaPluginGStreamer010::MediaPluginGStreamer010(
 	mSeekDestination(0.0),
 	mPump ( NULL ),
 	mPlaybin ( NULL ),
+	mVisualizer ( NULL ),
 	mVideoSink ( NULL ),
 	mCommand ( COMMAND_NONE )
 {
@@ -544,8 +546,12 @@ MediaPluginGStreamer010::pause()
 {
 	DEBUGMSG("pausing media...");
 	// todo: error-check this?
-	llgst_element_set_state(mPlaybin, GST_STATE_PAUSED);
-	return true;
+	if (mDoneInit && mPlaybin)
+	{
+		llgst_element_set_state(mPlaybin, GST_STATE_PAUSED);
+		return true;
+	}
+	return false;
 }
 
 bool
@@ -553,8 +559,12 @@ MediaPluginGStreamer010::stop()
 {
 	DEBUGMSG("stopping media...");
 	// todo: error-check this?
-	llgst_element_set_state(mPlaybin, GST_STATE_READY);
-	return true;
+	if (mDoneInit && mPlaybin)
+	{
+		llgst_element_set_state(mPlaybin, GST_STATE_READY);
+		return true;
+	}
+	return false;
 }
 
 bool
@@ -564,8 +574,12 @@ MediaPluginGStreamer010::play(double rate)
 
         DEBUGMSG("playing media... rate=%f", rate);
 	// todo: error-check this?
-	llgst_element_set_state(mPlaybin, GST_STATE_PLAYING);
-	return true;
+	if (mDoneInit && mPlaybin)
+	{
+		llgst_element_set_state(mPlaybin, GST_STATE_PLAYING);
+		return true;
+	}
+	return false;
 }
 
 bool
@@ -608,7 +622,7 @@ bool
 MediaPluginGStreamer010::getTimePos(double &sec_out)
 {
 	bool got_position = false;
-	if (mPlaybin)
+	if (mDoneInit && mPlaybin)
 	{
 		gint64 pos;
 		GstFormat timefmt = GST_FORMAT_TIME;
@@ -688,6 +702,35 @@ MediaPluginGStreamer010::load()
 					   this);
 	llgst_object_unref (bus);
 
+#if 0 // not quite stable/correct yet
+	// get a visualizer element (bonus feature!)
+	char* vis_name = getenv("LL_GST_VIS_NAME");
+	if (!vis_name ||
+	    (vis_name && std::string(vis_name)!="none"))
+	{
+		if (vis_name)
+		{
+			mVisualizer = llgst_element_factory_make (vis_name, "vis");
+		}
+		if (!mVisualizer)
+		{
+			mVisualizer = llgst_element_factory_make ("libvisual_jess", "vis");
+			if (!mVisualizer)
+			{
+				mVisualizer = llgst_element_factory_make ("goom", "vis");
+				if (!mVisualizer)
+				{
+					mVisualizer = llgst_element_factory_make ("libvisual_lv_scope", "vis");
+					if (!mVisualizer)
+					{
+						// That's okay, we don't NEED this.
+					}
+				}
+			}
+		}
+	}
+#endif
+
 	if (NULL == getenv("LL_GSTREAMER_EXTERNAL")) {
 		// instantiate a custom video sink
 		mVideoSink =
@@ -702,6 +745,11 @@ MediaPluginGStreamer010::load()
 
 		// connect the pieces
 		g_object_set(mPlaybin, "video-sink", mVideoSink, NULL);
+	}
+
+	if (mVisualizer)
+	{
+		g_object_set(mPlaybin, "vis-plugin", mVisualizer, NULL);
 	}
 
 	return true;
@@ -724,6 +772,12 @@ MediaPluginGStreamer010::unload ()
 		llgst_element_set_state (mPlaybin, GST_STATE_NULL);
 		llgst_object_unref (GST_OBJECT (mPlaybin));
 		mPlaybin = NULL;
+	}
+
+	if (mVisualizer)
+	{
+		llgst_object_unref (GST_OBJECT (mVisualizer));
+		mVisualizer = NULL;
 	}
 
 	if (mPump)

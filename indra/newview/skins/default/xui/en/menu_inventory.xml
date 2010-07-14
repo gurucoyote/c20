@@ -5,6 +5,14 @@
  name="Popup"
  visible="false">
     <menu_item_call
+     label="Share"
+     layout="topleft"
+     name="Share"
+     visible="true">
+        <menu_item_call.on_click
+         function="Inventory.Share" />
+    </menu_item_call>
+    <menu_item_call
      label="Buy"
      layout="topleft"
      name="Task Buy">
@@ -402,6 +410,14 @@
          parameter="open" />
     </menu_item_call>
     <menu_item_call
+     label="Open Original"
+     layout="topleft"
+     name="Open Original">
+        <menu_item_call.on_click
+         function="Inventory.DoToSelected"
+         parameter="open_original" />
+    </menu_item_call>
+    <menu_item_call
      label="Properties"
      layout="topleft"
      name="Properties">
@@ -590,7 +606,7 @@
     </menu_item_call>
     <menu_item_separator
      layout="topleft" 
-     name="Attach Separator"/>
+     name="Wearable And Object Separator"/>
     <menu_item_call
      label="Detach From Yourself"
      layout="topleft"
@@ -613,10 +629,10 @@
     <menu_item_call
      label="Wear"
      layout="topleft"
-     name="Object Wear">
+     name="Wearable And Object Wear">
         <menu_item_call.on_click
          function="Inventory.DoToSelected"
-         parameter="attach" />
+         parameter="wear" />
     </menu_item_call>
     <menu
      label="Attach To"
@@ -626,9 +642,6 @@
      label="Attach To HUD"
      layout="topleft"
      name="Attach To HUD" />
-    <menu_item_separator
-     layout="topleft" 
-     name="Wearable Separator"/>
     <menu_item_call
      label="Edit"
      layout="topleft"
@@ -638,12 +651,12 @@
          parameter="edit" />
     </menu_item_call>
     <menu_item_call
-     label="Wear"
+     label="Add"
      layout="topleft"
-     name="Wearable Wear">
+     name="Wearable Add">
         <menu_item_call.on_click
          function="Inventory.DoToSelected"
-         parameter="wear" />
+         parameter="wear_add" />
     </menu_item_call>
     <menu_item_call
      label="Take Off"

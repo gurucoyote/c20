@@ -127,7 +127,9 @@ void LLFloaterReporter::processRegionInfo(LLMessageSystem* msg)
 // virtual
 BOOL LLFloaterReporter::postBuild()
 {
-	childSetText("abuse_location_edit", LLAgentUI::buildSLURL());
+	LLSLURL slurl;
+	LLAgentUI::buildSLURL(slurl);
+	childSetText("abuse_location_edit", slurl.getSLURLString());
 
 	enableControls(TRUE);
 
@@ -281,7 +283,6 @@ void LLFloaterReporter::getObjectInfo(const LLUUID& object_id)
 				{
 					object_owner.append("Unknown");
 				}
-
 				setFromAvatar(mObjectID, object_owner);
 			}
 			else
@@ -309,7 +310,7 @@ void LLFloaterReporter::onClickSelectAbuser()
 	gFloaterView->getParentFloater(this)->addDependentFloater(LLFloaterAvatarPicker::show(boost::bind(&LLFloaterReporter::callbackAvatarID, this, _1, _2), FALSE, TRUE ));
 }
 
-void LLFloaterReporter::callbackAvatarID(const std::vector<std::string>& names, const std::vector<LLUUID>& ids)
+void LLFloaterReporter::callbackAvatarID(const std::vector<std::string>& names, const uuid_vec_t& ids)
 {
 	if (ids.empty() || names.empty()) return;
 
@@ -326,7 +327,8 @@ void LLFloaterReporter::setFromAvatar(const LLUUID& avatar_id, const std::string
 	mAbuserID = mObjectID = avatar_id;
 	mOwnerName = avatar_name;
 
-	std::string avatar_link = LLSLURL::buildCommand("agent", mObjectID, "inspect");
+	std::string avatar_link =
+	  LLSLURL("agent", mObjectID, "inspect").getSLURLString();
 	childSetText("owner_name", avatar_link);
 	childSetText("object_name", avatar_name);
 	childSetText("abuser_name_edit", avatar_name);
@@ -505,7 +507,7 @@ void LLFloaterReporter::setPickedObjectProperties(const std::string& object_name
 {
 	childSetText("object_name", object_name);
 	std::string owner_link =
-		LLSLURL::buildCommand("agent", owner_id, "inspect");
+		LLSLURL("agent", owner_id, "inspect").getSLURLString();
 	childSetText("owner_name", owner_link);
 	childSetText("abuser_name_edit", owner_name);
 	mAbuserID = owner_id;
@@ -567,7 +569,7 @@ LLSD LLFloaterReporter::gatherReport()
 	mCopyrightWarningSeen = FALSE;
 
 	std::ostringstream summary;
-	if (!LLViewerLogin::getInstance()->isInProductionGrid())
+	if (!LLGridManager::getInstance()->isInProductionGrid())
 	{
 		summary << "Preview ";
 	}

@@ -244,6 +244,7 @@
        layout="topleft"
        left="6"
        name="event_desc"
+       textbox.label="More"
        width="322">
        Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</expandable_text>
     </layout_panel>
@@ -265,7 +266,6 @@
            layout="topleft"
            left="6"
        name="create_event_btn"
-           picture_style="true"
            tool_tip="Create Event"
            width="18" />
       <button
@@ -279,7 +279,6 @@
            left="6"
            top_pad="-7" 
           name="god_delete_event_btn"
-           picture_style="true"
            tool_tip="Delete Event"
            width="18" />
       <button

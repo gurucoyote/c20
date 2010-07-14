@@ -51,7 +51,7 @@
 #include "llagentui.h"
 #include "llappviewer.h"
 #include "llcallbacklist.h"
-#include "llfloaterbuycurrency.h"
+#include "llbuycurrencyhtml.h"
 #include "llstatusbar.h"
 #include "llviewercontrol.h"
 #include "llviewerparcelmgr.h"
@@ -85,7 +85,9 @@ LLPanelPlaceProfile::LLPanelPlaceProfile()
 
 // virtual
 LLPanelPlaceProfile::~LLPanelPlaceProfile()
-{}
+{
+	gIdleCallbacks.deleteFunction(&LLPanelPlaceProfile::updateYouAreHereBanner, this);
+}
 
 // virtual
 BOOL LLPanelPlaceProfile::postBuild()
@@ -574,7 +576,7 @@ void LLPanelPlaceProfile::onForSaleBannerClick()
 			{
 				LLStringUtil::format_map_t args;
 				args["AMOUNT"] = llformat("%d", price);
-				LLFloaterBuyCurrency::buyCurrency(LLTrans::getString("buying_selected_land", args), price);
+				LLBuyCurrencyHTML::openCurrencyFloater( LLTrans::getString("buying_selected_land", args), price );
 			}
 			else
 			{

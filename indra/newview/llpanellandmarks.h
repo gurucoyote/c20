@@ -59,8 +59,10 @@ public:
 	/*virtual*/ BOOL postBuild();
 	/*virtual*/ void onSearchEdit(const std::string& string);
 	/*virtual*/ void onShowOnMap();
+	/*virtual*/ void onShowProfile();
 	/*virtual*/ void onTeleport();
 	/*virtual*/ void updateVerbs();
+	/*virtual*/ bool isSingleItemSelected();
 
 	void onSelectionChange(LLPlacesInventoryPanel* inventory_list, const std::deque<LLFolderViewItem*> &items, BOOL user_action);
 	void onSelectorButtonClicked();
@@ -143,7 +145,7 @@ private:
 	/**
 	 * Processes drag-n-drop of the Landmarks and folders into trash button.
 	 */
-	bool handleDragAndDropToTrash(BOOL drop, EDragAndDropType cargo_type, EAcceptance* accept);
+	bool handleDragAndDropToTrash(BOOL drop, EDragAndDropType cargo_type, void* cargo_data, EAcceptance* accept);
 
 	/**
 	 * Landmark actions callbacks. Fire when a landmark is loaded from the list.
@@ -167,7 +169,6 @@ private:
 	LLInventoryObserver*		mInventoryObserver;
 
 	LLPanel*					mListCommands;
-	bool 						mSortByDate;
 	
 	typedef	std::vector<LLAccordionCtrlTab*> accordion_tabs_t;
 	accordion_tabs_t			mAccordionTabs;

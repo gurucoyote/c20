@@ -88,9 +88,10 @@ protected:
  * Web browser-like navigation bar.
  */ 
 class LLNavigationBar
-	:	public LLPanel, public LLSingleton<LLNavigationBar>
+	:	public LLPanel, public LLSingleton<LLNavigationBar>, private LLDestroyClass<LLNavigationBar>
 {
 	LOG_CLASS(LLNavigationBar);
+	friend class LLDestroyClass<LLNavigationBar>;
 	
 public:
 	LLNavigationBar();
@@ -136,6 +137,14 @@ private:
 			const LLUUID& snapshot_id, bool teleport);
 
 	void fillSearchComboBox();
+
+	static void destroyClass()
+	{
+		if (LLNavigationBar::instanceExists())
+		{
+			LLNavigationBar::getInstance()->setEnabled(FALSE);
+		}
+	}
 
 	LLMenuGL*					mTeleportHistoryMenu;
 	LLPullButton*				mBtnBack;

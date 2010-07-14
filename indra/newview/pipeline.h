@@ -47,6 +47,8 @@
 #include "lldrawable.h"
 #include "llrendertarget.h"
 
+#include <stack>
+
 class LLViewerTexture;
 class LLEdge;
 class LLFace;
@@ -327,13 +329,24 @@ public:
 	LLCullResult::sg_list_t::iterator beginAlphaGroups();
 	LLCullResult::sg_list_t::iterator endAlphaGroups();
 	
+
 	void addTrianglesDrawn(S32 index_count, U32 render_type = LLRender::TRIANGLES);
-	BOOL hasRenderType(LLRenderType const& type) const		{ return (type != RENDER_TYPE_NONE && (mRenderTypeMask.has(type))) ? TRUE : FALSE; }
 	BOOL hasRenderDebugFeatureMask(const U32 mask) const	{ return (mRenderDebugFeatureMask & mask) ? TRUE : FALSE; }
 	BOOL hasRenderDebugMask(const U32 mask) const			{ return (mRenderDebugMask & mask) ? TRUE : FALSE; }
-	void setRenderTypeMask(LLRenderTypeMask const& mask)	{ mRenderTypeMask = mask; }
-	void clearRenderTypeMask()								{ mRenderTypeMask.clear(); }
-	LLRenderTypeMask getRenderTypeMask() const				{ return mRenderTypeMask; }
+	
+
+
+	BOOL hasRenderType(LLRenderType const& type) const;
+	BOOL hasAnyRenderType(LLRenderType type, ...) const;
+
+	void orRenderTypeMask(LLRenderType type, ...);
+	void andRenderTypeMask(LLRenderType type, ...);
+	void clearRenderTypeMask(LLRenderType type, ...);
+	void setRenderTypeMask(LLRenderType type, ...);
+	
+	void pushRenderTypeMask();
+	void popRenderTypeMask();
+
 	static void toggleRenderType(LLRenderType const& type);
 
 	// For UI control of render features
@@ -455,7 +468,8 @@ public:
 	static BOOL				sForceOldBakedUpload; // If true will not use capabilities to upload baked textures.
 	static S32				sUseOcclusion;  // 0 = no occlusion, 1 = read only, 2 = read/write
 	static BOOL				sDelayVBUpdate;
-	static BOOL				sFastAlpha;
+	static BOOL				sAutoMaskAlphaDeferred;
+	static BOOL				sAutoMaskAlphaNonDeferred;
 	static BOOL				sDisableShaders; // if TRUE, rendering will be done without shaders
 	static BOOL				sRenderBump;
 	static BOOL				sUseTriStrips;
@@ -473,6 +487,7 @@ public:
 	static BOOL				sRenderAttachedLights;
 	static BOOL				sRenderAttachedParticles;
 	static BOOL				sRenderDeferred;
+	static BOOL             sAllowRebuildPriorityGroup;
 	static S32				sVisibleLightCount;
 	static F32				sMinRenderSize;
 
@@ -543,7 +558,9 @@ public:
 	S32						mVertexShadersLoaded; // 0 = no, 1 = yes, -1 = failed
 
 protected:
-	LLRenderTypeMask		mRenderTypeMask;
+	BOOL					mRenderTypeEnabled[END_RENDER_TYPES];
+	std::stack<std::string> mRenderTypeEnableStack;
+
 	U32						mRenderDebugFeatureMask;
 	U32						mRenderDebugMask;
 
@@ -553,7 +570,7 @@ protected:
 	//
 	//
 	LLDrawable::drawable_vector_t	mMovedList;
-	LLDrawable::drawable_vector_t mMovedBridge;
+	LLDrawable::drawable_vector_t	mMovedBridge;
 	LLDrawable::drawable_vector_t	mShiftList;
 
 	/////////////////////////////////////////////

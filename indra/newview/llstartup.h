@@ -39,6 +39,7 @@
 class LLViewerTexture ;
 class LLEventPump;
 class LLStartupListener;
+class LLSLURL;
 
 // functions
 bool idle_startup();
@@ -81,9 +82,6 @@ extern LLPointer<LLViewerTexture> gStartTexture;
 class LLStartUp
 {
 public:
-	static bool canGoFullscreen();
-		// returns true if we are far enough along in startup to allow
-		// going full screen
 
 	// Always use this to set gStartupState so changes are logged
 	static void setStartupState( EStartupState state );
@@ -96,32 +94,30 @@ public:
 	// Load default fonts not already loaded at start screen
 	static void fontInit();
 
+	static void copyLibraryGestures(const std::string& same_gender_gestures);
+
 	// outfit_folder_name can be a folder anywhere in your inventory, 
 	// but the name must be a case-sensitive exact match.
 	// gender_name is either "male" or "female"
 	static void loadInitialOutfit( const std::string& outfit_folder_name,
 								   const std::string& gender_name );
 
-	// Load MD5 of user's password from local disk file.
-	static std::string loadPasswordFromDisk();
-	
-	// Record MD5 of user's password for subsequent login.
-	static void savePasswordToDisk(const std::string& hashed_password);
-	
-	// Delete the saved password local disk file.
-	static void deletePasswordFromDisk();
+	//save loaded initial outfit into My Outfits category
+	static void saveInitialOutfit();
+
+	static std::string& getInitialOutfitName();
 	
 	static bool dispatchURL();
 		// if we have a SLURL or sim string ("Ahern/123/45") that started
 		// the viewer, dispatch it
 
-	static std::string sSLURLCommand;
-		// *HACK: On startup, if we were passed a secondlife://app/do/foo
-		// command URL, store it for later processing.
-
 	static void postStartupState();
+	static void setStartSLURL(const LLSLURL& slurl); 
+	static LLSLURL& getStartSLURL() { return sStartSLURL; } 
 
 private:
+	static LLSLURL sStartSLURL;
+
 	static std::string startupStateToString(EStartupState state);
 	static EStartupState gStartupState; // Do not set directly, use LLStartup::setStartupState
 	static boost::scoped_ptr<LLEventPump> sStateWatcher;

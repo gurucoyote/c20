@@ -87,6 +87,7 @@ public:
 								track_end,
 								read_only,
 								allow_scroll,
+								plain_text,
 								wrap,
 								use_ellipses,
 								allow_html,
@@ -133,6 +134,7 @@ public:
 	/*virtual*/ LLTextViewModel* getViewModel() const;
 
 	// LLEditMenuHandler interface
+	/*virtual*/ BOOL		canDeselect() const;
 	/*virtual*/ void		deselect();
 
 	// used by LLTextSegment layout code
@@ -177,6 +179,9 @@ public:
 	void					setReadOnly(bool read_only) { mReadOnly = read_only; }
 	bool					getReadOnly() { return mReadOnly; }
 
+	void					setPlainText(bool value) { mPlainText = value;}
+	bool					getPlainText() const { return mPlainText; }
+
 	// cursor manipulation
 	bool					setCursor(S32 row, S32 column);
 	bool					setCursorPos(S32 cursor_pos, bool keep_cursor_offset = false);
@@ -191,6 +196,9 @@ public:
 	bool					scrolledToEnd();
 
 	const LLFontGL*			getDefaultFont() const					{ return mDefaultFont; }
+
+	void					appendLineBreakSegment(const LLStyle::Params& style_params);
+	void					appendImageSegment(const LLStyle::Params& style_params);
 
 public:
 	// Fired when a URL link is clicked
@@ -274,7 +282,7 @@ protected:
 	S32								insertStringNoUndo(S32 pos, const LLWString &wstr, segment_vec_t* segments = NULL); // returns num of chars actually inserted
 	S32 							removeStringNoUndo(S32 pos, S32 length);
 	S32								overwriteCharNoUndo(S32 pos, llwchar wc);
-	void							appendAndHighlightText(const std::string &new_text, bool prepend_newline, S32 highlight_part, const LLStyle::Params& stylep);
+	void							appendAndHighlightText(const std::string &new_text, S32 highlight_part, const LLStyle::Params& stylep);
 
 
 	// manage segments 
@@ -315,6 +323,10 @@ protected:
 	void							updateRects();
 	void							needsScroll() { mScrollNeeded = TRUE; }
 	void							replaceUrlLabel(const std::string &url, const std::string &label);
+	
+	void							appendTextImpl(const std::string &new_text, const LLStyle::Params& input_params = LLStyle::Params());
+	void							appendAndHighlightTextImpl(const std::string &new_text, S32 highlight_part, const LLStyle::Params& style_params);
+	
 
 protected:
 	// text segmentation and flow
@@ -346,6 +358,7 @@ protected:
 	S32							mHPad;				// padding on left of text
 	S32							mVPad;				// padding above text
 	LLFontGL::HAlign			mHAlign;
+	LLFontGL::VAlign			mVAlign;
 	F32							mLineSpacingMult;	// multiple of line height used as space for a single line of text (e.g. 1.5 to get 50% padding)
 	S32							mLineSpacingPixels;	// padding between lines
 	const LLFontGL*				mDefaultFont;		// font that is used when none specified
@@ -359,6 +372,7 @@ protected:
 	bool						mReadOnly;
 	bool						mBGVisible;			// render background?
 	bool						mClipPartial;		// false if we show lines that are partially inside bounding rect
+	bool						mPlainText;			// didn't use Image or Icon segments
 	S32							mMaxTextByteLength;	// Maximum length mText is allowed to be in bytes
 
 	// support widgets
@@ -507,5 +521,33 @@ private:
 	bool	mForceNewLine;
 };
 
+class LLLineBreakTextSegment : public LLTextSegment
+{
+public:
+
+	LLLineBreakTextSegment(LLStyleConstSP style,S32 pos);
+	LLLineBreakTextSegment(S32 pos);
+	~LLLineBreakTextSegment();
+	bool		getDimensions(S32 first_char, S32 num_chars, S32& width, S32& height) const;
+	S32			getNumChars(S32 num_pixels, S32 segment_offset, S32 line_offset, S32 max_chars) const;
+	F32			draw(S32 start, S32 end, S32 selection_start, S32 selection_end, const LLRect& draw_rect);
+
+private:
+	S32			mFontHeight;
+};
+
+class LLImageTextSegment : public LLTextSegment
+{
+public:
+	LLImageTextSegment(LLStyleConstSP style,S32 pos,class LLTextBase& editor);
+	~LLImageTextSegment();
+	bool		getDimensions(S32 first_char, S32 num_chars, S32& width, S32& height) const;
+	S32			getNumChars(S32 num_pixels, S32 segment_offset, S32 line_offset, S32 max_chars) const;
+	F32			draw(S32 start, S32 end, S32 selection_start, S32 selection_end, const LLRect& draw_rect);
+
+private:
+	class LLTextBase&	mEditor;
+	LLStyleConstSP	mStyle;
+};
 
 #endif

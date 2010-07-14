@@ -37,10 +37,12 @@
 
 // viewer includes
 #include "llagent.h"
+#include "llagentcamera.h"
 #include "llbutton.h"
 #include "llcommandhandler.h"
 #include "llviewercontrol.h"
 #include "llfloaterbuycurrency.h"
+#include "llbuycurrencyhtml.h"
 #include "llfloaterlagmeter.h"
 #include "llpanelnearbymedia.h"
 #include "llpanelvolumepulldown.h"
@@ -120,7 +122,6 @@ const U32 LLStatusBar::MAX_DATE_STRING_LENGTH = 2000;
 
 LLStatusBar::LLStatusBar(const LLRect& rect)
 :	LLPanel(),
-	mTextHealth(NULL),
 	mTextTime(NULL),
 	mSGBandwidth(NULL),
 	mSGPacketLoss(NULL),
@@ -180,11 +181,8 @@ BOOL LLStatusBar::postBuild()
 	// build date necessary data (must do after panel built)
 	setupDate();
 
-	mTextHealth = getChild<LLTextBox>("HealthText" );
 	mTextTime = getChild<LLTextBox>("TimeText" );
 	
-	getChild<LLUICtrl>("buycurrency")->setCommitCallback( 
-		boost::bind(&LLStatusBar::onClickBuyCurrency, this));
 	getChild<LLUICtrl>("buyL")->setCommitCallback(
 		boost::bind(&LLStatusBar::onClickBuyCurrency, this));
 
@@ -314,7 +312,7 @@ void LLStatusBar::refresh()
 		childSetVisible("scriptout", false);
 	}
 
-	if (gAgent.getCameraMode() == CAMERA_MODE_MOUSELOOK &&
+	if (gAgentCamera.getCameraMode() == CAMERA_MODE_MOUSELOOK &&
 		((region && region->getAllowDamage()) || (parcel && parcel->getAllowDamage())))
 	{
 		// set visibility based on flashing
@@ -327,24 +325,12 @@ void LLStatusBar::refresh()
 			BOOL flash = S32(mHealthTimer->getElapsedSeconds() * ICON_FLASH_FREQUENCY) & 1;
 			childSetVisible("health", flash);
 		}
-		mTextHealth->setVisible(TRUE);
 
 		// Health
 		childGetRect( "health", buttonRect );
 		r.setOriginAndSize( x, y, buttonRect.getWidth(), buttonRect.getHeight());
 		childSetRect("health", r);
 		x += buttonRect.getWidth();
-
-		const S32 health_width = S32( LLFontGL::getFontSansSerifSmall()->getWidth(std::string("100%")) );
-		r.set(x, y+TEXT_HEIGHT - 2, x+health_width, y);
-		mTextHealth->setRect(r);
-		x += health_width;
-	}
-	else
-	{
-		// invisible if region doesn't allow damage
-		childSetVisible("health", false);
-		mTextHealth->setVisible(FALSE);
 	}
 
 	mSGBandwidth->setVisible(net_stats_visible);
@@ -370,8 +356,9 @@ void LLStatusBar::refresh()
 void LLStatusBar::setVisibleForMouselook(bool visible)
 {
 	mTextTime->setVisible(visible);
-	getChild<LLUICtrl>("buycurrency")->setVisible(visible);
-	getChild<LLUICtrl>("buyL")->setVisible(visible);
+	getChild<LLUICtrl>("balance_bg")->setVisible(visible);
+	mBtnVolume->setVisible(visible);
+	mMediaToggle->setVisible(visible);
 	mSGBandwidth->setVisible(visible);
 	mSGPacketLoss->setVisible(visible);
 	setBackgroundVisible(visible);
@@ -391,18 +378,21 @@ void LLStatusBar::setBalance(S32 balance)
 {
 	std::string money_str = LLResMgr::getInstance()->getMonetaryString( balance );
 
-	LLButton* btn_buy_currency = getChild<LLButton>("buycurrency");
+	LLTextBox* balance_box = getChild<LLTextBox>("balance");
 	LLStringUtil::format_map_t string_args;
 	string_args["[AMT]"] = llformat("%s", money_str.c_str());
 	std::string label_str = getString("buycurrencylabel", string_args);
-	btn_buy_currency->setLabel(label_str);
+	balance_box->setValue(label_str);
 
-	// Resize the balance button so that the label fits it, and the button expands to the left.
-	// *TODO: LLButton should have an option where to expand.
+	// Resize the L$ balance background to be wide enough for your balance plus the buy button
 	{
-		S32 saved_right = btn_buy_currency->getRect().mRight;
-		btn_buy_currency->autoResize();
-		btn_buy_currency->translate(saved_right - btn_buy_currency->getRect().mRight, 0);
+		const S32 HPAD = 24;
+		LLRect balance_rect = balance_box->getTextBoundingRect();
+		LLRect buy_rect = getChildView("buyL")->getRect();
+		LLView* balance_bg_view = getChildView("balance_bg");
+		LLRect balance_bg_rect = balance_bg_view->getRect();
+		balance_bg_rect.mLeft = balance_bg_rect.mRight - (buy_rect.getWidth() + balance_rect.getWidth() + HPAD);
+		balance_bg_view->setShape(balance_bg_rect);
 	}
 
 	if (mBalance && (fabs((F32)(mBalance - balance)) > gSavedSettings.getF32("UISndMoneyChangeThreshold")))
@@ -439,17 +429,13 @@ void LLStatusBar::sendMoneyBalanceRequest()
 void LLStatusBar::setHealth(S32 health)
 {
 	//llinfos << "Setting health to: " << buffer << llendl;
-	mTextHealth->setText(llformat("%d%%", health));
-
 	if( mHealth > health )
 	{
 		if (mHealth > (health + gSavedSettings.getF32("UISndHealthReductionThreshold")))
 		{
-			LLVOAvatar *me;
-
-			if ((me = gAgent.getAvatarObject()))
+			if (isAgentAvatarValid())
 			{
-				if (me->getSex() == SEX_FEMALE)
+				if (gAgentAvatarp->getSex() == SEX_FEMALE)
 				{
 					make_ui_sound("UISndHealthReductionF");
 				}
@@ -509,7 +495,9 @@ S32 LLStatusBar::getSquareMetersLeft() const
 
 void LLStatusBar::onClickBuyCurrency()
 {
-	LLFloaterBuyCurrency::buyCurrency();
+	// open a currency floater - actual one open depends on 
+	// value specified in settings.xml
+	LLBuyCurrencyHTML::openCurrencyFloater();
 }
 
 static void onClickHealth(void* )

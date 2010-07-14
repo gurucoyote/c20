@@ -119,8 +119,7 @@ LLPanelGroupRoles::LLPanelGroupRoles()
 	mCurrentTab(NULL),
 	mRequestedTab( NULL ),
 	mSubTabContainer( NULL ),
-	mFirstUse( TRUE ),
-	mIgnoreTransition( FALSE )
+	mFirstUse( TRUE )
 {
 }
 
@@ -146,8 +145,6 @@ BOOL LLPanelGroupRoles::postBuild()
 			llwarns << "Invalid subtab panel: " << panel->getName() << llendl;
 			return FALSE;
 		}
-		// Add click callbacks to all the tabs.
-		mSubTabContainer->setCommitCallback(boost::bind(&LLPanelGroupRoles::handleClickSubTab, this));
 
 		// Hand the subtab a pointer to this LLPanelGroupRoles, so that it can
 		// look around for the widgets it is interested in.
@@ -156,6 +153,8 @@ BOOL LLPanelGroupRoles::postBuild()
 
 		//subtabp->addObserver(this);
 	}
+	// Add click callbacks to tab switching.
+	mSubTabContainer->setValidateBeforeCommit(boost::bind(&LLPanelGroupRoles::handleSubTabSwitch, this, _1));
 
 	// Set the current tab to whatever is currently being shown.
 	mCurrentTab = (LLPanelGroupTab*) mSubTabContainer->getCurrentPanel();
@@ -197,30 +196,17 @@ BOOL LLPanelGroupRoles::isVisibleByAgent(LLAgent* agentp)
 								   
 }
 
-void LLPanelGroupRoles::handleClickSubTab()
+bool LLPanelGroupRoles::handleSubTabSwitch(const LLSD& data)
 {
-	// If we are already handling a transition,
-	// ignore this.
-	if (mIgnoreTransition)
+	std::string panel_name = data.asString();
+	
+	if(mRequestedTab != NULL)//we already have tab change request
 	{
-		return;
+		return false;
 	}
 
-	mRequestedTab = (LLPanelGroupTab*) mSubTabContainer->getCurrentPanel();
+	mRequestedTab = static_cast<LLPanelGroupTab*>(mSubTabContainer->getPanelByName(panel_name));
 
-	// Make sure they aren't just clicking the same tab...
-	if (mRequestedTab == mCurrentTab)
-	{
-		return;
-	}
-
-	// Try to switch from the current panel to the panel the user selected.
-	attemptTransition();
-}
-
-BOOL LLPanelGroupRoles::attemptTransition()
-{
-	// Check if the current tab needs to be applied.
 	std::string mesg;
 	if (mCurrentTab && mCurrentTab->needsApply(mesg))
 	{
@@ -236,26 +222,14 @@ BOOL LLPanelGroupRoles::attemptTransition()
 		LLNotificationsUtil::add("PanelGroupApply", args, LLSD(),
 			boost::bind(&LLPanelGroupRoles::handleNotifyCallback, this, _1, _2));
 		mHasModal = TRUE;
-		// We need to reselect the current tab, since it isn't finished.
-		if (mSubTabContainer)
-		{
-			mIgnoreTransition = TRUE;
-			mSubTabContainer->selectTabPanel( mCurrentTab );
-			mIgnoreTransition = FALSE;
-		}
+		
 		// Returning FALSE will block a close action from finishing until
 		// we get a response back from the user.
-		return FALSE;
+		return false;
 	}
-	else
-	{
-		// The current panel didn't have anything it needed to apply.
-		if (mRequestedTab)
-		{
-			transitionToTab();
-		}
-		return TRUE;
-	}
+
+	transitionToTab();
+	return true;
 }
 
 void LLPanelGroupRoles::transitionToTab()
@@ -272,6 +246,7 @@ void LLPanelGroupRoles::transitionToTab()
 		// This is now the current tab;
 		mCurrentTab = mRequestedTab;
 		mCurrentTab->activate();
+		mRequestedTab = 0;
 	}
 }
 
@@ -279,6 +254,7 @@ bool LLPanelGroupRoles::handleNotifyCallback(const LLSD& notification, const LLS
 {
 	S32 option = LLNotificationsUtil::getSelectedOption(notification, response);
 	mHasModal = FALSE;
+	LLPanelGroupTab* transition_tab = mRequestedTab;
 	switch (option)
 	{
 	case 0: // "Apply Changes"
@@ -298,26 +274,20 @@ bool LLPanelGroupRoles::handleNotifyCallback(const LLSD& notification, const LLS
 			// Skip switching tabs.
 			break;
 		}
-
-		// This panel's info successfully applied.
-		// Switch to the next panel.
-		// No break!  Continue into 'Ignore Changes' which just switches tabs.
-		mIgnoreTransition = TRUE;
-		mSubTabContainer->selectTabPanel( mRequestedTab );
-		mIgnoreTransition = FALSE;
 		transitionToTab();
+		mSubTabContainer->selectTabPanel( transition_tab );
+		
 		break;
 	}
 	case 1: // "Ignore Changes"
 		// Switch to the requested panel without applying changes
 		cancel();
-		mIgnoreTransition = TRUE;
-		mSubTabContainer->selectTabPanel( mRequestedTab );
-		mIgnoreTransition = FALSE;
 		transitionToTab();
+		mSubTabContainer->selectTabPanel( transition_tab );
 		break;
 	case 2: // "Cancel"
 	default:
+		mRequestedTab = NULL;
 		// Do nothing.  The user is canceling the action.
 		break;
 	}
@@ -828,8 +798,39 @@ BOOL LLPanelGroupMembersSubTab::postBuildSubTab(LLView* root)
 
 void LLPanelGroupMembersSubTab::setGroupID(const LLUUID& id)
 {
-	LLPanelGroupSubTab::setGroupID(id);
+	//clear members list
+	if(mMembersList) mMembersList->deleteAllItems();
+	if(mAssignedRolesList) mAssignedRolesList->deleteAllItems();
+	if(mAllowedActionsList) mAllowedActionsList->deleteAllItems();
 
+	LLPanelGroupSubTab::setGroupID(id);
+}
+
+void LLPanelGroupRolesSubTab::setGroupID(const LLUUID& id)
+{
+	if(mRolesList) mRolesList->deleteAllItems();
+	if(mAssignedMembersList) mAssignedMembersList->deleteAllItems();
+	if(mAllowedActionsList) mAllowedActionsList->deleteAllItems();
+
+	if(mRoleName) mRoleName->clear();
+	if(mRoleDescription) mRoleDescription->clear();
+	if(mRoleTitle) mRoleTitle->clear();
+
+	mHasRoleChange = FALSE;
+
+	setFooterEnabled(FALSE);
+
+	LLPanelGroupSubTab::setGroupID(id);
+}
+void LLPanelGroupActionsSubTab::setGroupID(const LLUUID& id)
+{
+	if(mActionList) mActionList->deleteAllItems();
+	if(mActionRoles) mActionRoles->deleteAllItems();
+	if(mActionMembers) mActionMembers->deleteAllItems();
+
+	if(mActionDescription) mActionDescription->clear();
+
+	LLPanelGroupSubTab::setGroupID(id);
 }
 
 
@@ -860,7 +861,7 @@ void LLPanelGroupMembersSubTab::handleMemberSelect()
 	if (selection.empty()) return;
 
 	// Build a vector of all selected members, and gather allowed actions.
-	std::vector<LLUUID> selected_members;
+	uuid_vec_t selected_members;
 	U64 allowed_by_all = 0xffffffffffffLL;
 	U64 allowed_by_some = 0;
 
@@ -926,8 +927,8 @@ void LLPanelGroupMembersSubTab::handleMemberSelect()
 			if (cb_enable && (count > 0) && role_id == gdatap->mOwnerRole)
 			{
 				// Check if any owners besides this agent are selected.
-				std::vector<LLUUID>::const_iterator member_iter;
-				std::vector<LLUUID>::const_iterator member_end =
+				uuid_vec_t::const_iterator member_iter;
+				uuid_vec_t::const_iterator member_end =
 												selected_members.end();
 				for (member_iter = selected_members.begin();
 					 member_iter != member_end;	
@@ -953,7 +954,7 @@ void LLPanelGroupMembersSubTab::handleMemberSelect()
 
 			//now see if there are any role changes for the selected
 			//members and remember to include them
-			std::vector<LLUUID>::iterator sel_mem_iter = selected_members.begin();
+			uuid_vec_t::iterator sel_mem_iter = selected_members.begin();
 			for (; sel_mem_iter != selected_members.end(); sel_mem_iter++)
 			{
 				LLRoleMemberChangeType type;
@@ -1010,7 +1011,7 @@ void LLPanelGroupMembersSubTab::handleMemberSelect()
 				check->setTentative(
 					(0 != count)
 					&& (selected_members.size() !=
-						(std::vector<LLUUID>::size_type)count));
+						(uuid_vec_t::size_type)count));
 
 				//NOTE: as of right now a user can break the group
 				//by removing himself from a role if he is the
@@ -1085,7 +1086,7 @@ void LLPanelGroupMembersSubTab::onEjectMembers(void *userdata)
 void LLPanelGroupMembersSubTab::handleEjectMembers()
 {
 	//send down an eject message
-	std::vector<LLUUID> selected_members;
+	uuid_vec_t selected_members;
 
 	std::vector<LLScrollListItem*> selection = mMembersList->getAllSelected();
 	if (selection.empty()) return;
@@ -1106,13 +1107,13 @@ void LLPanelGroupMembersSubTab::handleEjectMembers()
 									 selected_members);
 }
 
-void LLPanelGroupMembersSubTab::sendEjectNotifications(const LLUUID& group_id, const std::vector<LLUUID>& selected_members)
+void LLPanelGroupMembersSubTab::sendEjectNotifications(const LLUUID& group_id, const uuid_vec_t& selected_members)
 {
 	LLGroupMgrGroupData* group_data = LLGroupMgr::getInstance()->getGroupData(group_id);
 
 	if (group_data)
 	{
-		for (std::vector<LLUUID>::const_iterator i = selected_members.begin(); i != selected_members.end(); ++i)
+		for (uuid_vec_t::const_iterator i = selected_members.begin(); i != selected_members.end(); ++i)
 		{
 			LLSD args;
 			std::string name;
@@ -1438,7 +1439,7 @@ U64 LLPanelGroupMembersSubTab::getAgentPowersBasedOnRoleChanges(const LLUUID& ag
 
 	if ( role_change_datap )
 	{
-		std::vector<LLUUID> roles_to_be_removed;
+		uuid_vec_t roles_to_be_removed;
 
 		for (role_change_data_map_t::iterator role = role_change_datap->begin();
 			 role != role_change_datap->end(); ++ role)
@@ -1751,8 +1752,7 @@ BOOL LLPanelGroupRolesSubTab::postBuildSubTab(LLView* root)
 	mRoleTitle->setKeystrokeCallback(onPropertiesKey, this);
 
 	mRoleDescription->setCommitOnFocusLost(TRUE);
-	mRoleDescription->setCommitCallback(onDescriptionCommit, this);
-	mRoleDescription->setFocusReceivedCallback(boost::bind(onDescriptionFocus, _1, this));
+	mRoleDescription->setKeystrokeCallback(boost::bind(&LLPanelGroupRolesSubTab::onDescriptionKeyStroke, this, _1));
 
 	setFooterEnabled(FALSE);
 
@@ -2087,8 +2087,8 @@ void LLPanelGroupRolesSubTab::buildMembersList()
 			LLGroupRoleData* rdatap = (*rit).second;
 			if (rdatap)
 			{
-				std::vector<LLUUID>::const_iterator mit = rdatap->getMembersBegin();
-				std::vector<LLUUID>::const_iterator end = rdatap->getMembersEnd();
+				uuid_vec_t::const_iterator mit = rdatap->getMembersBegin();
+				uuid_vec_t::const_iterator end = rdatap->getMembersEnd();
 				for ( ; mit != end; ++mit)
 				{
 					mAssignedMembersList->addNameItem((*mit));
@@ -2208,14 +2208,10 @@ void LLPanelGroupRolesSubTab::onPropertiesKey(LLLineEditor* ctrl, void* user_dat
 	self->notifyObservers();
 }
 
-// static 
-void LLPanelGroupRolesSubTab::onDescriptionFocus(LLFocusableElement* ctrl, void* user_data)
+void LLPanelGroupRolesSubTab::onDescriptionKeyStroke(LLTextEditor* caller)
 {
-	LLPanelGroupRolesSubTab* self = static_cast<LLPanelGroupRolesSubTab*>(user_data);
-	if (!self) return;
-
-	self->mHasRoleChange = TRUE;
-	self->notifyObservers();
+	mHasRoleChange = TRUE;
+	notifyObservers();
 }
 
 // static 

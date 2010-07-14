@@ -16,8 +16,8 @@
 	<button label="Mappa" name="classified_map_btn"/>
 	<combo_box label="" name="classified_mature_check">
 		<combo_box.item label="- Seleziona uno -" name="select_mature"/>
-		<combo_box.item label="Contenuto Mature" name="mature"/>
-		<combo_box.item label="Contenuto PG" name="pg"/>
+		<combo_box.item label="Contenuti di tipo Moderato" name="mature"/>
+		<combo_box.item label="Contenuti di tipo Generale" name="pg"/>
 	</combo_box>
 	<text bottom_delta="-24" name="classified_info_text" tool_tip="Più paghi per la tua pubblicità, più in alto apparirà nella lista">
 		Inserzione accettata, ma non ancora pubblicata

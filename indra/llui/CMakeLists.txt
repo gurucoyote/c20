@@ -52,6 +52,7 @@ set(llui_SOURCE_FILES
     llkeywords.cpp
     lllayoutstack.cpp
     lllineeditor.cpp
+    llloadingindicator.cpp
     lllocalcliprect.cpp
     llmenubutton.cpp
     llmenugl.cpp
@@ -90,6 +91,7 @@ set(llui_SOURCE_FILES
     lltextbox.cpp
     lltexteditor.cpp
     lltextparser.cpp
+    lltextutil.cpp
     lltextvalidate.cpp
     lltransutil.cpp
     lltoggleablemenu.cpp
@@ -144,6 +146,7 @@ set(llui_HEADER_FILES
     lllayoutstack.h
     lllazyvalue.h
     lllineeditor.h
+    llloadingindicator.h
     lllocalcliprect.h
     llmenubutton.h
     llmenugl.h
@@ -183,6 +186,7 @@ set(llui_HEADER_FILES
     lltextbox.h
     lltexteditor.h
     lltextparser.h
+    lltextutil.h
     lltextvalidate.h
     lltoggleablemenu.h
     lltooltip.h

@@ -49,6 +49,7 @@ typedef enum EGPUClass
 	GPU_CLASS_3 = 3
 } EGPUClass; 
 
+
 class LLFeatureInfo
 {
 public:
@@ -145,8 +146,13 @@ public:
 	// in the skip list if true
 	void applyFeatures(bool skipFeatures);
 
+	// load the dynamic GPU/feature table from a website
+	void fetchHTTPTables();
+	
 protected:
 	void loadGPUClass();
+	BOOL parseFeatureTable(std::string filename);
+	void parseGPUTable(std::string filename);
 	void initBaseMask();
 
 

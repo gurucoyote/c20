@@ -52,7 +52,7 @@ void LLUrlMatch::setValues(U32 start, U32 end, const std::string &url,
 						   const std::string &label, const std::string &tooltip,
 						   const std::string &icon, const LLUIColor& color,
 						   const std::string &menu, const std::string &location,
-						   bool disabled_link)
+						   bool disabled_link, const LLUUID& id)
 {
 	mStart = start;
 	mEnd = end;
@@ -64,4 +64,5 @@ void LLUrlMatch::setValues(U32 start, U32 end, const std::string &url,
 	mMenuName = menu;
 	mLocation = location;
 	mDisabledLink = disabled_link;
+	mID = id;
 }

@@ -100,6 +100,24 @@
 	<string name="LoginDownloadingClothing">
 		衣類をダウンロードしています...
 	</string>
+	<string name="InvalidCertificate">
+		証明書が無効または壊れています。 グリッド管理者にご連絡ください。
+	</string>
+	<string name="CertInvalidHostname">
+		無効なホストネームがサーバーにアクセスしていました。SLURL かグリッドのホストネームをご確認ください。
+	</string>
+	<string name="CertExpired">
+		グリッドが返した証明書は有効期限が終了していると考えられます。お使いのシステムクロックを確認するか、グリッドの管理者にお問い合わせください。
+	</string>
+	<string name="CertKeyUsage">
+		SSL 証明書のエラーが発生しました。  グリッド管理者にご連絡ください。
+	</string>
+	<string name="CertBasicConstraints">
+		サーバーの証明書チェーンに証明書が多すぎます。  グリッド管理者にご連絡ください。
+	</string>
+	<string name="CertInvalidSignature">
+		グリッドサーバーが返した証明書の署名を認証できませんでした。グリッドの管理者にお問い合わせください。
+	</string>
 	<string name="LoginFailedNoNetwork">
 		ネットワークエラー： 接続を確立できませんでした。お使いのネットワーク接続をご確認ください。
 	</string>
@@ -261,6 +279,9 @@
 	<string name="BUTTON_CLOSE_WIN">
 		閉じる （Ctrl+W）
 	</string>
+	<string name="BUTTON_CLOSE_CHROME">
+		閉じる
+	</string>
 	<string name="BUTTON_RESTORE">
 		復元
 	</string>
@@ -288,6 +309,9 @@
 	<string name="ReleaseNotes">
 		リリースノート
 	</string>
+	<string name="RELEASE_NOTES_BASE_URL">
+		http://wiki.secondlife.com/wiki/Release_Notes/
+	</string>
 	<string name="LoadingData">
 		ローディング...
 	</string>
@@ -302,6 +326,9 @@
 	</string>
 	<string name="GroupNameNone">
 		（なし）
+	</string>
+	<string name="AvalineCaller">
+		Avaline コール [ORDER]
 	</string>
 	<string name="AssetErrorNone">
 		エラーなし
@@ -729,6 +756,12 @@
 	<string name="land_type_unknown">
 		（不明）
 	</string>
+	<string name="Estate / Full Region">
+		不動産 / フルリージョン
+	</string>
+	<string name="Mainland / Full Region">
+		メインランド / フルリージョン
+	</string>
 	<string name="all_files">
 		全てのファイル
 	</string>
@@ -834,8 +867,50 @@
 	<string name="invalid">
 		無効
 	</string>
+	<string name="none">
+		なし
+	</string>
+	<string name="shirt_not_worn">
+		シャツ未着用
+	</string>
+	<string name="pants_not_worn">
+		パンツ未着用
+	</string>
+	<string name="shoes_not_worn">
+		靴未着用
+	</string>
+	<string name="socks_not_worn">
+		靴下未着用
+	</string>
+	<string name="jacket_not_worn">
+		ジャケット未着用
+	</string>
+	<string name="gloves_not_worn">
+		手袋未着用
+	</string>
+	<string name="undershirt_not_worn">
+		下着（上）未着用
+	</string>
+	<string name="underpants_not_worn">
+		下着（下）未着用
+	</string>
+	<string name="skirt_not_worn">
+		スカート未着用
+	</string>
+	<string name="alpha_not_worn">
+		アルファ未着用
+	</string>
+	<string name="tattoo_not_worn">
+		タトゥー未着用
+	</string>
+	<string name="invalid_not_worn">
+		無効
+	</string>
 	<string name="NewWearable">
 		新しい [WEARABLE_ITEM]
+	</string>
+	<string name="CreateNewWearable">
+		[WEARABLE_TYPE]を作成
 	</string>
 	<string name="next">
 		次へ
@@ -886,7 +961,7 @@
 		左脚
 	</string>
 	<string name="BodyPartsTorso">
-		頭
+		上半身
 	</string>
 	<string name="BodyPartsRightLeg">
 		右脚
@@ -904,10 +979,13 @@
 		ESC キーを押してワールドビューに戻ります
 	</string>
 	<string name="InventoryNoMatchingItems">
-		一致するアイテムがありませんでした。[secondlife:///app/search/groups 「検索」]をお試しください。
+		お探しのものは見つかりましたか？ [secondlife:///app/search/all/[SEARCH_TERM] 検索] をお試しください。
+	</string>
+	<string name="PlacesNoMatchingItems">
+		お探しのものは見つかりましたか？ [secondlife:///app/search/places/[SEARCH_TERM] 検索] をお試しください。
 	</string>
 	<string name="FavoritesNoMatchingItems">
-		ここにランドマークをドラッグして、お気に入りに追加します。
+		ここにランドマークをドラッグしてお気に入りに追加します。
 	</string>
 	<string name="InventoryNoTexture">
 		「持ち物」内にこのテクスチャのコピーがありません
@@ -940,6 +1018,7 @@
 	<string name="Wave" value=" 手を振る"/>
 	<string name="HelloAvatar" value=" やあ、アバター！"/>
 	<string name="ViewAllGestures" value="  すべて表示 &gt;&gt;"/>
+	<string name="GetMoreGestures" value="ショッピング &gt;&gt;"/>
 	<string name="Animations" value="アニメーション、"/>
 	<string name="Calling Cards" value="コーリングカード、"/>
 	<string name="Clothing" value="衣類、"/>
@@ -1016,7 +1095,7 @@
 	<string name="InvFolder Gestures">
 		ジェスチャー
 	</string>
-	<string name="InvFolder favorite">
+	<string name="InvFolder Favorite">
 		お気に入り
 	</string>
 	<string name="InvFolder Current Outfit">
@@ -1569,15 +1648,16 @@
 	<string name="MuteGroup">
 		（グループ）
 	</string>
+	<string name="MuteExternal">
+		（外部）
+	</string>
 	<string name="RegionNoCovenant">
 		この不動産には約款がありません。
 	</string>
 	<string name="RegionNoCovenantOtherOwner">
 		この不動産には約款がありません。 この不動産上の土地は不動産所有者により販売され、Linden Lab は販売しません。  販売に関するお問い合わせは、不動産所有者までお願い致します。
 	</string>
-	<string name="covenant_last_modified">
-		最終修正日：
-	</string>
+	<string name="covenant_last_modified" value="最終修正日："/>
 	<string name="none_text" value=" （なし） "/>
 	<string name="never_text" value=" （無） "/>
 	<string name="GroupOwned">
@@ -1626,25 +1706,25 @@
 		が渡しました
 	</string>
 	<string name="InvOfferYouDecline">
-		You decline
+		拒否：
 	</string>
 	<string name="InvOfferFrom">
-		from
+		送信元：
 	</string>
 	<string name="GroupMoneyTotal">
 		合計
 	</string>
 	<string name="GroupMoneyBought">
-		は購入しました
+		購入：
 	</string>
 	<string name="GroupMoneyPaidYou">
-		があなたに支払いました
+		あなたに支払い：
 	</string>
 	<string name="GroupMoneyPaidInto">
 		paid into
 	</string>
 	<string name="GroupMoneyBoughtPassTo">
-		bought pass to
+		入場許可を購入：
 	</string>
 	<string name="GroupMoneyPaidFeeForEvent">
 		がイベント用の費用を支払いました
@@ -2412,7 +2492,7 @@ www.secondlife.com から最新バージョンをダウンロードしてくだ�
 		頭の大きさ
 	</string>
 	<string name="Head Stretch">
-		頭の伸び
+		縦横の長さ
 	</string>
 	<string name="Heel Height">
 		ヒールの高さ
@@ -3240,7 +3320,7 @@ www.secondlife.com から最新バージョンをダウンロードしてくだ�
 		ほおの上部
 	</string>
 	<string name="Upper Chin Cleft">
-		あご上部の割れ具合
+		あご上部の割れ
 	</string>
 	<string name="Upper Eyelid Fold">
 		二重の幅
@@ -3311,6 +3391,15 @@ www.secondlife.com から最新バージョンをダウンロードしてくだ�
 	<string name="LocationCtrlDamageTooltip">
 		体力
 	</string>
+	<string name="LocationCtrlAdultIconTooltip">
+		Adult リージョン
+	</string>
+	<string name="LocationCtrlModerateIconTooltip">
+		Moderate リージョン
+	</string>
+	<string name="LocationCtrlGeneralIconTooltip">
+		General リージョン
+	</string>
 	<string name="UpdaterWindowTitle">
 		[APP_NAME] アップデート
 	</string>
@@ -3341,6 +3430,12 @@ www.secondlife.com から最新バージョンをダウンロードしてくだ�
 	<string name="UpdaterFailStartTitle">
 		ビューワの起動に失敗しました
 	</string>
+	<string name="ItemsComingInTooFastFrom">
+		[APP_NAME] ： アイテムが [FROM_NAME] から同時にたくさん読み込まれているため、自動プレビューが [TIME] 秒間無効となります。
+	</string>
+	<string name="ItemsComingInTooFast">
+		[APP_NAME] ： アイテムが同時にたくさん読み込まれているため、自動プレビューが [TIME] 秒間無効となります。
+	</string>
 	<string name="IM_logging_string">
 		-- インスタントメッセージの保存開始 --
 	</string>
@@ -3368,11 +3463,17 @@ www.secondlife.com から最新バージョンをダウンロードしてくだ�
 	<string name="IM_moderator_label">
 		（モデレータ）
 	</string>
-	<string name="started_call">
+	<string name="answered_call">
+		相手がコールを受けました
+	</string>
+	<string name="you_started_call">
 		ボイスコールを開始します
 	</string>
-	<string name="joined_call">
+	<string name="you_joined_call">
 		ボイスコールに参加しました
+	</string>
+	<string name="name_started_call">
+		[NAME] はボイスコールを開始します
 	</string>
 	<string name="ringing-im">
 		ボイスコールに参加...
@@ -3461,11 +3562,20 @@ www.secondlife.com から最新バージョンをダウンロードしてくだ�
 	<string name="unread_chat_multiple">
 		[SOURCES] は何か新しいことを言いました。
 	</string>
+	<string name="session_initialization_timed_out_error">
+		セッションの初期化がタイムアウトしました
+	</string>
+	<string name="voice_morphing_url">
+		http://secondlife.com/landing/voicemorphing
+	</string>
 	<string name="paid_you_ldollars">
 		[NAME] は L$[AMOUNT] 支払いました
 	</string>
 	<string name="you_paid_ldollars">
 		[NAME] に L$ [AMOUNT] を支払いました：[REASON]
+	</string>
+	<string name="you_paid_ldollars_no_info">
+		L$ [AMOUNT] を支払いました。
 	</string>
 	<string name="you_paid_ldollars_no_reason">
 		[NAME] に L$ [AMOUNT] を支払いました。
@@ -3576,5 +3686,126 @@ www.secondlife.com から最新バージョンをダウンロードしてくだ�
 	</string>
 	<string name="Contents">
 		コンテンツ
+	</string>
+	<string name="Gesture">
+		ジェスチャー
+	</string>
+	<string name="Male Gestures">
+		男性用ジェスチャー
+	</string>
+	<string name="Female Gestures">
+		女性用ジェスチャー
+	</string>
+	<string name="Other Gestures">
+		その他のジェスチャー
+	</string>
+	<string name="Speech Gestures">
+		会話ジェスチャー
+	</string>
+	<string name="Common Gestures">
+		一般的ジェスチャー
+	</string>
+	<string name="Male - Excuse me">
+		男性 - すみません
+	</string>
+	<string name="Male - Get lost">
+		男性 - Get lost
+	</string>
+	<string name="Male - Blow kiss">
+		男性 - 投げキッス
+	</string>
+	<string name="Male - Boo">
+		男性 - Boo
+	</string>
+	<string name="Male - Bored">
+		男性 - 退屈
+	</string>
+	<string name="Male - Hey">
+		男性 - Hey
+	</string>
+	<string name="Male - Laugh">
+		男性 - 笑う
+	</string>
+	<string name="Male - Repulsed">
+		男性 - 拒絶
+	</string>
+	<string name="Male - Shrug">
+		男性 - 肩をすくめる
+	</string>
+	<string name="Male - Stick tougue out">
+		男性 - 舌を出す
+	</string>
+	<string name="Male - Wow">
+		男性 - Wow
+	</string>
+	<string name="Female - Excuse me">
+		女性 – すみません
+	</string>
+	<string name="Female - Get lost">
+		女性 – あっち行ってよ
+	</string>
+	<string name="Female - Blow kiss">
+		女性 - 投げキッス
+	</string>
+	<string name="Female - Boo">
+		女性 – ワッ！
+	</string>
+	<string name="Female - Bored">
+		女性 - 退屈
+	</string>
+	<string name="Female - Hey">
+		女性 - Hey
+	</string>
+	<string name="Female - Laugh">
+		女性 - 笑う
+	</string>
+	<string name="Female - Repulsed">
+		女性 - 拒絶
+	</string>
+	<string name="Female - Shrug">
+		女性 - 肩をすくめる
+	</string>
+	<string name="Female - Stick tougue out">
+		女性 - 舌を出す
+	</string>
+	<string name="Female - Wow">
+		女性 - Wow
+	</string>
+	<string name="AvatarBirthDateFormat">
+		[year,datetime,slt]/[mthnum,datetime,slt]/[day,datetime,slt]
+	</string>
+	<string name="DefaultMimeType">
+		なし/なし
+	</string>
+	<string name="texture_load_dimensions_error">
+		[WIDTH]*[HEIGHT] 以上の画像は読み込めません
+	</string>
+	<string name="words_separator" value=","/>
+	<string name="server_is_down">
+		大変申し訳ございませんが、予期せぬ問題が発生しました。
+
+	status.secondlifegrid.netで、サービスに関する既知の問題についてお調べください。
+        問題が引き続き発生する場合は、お使いのネットワークやファイアウォールの設定を確認してください。
+	</string>
+	<string name="dateTimeWeekdaysNames">
+		日曜日:月曜日:火曜日:水曜日:木曜日:金曜日:土曜日
+	</string>
+	<string name="dateTimeWeekdaysShortNames">
+		日:月:火:水:木:金:土
+	</string>
+	<string name="dateTimeMonthNames">
+		1月:2月:3月:4月:5月:6月:7月:8月:9月:10月:11月:12月
+	</string>
+	<string name="dateTimeMonthShortNames">
+		1月:2月:3月:4月:5月:6月:7月:8月:9月:10月:11月:12月
+	</string>
+	<string name="dateTimeDayFormat">
+		[MDAY]
+	</string>
+	<string name="dateTimeAM">
+		AM
+	</string>
+	<string name="dateTimePM">
+		PM
 	</string>
 </strings>

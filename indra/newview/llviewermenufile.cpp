@@ -37,9 +37,10 @@
 
 // project includes
 #include "llagent.h"
+#include "llagentcamera.h"
 #include "llfilepicker.h"
 #include "llfloaterreg.h"
-#include "llfloaterbuycurrency.h"
+#include "llbuycurrencyhtml.h"
 #include "llfloatersnapshot.h"
 #include "llimage.h"
 #include "llimagebmp.h"
@@ -141,9 +142,9 @@ std::string build_extensions_string(LLFilePicker::ELoadFilter filter)
 **/
 const std::string upload_pick(void* data)
 {
- 	if( gAgent.cameraMouselook() )
+ 	if( gAgentCamera.cameraMouselook() )
 	{
-		gAgent.changeCameraToDefault();
+		gAgentCamera.changeCameraToDefault();
 		// This doesn't seem necessary. JC
 		// display();
 	}
@@ -290,9 +291,9 @@ class LLFileUploadBulk : public view_listener_t
 {
 	bool handleEvent(const LLSD& userdata)
 	{
-		if( gAgent.cameraMouselook() )
+		if( gAgentCamera.cameraMouselook() )
 		{
-			gAgent.changeCameraToDefault();
+			gAgentCamera.changeCameraToDefault();
 		}
 
 		// TODO:
@@ -814,7 +815,7 @@ void upload_done_callback(const LLUUID& uuid, void* user_data, S32 result, LLExt
 					LLStringUtil::format_map_t args;
 					args["NAME"] = data->mAssetInfo.getName();
 					args["AMOUNT"] = llformat("%d", expected_upload_cost);
-					LLFloaterBuyCurrency::buyCurrency(LLTrans::getString("UploadingCosts", args), expected_upload_cost);
+					LLBuyCurrencyHTML::openCurrencyFloater( LLTrans::getString("UploadingCosts", args), expected_upload_cost );
 					is_balance_sufficient = FALSE;
 				}
 				else if(region)
@@ -1000,10 +1001,11 @@ void upload_new_resource(const LLTransactionID &tid, LLAssetType::EType asset_ty
 			S32 balance = gStatusBar->getBalance();
 			if (balance < expected_upload_cost)
 			{
-				// insufficient funds, bail on this upload
 				LLStringUtil::format_map_t args;
+				args["NAME"] = name;
 				args["AMOUNT"] = llformat("%d", expected_upload_cost);
-				LLFloaterBuyCurrency::buyCurrency(LLTrans::getString("uploading_costs", args), expected_upload_cost);
+				// insufficient funds, bail on this upload
+				LLBuyCurrencyHTML::openCurrencyFloater( LLTrans::getString("UploadingCosts", args), expected_upload_cost );
 				return;
 			}
 		}

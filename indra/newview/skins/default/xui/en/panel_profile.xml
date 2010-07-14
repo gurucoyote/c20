@@ -83,6 +83,7 @@
                allow_no_texture="true"
                default_image_name="None"
                enabled="false"
+               fallback_image="Generic_Person_Large"
                follows="top|left"
                height="124"
                layout="topleft"
@@ -107,6 +108,8 @@
                layout="topleft"
                left="107"
                textbox.max_length="512"
+               textbox.label="More"
+               textbox.show_context_menu="true"
                name="sl_description_edit"
                top_pad="-3"
                translate="false"
@@ -128,6 +131,7 @@
                allow_no_texture="true"
                default_image_name="None"
                enabled="false"
+               fallback_image="Generic_Person_Large"
                follows="top|left"
                height="124"
                layout="topleft"
@@ -151,6 +155,8 @@
                layout="topleft"
                left="107"
                textbox.max_length="512"
+               textbox.label="More"
+               textbox.show_context_menu="true"
                name="fl_description_edit"
                top_pad="-3"
                translate="false"
@@ -289,6 +295,8 @@
             left="7"
             name="sl_groups"
             textbox.max_length="512"
+            textbox.label="More"
+            textbox.show_context_menu="true"
             top_pad="0"
             translate="false"
             width="290"
@@ -382,14 +390,6 @@
          label="Edit Profile"
          name="edit_profile_btn"
          tool_tip="Edit your personal information"
-         width="130" />
-        <button
-         follows="bottom|right"
-         height="23"
-         label="Edit Appearance"
-         left_pad="10"
-         name="edit_appearance_btn"
-         tool_tip="Create/edit your appearance: physical data, clothes and etc."
          width="130" />
         </layout_panel>
 

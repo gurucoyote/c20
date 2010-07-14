@@ -137,6 +137,10 @@ public:
 	 * @see load()
 	 */
 	void					dump() const;
+	/**
+	 * Process login complete event. Basically put current location into history
+	 */
+	void					handleLoginComplete();
 
 private:
 	

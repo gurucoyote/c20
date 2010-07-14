@@ -69,7 +69,7 @@
 				Sobre:
 			</text>
 			<text name="(500 chars)">
-				(500 chars)
+				(500 caract.)
 			</text>
 			<text_editor name="about" width="386"/>
 			<text name="Give item:">
@@ -96,7 +96,7 @@
           No navegador externo
         </flyout_button.item>
         <flyout_button.item name="home_item">
-          URL de Casa
+          URL do início
         </flyout_button.item>
 			</flyout_button>
 			<button label="?" label_selected="?" name="web_profile_help"/>

@@ -20,8 +20,8 @@
 	<button label="Profilo" left="260" name="classified_profile_btn"/>
 	<combo_box name="classified_mature_check">
 		<combo_box.item label="- Seleziona uno -" name="select_mature"/>
-		<combo_box.item label="Contenuto Mature" name="mature"/>
-		<combo_box.item label="Contenuto PG" name="pg"/>
+		<combo_box.item label="Contenuti di tipo Moderato" name="mature"/>
+		<combo_box.item label="Contenuti di tipo Generale" name="pg"/>
 	</combo_box>
 	<button label="Aggiorna" name="classified_update_btn"/>
 </panel>

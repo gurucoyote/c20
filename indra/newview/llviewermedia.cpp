@@ -34,6 +34,7 @@
 #include "llviewerprecompiledheaders.h"
 
 #include "llagent.h"
+#include "llagentcamera.h"
 #include "llviewermedia.h"
 #include "llviewermediafocus.h"
 #include "llmimetypes.h"
@@ -46,6 +47,7 @@
 #include "llviewertexturelist.h"
 #include "llvovolume.h"
 #include "llpluginclassmedia.h"
+#include "llplugincookiestore.h"
 #include "llviewerwindow.h"
 #include "llfocusmgr.h"
 #include "llcallbacklist.h"
@@ -55,6 +57,7 @@
 #include "llvoavatar.h"
 #include "llvoavatarself.h"
 #include "llviewerregion.h"
+#include "llwebsharing.h"	// For LLWebSharing::setOpenIDCookie(), *TODO: find a better way to do this!
 
 #include "llevent.h"		// LLSimpleListener
 #include "llnotificationsutil.h"
@@ -254,6 +257,43 @@ public:
 		LLViewerMediaImpl *mMediaImpl;
 		bool mInitialized;
 };
+
+class LLViewerMediaOpenIDResponder : public LLHTTPClient::Responder
+{
+LOG_CLASS(LLViewerMediaOpenIDResponder);
+public:
+	LLViewerMediaOpenIDResponder( )
+	{
+	}
+
+	~LLViewerMediaOpenIDResponder()
+	{
+	}
+
+	/* virtual */ void completedHeader(U32 status, const std::string& reason, const LLSD& content)
+	{
+		LL_DEBUGS("MediaAuth") << "status = " << status << ", reason = " << reason << LL_ENDL;
+		LL_DEBUGS("MediaAuth") << content << LL_ENDL;
+		std::string cookie = content["set-cookie"].asString();
+		
+		LLViewerMedia::openIDCookieResponse(cookie);
+	}
+
+	/* virtual */ void completedRaw(
+		U32 status,
+		const std::string& reason,
+		const LLChannelDescriptors& channels,
+		const LLIOPipe::buffer_ptr_t& buffer)
+	{
+		// This is just here to disable the default behavior (attempting to parse the response as llsd).
+		// We don't care about the content of the response, only the set-cookie header.
+	}
+
+};
+
+LLPluginCookieStore *LLViewerMedia::sCookieStore = NULL;
+LLURL LLViewerMedia::sOpenIDURL;
+std::string LLViewerMedia::sOpenIDCookie;
 static LLViewerMedia::impl_list sViewerMediaImplList;
 static LLViewerMedia::impl_id_map sViewerMediaTextureIDMap;
 static LLTimer sMediaCreateTimer;
@@ -262,6 +302,8 @@ static F32 sGlobalVolume = 1.0f;
 static F64 sLowestLoadableImplInterest = 0.0f;
 static bool sAnyMediaShowing = false;
 static boost::signals2::connection sTeleportFinishConnection;
+static std::string sUpdatedCookies;
+static const char *PLUGIN_COOKIE_FILE_NAME = "plugin_cookies.txt";
 
 //////////////////////////////////////////////////////////////////////////////////////////
 static void add_media_impl(LLViewerMediaImpl* media)
@@ -397,7 +439,6 @@ viewer_media_t LLViewerMedia::updateMediaImpl(LLMediaEntry* media_entry, const s
 		media_impl->setHomeURL(media_entry->getHomeURL());
 		media_impl->mMediaAutoPlay = media_entry->getAutoPlay();
 		media_impl->mMediaEntryURL = media_entry->getCurrentURL();
-		
 		if(media_impl->isAutoPlayable())
 		{
 			needs_navigate = true;
@@ -691,11 +732,25 @@ static bool proximity_comparitor(const LLViewerMediaImpl* i1, const LLViewerMedi
 	}
 }
 
+static LLFastTimer::DeclareTimer FTM_MEDIA_UPDATE("Update Media");
+
 //////////////////////////////////////////////////////////////////////////////////////////
 // static
 void LLViewerMedia::updateMedia(void *dummy_arg)
 {
+	LLFastTimer t1(FTM_MEDIA_UPDATE);
+	
+	// Enable/disable the plugin read thread
+	LLPluginProcessParent::setUseReadThread(gSavedSettings.getBOOL("PluginUseReadThread"));
+	
 	sAnyMediaShowing = false;
+	sUpdatedCookies = getCookieStore()->getChangedCookies();
+	if(!sUpdatedCookies.empty())
+	{
+		lldebugs << "updated cookies will be sent to all loaded plugins: " << llendl;
+		lldebugs << sUpdatedCookies << llendl;
+	}
+	
 	impl_list::iterator iter = sViewerMediaImplList.begin();
 	impl_list::iterator end = sViewerMediaImplList.end();
 
@@ -707,7 +762,7 @@ void LLViewerMedia::updateMedia(void *dummy_arg)
 	}
 		
 	// Sort the static instance list using our interest criteria
-	std::stable_sort(sViewerMediaImplList.begin(), sViewerMediaImplList.end(), priorityComparitor);
+	sViewerMediaImplList.sort(priorityComparitor);
 
 	// Go through the list again and adjust according to priority.
 	iter = sViewerMediaImplList.begin();
@@ -996,6 +1051,9 @@ void LLViewerMedia::clearAllCookies()
 		}
 	}
 	
+	// Clear all cookies from the cookie store
+	getCookieStore()->setAllCookies("");
+
 	// FIXME: this may not be sufficient, since the on-disk cookie file won't get written until some browser instance exits cleanly.
 	// It also won't clear cookies for other accounts, or for any account if we're not logged in, and won't do anything at all if there are no webkit plugins loaded.
 	// Until such time as we can centralize cookie storage, the following hack should cover these cases:
@@ -1006,6 +1064,7 @@ void LLViewerMedia::clearAllCookies()
 	// Places that cookie files can be:
 	// <getOSUserAppDir>/browser_profile/cookies
 	// <getOSUserAppDir>/first_last/browser_profile/cookies  (note that there may be any number of these!)
+	// <getOSUserAppDir>/first_last/plugin_cookies.txt  (note that there may be any number of these!)
 	
 	std::string base_dir = gDirUtilp->getOSUserAppDir() + gDirUtilp->getDirDelimiter();
 	std::string target;
@@ -1038,9 +1097,21 @@ void LLViewerMedia::clearAllCookies()
 		{	
 			LLFile::remove(target);
 		}
+		
+		// Other accounts may have new-style cookie files too -- delete them as well
+		target = base_dir;
+		target += filename;
+		target += gDirUtilp->getDirDelimiter();
+		target += PLUGIN_COOKIE_FILE_NAME;
+		lldebugs << "target = " << target << llendl;
+		if(LLFile::isfile(target))
+		{	
+			LLFile::remove(target);
+		}
 	}
 	
-	
+	// If we have an OpenID cookie, re-add it to the cookie store.
+	setOpenIDCookie();
 }
 	
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -1093,6 +1164,211 @@ void LLViewerMedia::setProxyConfig(bool enable, const std::string &host, int por
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // static 
+/////////////////////////////////////////////////////////////////////////////////////////
+// static
+LLPluginCookieStore *LLViewerMedia::getCookieStore()
+{
+	if(sCookieStore == NULL)
+	{
+		sCookieStore = new LLPluginCookieStore;
+	}
+	
+	return sCookieStore;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// static
+void LLViewerMedia::loadCookieFile()
+{
+	// build filename for each user
+	std::string resolved_filename = gDirUtilp->getExpandedFilename(LL_PATH_PER_SL_ACCOUNT, PLUGIN_COOKIE_FILE_NAME);
+
+	if (resolved_filename.empty())
+	{
+		llinfos << "can't get path to plugin cookie file - probably not logged in yet." << llendl;
+		return;
+	}
+	
+	// open the file for reading
+	llifstream file(resolved_filename);
+	if (!file.is_open())
+	{
+		llwarns << "can't load plugin cookies from file \"" << PLUGIN_COOKIE_FILE_NAME << "\"" << llendl;
+		return;
+	}
+	
+	getCookieStore()->readAllCookies(file, true);
+
+	file.close();
+	
+	// send the clear_cookies message to all loaded plugins
+	impl_list::iterator iter = sViewerMediaImplList.begin();
+	impl_list::iterator end = sViewerMediaImplList.end();
+	for (; iter != end; iter++)
+	{
+		LLViewerMediaImpl* pimpl = *iter;
+		if(pimpl->mMediaSource)
+		{
+			pimpl->mMediaSource->clear_cookies();
+		}
+	}
+	
+	// If we have an OpenID cookie, re-add it to the cookie store.
+	setOpenIDCookie();
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// static
+void LLViewerMedia::saveCookieFile()
+{
+	// build filename for each user
+	std::string resolved_filename = gDirUtilp->getExpandedFilename(LL_PATH_PER_SL_ACCOUNT, PLUGIN_COOKIE_FILE_NAME);
+
+	if (resolved_filename.empty())
+	{
+		llinfos << "can't get path to plugin cookie file - probably not logged in yet." << llendl;
+		return;
+	}
+
+	// open a file for writing
+	llofstream file (resolved_filename);
+	if (!file.is_open())
+	{
+		llwarns << "can't open plugin cookie file \"" << PLUGIN_COOKIE_FILE_NAME << "\" for writing" << llendl;
+		return;
+	}
+
+	getCookieStore()->writePersistentCookies(file);
+
+	file.close();
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// static
+void LLViewerMedia::addCookie(const std::string &name, const std::string &value, const std::string &domain, const LLDate &expires, const std::string &path, bool secure)
+{
+	std::stringstream cookie;
+	
+	cookie << name << "=" << LLPluginCookieStore::quoteString(value);
+	
+	if(expires.notNull())
+	{
+		cookie << "; expires=" << expires.asRFC1123();
+	}
+	
+	cookie << "; domain=" << domain;
+
+	cookie << "; path=" << path;
+	
+	if(secure)
+	{
+		cookie << "; secure";
+	}
+	
+	getCookieStore()->setCookies(cookie.str());
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// static
+void LLViewerMedia::addSessionCookie(const std::string &name, const std::string &value, const std::string &domain, const std::string &path, bool secure)
+{
+	// A session cookie just has a NULL date.
+	addCookie(name, value, domain, LLDate(), path, secure);
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// static
+void LLViewerMedia::removeCookie(const std::string &name, const std::string &domain, const std::string &path )
+{
+	// To remove a cookie, add one with the same name, domain, and path that expires in the past.
+	
+	addCookie(name, "", domain, LLDate(LLDate::now().secondsSinceEpoch() - 1.0), path);
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// static
+void LLViewerMedia::setOpenIDCookie()
+{
+	if(!sOpenIDCookie.empty())
+	{
+		// The LLURL can give me the 'authority', which is of the form: [username[:password]@]hostname[:port]
+		// We want just the hostname for the cookie code, but LLURL doesn't seem to have a way to extract that.
+		// We therefore do it here.
+		std::string authority = sOpenIDURL.mAuthority;
+		std::string::size_type host_start = authority.find('@'); 
+		if(host_start == std::string::npos)
+		{
+			// no username/password
+			host_start = 0;
+		}
+		else
+		{
+			// Hostname starts after the @. 
+			// (If the hostname part is empty, this may put host_start at the end of the string.  In that case, it will end up passing through an empty hostname, which is correct.)
+			++host_start;
+		}
+		std::string::size_type host_end = authority.rfind(':'); 
+		if((host_end == std::string::npos) || (host_end < host_start))
+		{
+			// no port
+			host_end = authority.size();
+		}
+		
+		getCookieStore()->setCookiesFromHost(sOpenIDCookie, authority.substr(host_start, host_end - host_start));
+
+		// *HACK: Doing this here is nasty, find a better way.
+		LLWebSharing::instance().setOpenIDCookie(sOpenIDCookie);
+	}
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// static
+void LLViewerMedia::openIDSetup(const std::string &openid_url, const std::string &openid_token)
+{
+	LL_DEBUGS("MediaAuth") << "url = \"" << openid_url << "\", token = \"" << openid_token << "\"" << LL_ENDL;
+
+	// post the token to the url 
+	// the responder will need to extract the cookie(s).
+
+	// Save the OpenID URL for later -- we may need the host when adding the cookie.
+	sOpenIDURL.init(openid_url.c_str());
+	
+	// We shouldn't ever do this twice, but just in case this code gets repurposed later, clear existing cookies.
+	sOpenIDCookie.clear();
+
+	LLSD headers = LLSD::emptyMap();
+	// Keep LLHTTPClient from adding an "Accept: application/llsd+xml" header
+	headers["Accept"] = "*/*";
+	// and use the expected content-type for a post, instead of the LLHTTPClient::postRaw() default of "application/octet-stream"
+	headers["Content-Type"] = "application/x-www-form-urlencoded";
+
+	// postRaw() takes ownership of the buffer and releases it later, so we need to allocate a new buffer here.
+	size_t size = openid_token.size();
+	U8 *data = new U8[size];
+	memcpy(data, openid_token.data(), size);
+
+	LLHTTPClient::postRaw( 
+		openid_url, 
+		data, 
+		size, 
+		new LLViewerMediaOpenIDResponder(),
+		headers);
+			
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// static
+void LLViewerMedia::openIDCookieResponse(const std::string &cookie)
+{
+	LL_DEBUGS("MediaAuth") << "Cookie received: \"" << cookie << "\"" << LL_ENDL;
+	
+	sOpenIDCookie += cookie;
+
+	setOpenIDCookie();
+}
+
 bool LLViewerMedia::hasInWorldMedia()
 {
 	if (sInWorldMediaDisabled) return false;
@@ -1230,11 +1506,6 @@ LLViewerMediaImpl::LLViewerMediaImpl(	  const LLUUID& texture_id,
 //////////////////////////////////////////////////////////////////////////////////////////
 LLViewerMediaImpl::~LLViewerMediaImpl()
 {
-	if( gEditMenuHandler == this )
-	{
-		gEditMenuHandler = NULL;
-	}
-	
 	destroyMediaSource();
 	
 	LLViewerMediaTexture::removeMediaImplFromTexture(mTextureId) ;
@@ -1294,7 +1565,10 @@ void LLViewerMediaImpl::createMediaSource()
 	}
 	else if(! mMimeType.empty())
 	{
-		initializeMedia(mMimeType);
+		if (!initializeMedia(mMimeType))
+		{
+			LL_WARNS("Media") << "Failed to initialize media for mime type " << mMimeType << LL_ENDL;
+		}
 	}
 }
 
@@ -1314,6 +1588,7 @@ void LLViewerMediaImpl::destroyMediaSource()
 	
 	if(mMediaSource)
 	{
+		mMediaSource->setDeleteOK(true) ;
 		delete mMediaSource;
 		mMediaSource = NULL;
 	}	
@@ -1453,8 +1728,19 @@ bool LLViewerMediaImpl::initializePlugin(const std::string& media_type)
 			media_source->clear_cache();
 		}
 		
+		// TODO: Only send cookies to plugins that need them
+		//  Ideally, the plugin should tell us whether it handles cookies or not -- either via the init response or through a separate message.
+		//  Due to the ordering of messages, it's possible we wouldn't get that information back in time to send cookies before sending a navigate message,
+		//  which could cause odd race conditions.
+		std::string all_cookies = LLViewerMedia::getCookieStore()->getAllCookies();
+		lldebugs << "setting cookies: " << all_cookies << llendl;
+		if(!all_cookies.empty())
+		{
+			media_source->set_cookies(all_cookies);
+		}
+				
 		mMediaSource = media_source;
-
+		mMediaSource->setDeleteOK(false) ;
 		updateVolume();
 
 		return true;
@@ -1492,29 +1778,22 @@ void LLViewerMediaImpl::loadURI()
 		llinfos << "Asking media source to load URI: " << uri << llendl;
 		
 		mMediaSource->loadURI( uri );
-
+		
+		// A non-zero mPreviousMediaTime means that either this media was previously unloaded by the priority code while playing/paused, 
+		// or a seek happened before the media loaded.  In either case, seek to the saved time.
+		if(mPreviousMediaTime != 0.0f)
+		{
+			seek(mPreviousMediaTime);
+		}
+			
 		if(mPreviousMediaState == MEDIA_PLAYING)
 		{
 			// This media was playing before this instance was unloaded.
-
-			if(mPreviousMediaTime != 0.0f)
-			{
-				// Seek back to where we left off, if possible.
-				seek(mPreviousMediaTime);
-			}
-			
 			start();
 		}
 		else if(mPreviousMediaState == MEDIA_PAUSED)
 		{
 			// This media was paused before this instance was unloaded.
-
-			if(mPreviousMediaTime != 0.0f)
-			{
-				// Seek back to where we left off, if possible.
-				seek(mPreviousMediaTime);
-			}
-			
 			pause();
 		}
 		else
@@ -1573,6 +1852,10 @@ void LLViewerMediaImpl::pause()
 	{
 		mMediaSource->pause();
 	}
+	else
+	{
+		mPreviousMediaState = MEDIA_PAUSED;
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1582,6 +1865,10 @@ void LLViewerMediaImpl::start()
 	{
 		mMediaSource->start();
 	}
+	else
+	{
+		mPreviousMediaState = MEDIA_PLAYING;
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1590,6 +1877,11 @@ void LLViewerMediaImpl::seek(F32 time)
 	if(mMediaSource)
 	{
 		mMediaSource->seek(time);
+	}
+	else
+	{
+		// Save the seek time to be set when the media is loaded.
+		mPreviousMediaTime = time;
 	}
 }
 
@@ -1639,7 +1931,28 @@ void LLViewerMediaImpl::updateVolume()
 {
 	if(mMediaSource)
 	{
-		mMediaSource->setVolume(mRequestedVolume * LLViewerMedia::getVolume());
+		// always scale the volume by the global media volume 
+		F32 volume = mRequestedVolume * LLViewerMedia::getVolume();
+
+		if (mProximityCamera > 0) 
+		{
+			if (mProximityCamera > gSavedSettings.getF32("MediaRollOffMax"))
+			{
+				volume = 0;
+			}
+			else if (mProximityCamera > gSavedSettings.getF32("MediaRollOffMin"))
+			{
+				// attenuated_volume = 1 / (roll_off_rate * (d - min))^2
+				// the +1 is there so that for distance 0 the volume stays the same
+				F64 adjusted_distance = mProximityCamera - gSavedSettings.getF32("MediaRollOffMin");
+				F64 attenuation = 1.0 + (gSavedSettings.getF32("MediaRollOffRate") * adjusted_distance);
+				attenuation = 1.0 / (attenuation * attenuation);
+				// the attenuation multiplier should never be more than one since that would increase volume
+				volume = volume * llmin(1.0, attenuation);
+			}
+		}
+
+		mMediaSource->setVolume(volume);
 	}
 }
 
@@ -1970,7 +2283,7 @@ void LLViewerMediaImpl::navigateInternal()
 	// This helps in supporting legacy media content where the server the media resides on returns a bogus MIME type
 	// but the parcel owner has correctly set the MIME type in the parcel media settings.
 	
-	if(!mMimeType.empty() && (mMimeType != "none/none"))
+	if(!mMimeType.empty() && (mMimeType != LLMIMETypes::getDefaultMimeType()))
 	{
 		std::string plugin_basename = LLMIMETypes::implType(mMimeType);
 		if(!plugin_basename.empty())
@@ -2150,6 +2463,18 @@ void LLViewerMediaImpl::update()
 			}
 		}
 	}
+	else
+	{
+		updateVolume();
+
+		// If we didn't just create the impl, it may need to get cookie updates.
+		if(!sUpdatedCookies.empty())
+		{
+			// TODO: Only send cookies to plugins that need them
+			mMediaSource->set_cookies(sUpdatedCookies);
+		}
+	}
+
 	
 	if(mMediaSource == NULL)
 	{
@@ -2491,6 +2816,33 @@ void LLViewerMediaImpl::handleMediaEvent(LLPluginClassMedia* plugin, LLPluginCla
 
 		}
 		break;
+		case MEDIA_EVENT_CLICK_LINK_HREF:
+		{
+			LL_DEBUGS("Media") <<  "Media event:  MEDIA_EVENT_CLICK_LINK_HREF, target is \"" << plugin->getClickTarget() << "\", uri is " << plugin->getClickURL() << LL_ENDL;
+			// retrieve the event parameters
+			std::string url = plugin->getClickURL();
+			U32 target_type = plugin->getClickTargetType();
+			
+			switch (target_type)
+			{
+			case LLPluginClassMedia::TARGET_EXTERNAL:
+				// force url to external browser
+				LLWeb::loadURLExternal(url);
+				break;
+			case LLPluginClassMedia::TARGET_BLANK:
+				// open in SL media browser or external browser based on user pref
+				LLWeb::loadURL(url);
+				break;
+			case LLPluginClassMedia::TARGET_NONE:
+				// ignore this click and let media plugin handle it
+				break;
+			case LLPluginClassMedia::TARGET_OTHER:
+				LL_WARNS("LinkTarget") << "Unsupported link target type" << LL_ENDL;
+				break;
+			default: break;
+			}
+		};
+		break;
 		case MEDIA_EVENT_PLUGIN_FAILED_LAUNCH:
 		{
 			// The plugin failed to load properly.  Make sure the timer doesn't retry.
@@ -2612,6 +2964,13 @@ void LLViewerMediaImpl::handleMediaEvent(LLPluginClassMedia* plugin, LLPluginCla
 
 ////////////////////////////////////////////////////////////////////////////////
 // virtual
+void LLViewerMediaImpl::handleCookieSet(LLPluginClassMedia* self, const std::string &cookie)
+{
+	LLViewerMedia::getCookieStore()->setCookies(cookie);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// virtual
 void
 LLViewerMediaImpl::cut()
 {
@@ -2707,6 +3066,9 @@ void LLViewerMediaImpl::calculateInterest()
 		LLVector3d agent_global = gAgent.getPositionGlobal() ;
 		LLVector3d global_delta = agent_global - obj_global ;
 		mProximityDistance = global_delta.magVecSquared();  // use distance-squared because it's cheaper and sorts the same.
+
+		LLVector3d camera_delta = gAgentCamera.getCameraPositionGlobal() - obj_global;
+		mProximityCamera = camera_delta.magVec();
 	}
 	
 	if(mNeedsMuteCheck)
@@ -3030,7 +3392,7 @@ bool LLViewerMediaImpl::isObjectAttachedToAnotherAvatar(LLVOVolume *obj)
 		if (NULL != object)
 		{
 			LLVOAvatar *avatar = object->asAvatar();
-			if (NULL != avatar && avatar != gAgent.getAvatarObject())
+			if ((NULL != avatar) && (avatar != gAgentAvatarp))
 			{
 				result = true;
 				break;

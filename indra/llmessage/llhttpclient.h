@@ -41,7 +41,8 @@
 #include <string>
 
 #include <boost/intrusive_ptr.hpp>
-
+#include <openssl/x509_vfy.h>
+#include "llurlrequest.h"
 #include "llassettype.h"
 #include "llcurl.h"
 #include "lliopipe.h"
@@ -62,6 +63,7 @@ public:
 	typedef LLCurl::Responder Responder;
 	typedef LLCurl::ResponderPtr ResponderPtr;
 
+	
 	/** @name non-blocking API */
 	//@{
 	static void head(
@@ -156,7 +158,12 @@ public:
 	static void setPump(LLPumpIO& pump);
 		///< must be called before any of the above calls are made
 	static bool hasPump();
-		///< for testing
+
+	static void setCertVerifyCallback(LLURLRequest::SSLCertVerifyCallback callback);
+	static  LLURLRequest::SSLCertVerifyCallback getCertVerifyCallback() { return mCertVerifyCallback; }
+
+protected:
+	static LLURLRequest::SSLCertVerifyCallback mCertVerifyCallback;
 };
 
 #endif // LL_LLHTTPCLIENT_H

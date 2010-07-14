@@ -2,12 +2,11 @@
 <floater name="godtools floater" title="ゴッド・ツール">
 	<tab_container name="GodTools Tabs">
 		<panel label="グリッド" name="grid">
-			<button label="住人全員を追い出す" label_selected="住人全員を追い出す" name="Kick all users" width="160"/>
 			<button label="この地域の地図の表示キャッシュを消去" label_selected="この地域の地図の表示キャッシュを消去" name="Flush This Region&apos;s Map Visibility Caches"/>
 		</panel>
 		<panel label="地域" name="region">
-			<text name="Sim Name:">
-				シム名：
+			<text name="Region Name:">
+				リージョン名：
 			</text>
 			<check_box label="準備" name="check prelude" tool_tip="この設定により、この地域の準備をします。"/>
 			<check_box label="太陽固定" name="check fixed sun" tool_tip="太陽位置を固定（[地域／不動産]＞[地形]の場合と同様）"/>
@@ -15,7 +14,7 @@
 			<check_box label="可視" name="check visible" tool_tip="この設定により、この地域をゴッド・モード以外でも可視にします。"/>
 			<check_box label="ダメージ" name="check damage" tool_tip="この設定により、この地域内でダメージを有効化します。"/>
 			<check_box label="トラフィック・トラッキングをブロック" name="block dwell" tool_tip="この設定により、この地域内のトラフィック計算をオフにします。"/>
-			<check_box label="土地整備をブロック" name="block terraform" tool_tip="この設定により、この地域内での土地整備を禁止"/>
+			<check_box label="地形編集をブロック" name="block terraform" tool_tip="この設定により、この地域内での土地整備を禁止"/>
 			<check_box label="サンドボックス" name="is sandbox" tool_tip="これがサンドボックス地域でも切り替え"/>
 			<button label="地形を構築する" label_selected="地形を構築する" name="Bake Terrain" tool_tip="現在の地形をデフォルトとして保存します。"/>
 			<button label="地形を元に戻す" label_selected="地形を元に戻す" name="Revert Terrain" tool_tip="現在の地形をデフォルトに置換します。"/>
@@ -52,8 +51,8 @@
 			<panel.string name="no_target">
 				（ターゲットなし）
 			</panel.string>
-			<text name="Sim Name:">
-				シム名：
+			<text name="Region Name:">
+				リージョン名：
 			</text>
 			<text name="region name">
 				ウェルシュ

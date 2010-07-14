@@ -24,15 +24,16 @@
  </string>
   <button
      follows="top|right"
-     height="23"
-     image_overlay="BackArrow_Off"
+     height="24"
+     image_hover_unselected="BackButton_Over"
+     image_pressed="BackButton_Press"
+     image_unselected="BackButton_Off"
      layout="topleft"
      name="back_btn"
-     picture_style="true"
-     left="12"
+     left="10"
      tab_stop="false"
      top="2"
-     width="23" />
+     width="30" />
    <text
      type="string"
      length="1"
@@ -40,7 +41,7 @@
      font="SansSerifHugeBold"
      height="26"
      layout="topleft"
-     left_pad="10"
+     left_pad="4"
      name="title"
      text_color="LtGray"
      top="0"
@@ -252,35 +253,6 @@
                  width="20"/>
             </icons_combo_box.item>
         </icons_combo_box>
-        <text
-         follows="left|top"
-         font.style="BOLD"
-         height="10"
-         layout="topleft"
-         left="10"
-         name="price_for_listing_label"
-         text_color="white"
-         top_pad="15"
-         value="Price for listing:"
-         width="250" />
-        <spinner
-         decimal_digits="0"
-         follows="left|top"
-         halign="left"
-         height="23"
-         increment="1"
-         label_width="20"
-         label="L$"
-         v_pad="10"
-         layout="topleft"
-         left="10"
-         value="50"
-         min_val="50"
-         max_val="99999"
-         name="price_for_listing"
-         top_pad="5"
-         tool_tip="Price for listing."
-         width="105" />
         <check_box
          height="16"
          label="Auto renew each week"

@@ -62,6 +62,7 @@ BOOL LLVertexBuffer::sVBOActive = FALSE;
 BOOL LLVertexBuffer::sIBOActive = FALSE;
 U32 LLVertexBuffer::sAllocatedBytes = 0;
 BOOL LLVertexBuffer::sMapped = FALSE;
+BOOL LLVertexBuffer::sUseStreamDraw = TRUE;
 
 std::vector<U32> LLVertexBuffer::sDeleteList;
 
@@ -382,7 +383,17 @@ LLVertexBuffer::LLVertexBuffer(U32 typemask, S32 usage) :
 	{
 		mUsage = 0 ; 
 	}
+
+	if (mUsage == GL_STREAM_DRAW_ARB && !sUseStreamDraw)
+	{
+		mUsage = 0;
+	}
 	
+	if (mUsage == GL_STREAM_DRAW_ARB && !sUseStreamDraw)
+	{
+		mUsage = 0;
+	}
+
 	S32 stride = calcStride(typemask, mOffsets);
 
 	mTypeMask = typemask;
@@ -814,7 +825,7 @@ BOOL LLVertexBuffer::useVBOs() const
 		return FALSE;
 	}
 #endif
-	return sEnableVBOs;
+	return TRUE;
 }
 
 //----------------------------------------------------------------------------
@@ -1178,7 +1189,7 @@ void LLVertexBuffer::setBuffer(U32 data_mask)
 	{		
 		if (mGLBuffer)
 		{
-			if (sEnableVBOs && sVBOActive)
+			if (sVBOActive)
 			{
 				glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
 				sBindCount++;
@@ -1190,7 +1201,7 @@ void LLVertexBuffer::setBuffer(U32 data_mask)
 				setup = TRUE; // ... or a client memory pointer changed
 			}
 		}
-		if (sEnableVBOs && mGLIndices && sIBOActive)
+		if (mGLIndices && sIBOActive)
 		{
 			/*if (sMapped)
 			{

@@ -525,7 +525,7 @@ F32 LLDrawable::updateXform(BOOL undamped)
 		{
 			// snap to final position
 			dist_squared = 0.0f;
-			if (!isRoot())
+			if (getVOVolume() && !isRoot())
 			{ //child prim snapping to some position, needs a rebuild
 				gPipeline.markRebuild(this, LLDrawable::REBUILD_POSITION, TRUE);
 			}
@@ -1368,10 +1368,11 @@ void LLSpatialBridge::move(LLDrawable *drawablep, LLSpatialGroup *curp, BOOL imm
 
 BOOL LLSpatialBridge::updateMove()
 {
-	llassert(mDrawable);
-	llassert(mDrawable->getRegion());
+	llassert_always(mDrawable);
+	llassert_always(mDrawable->mVObjp);
+	llassert_always(mDrawable->getRegion());
 	LLSpatialPartition* part = mDrawable->getRegion()->getSpatialPartition(mPartitionType);
-	llassert(part);
+	llassert_always(part);
 
 	mOctree->balance();
 	if (part)

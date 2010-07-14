@@ -66,6 +66,8 @@ public:
 	// Channel's outfit-functions
 	// update channel's size and position in the World View
 	virtual void		updatePositionAndSize(LLRect old_world_rect, LLRect new_world_rect);
+
+	bool resetPositionAndSize(const LLSD& newvalue);
 	// initialization of channel's shape and position
 	virtual void		init(S32 channel_left, S32 channel_right);
 
@@ -174,6 +176,12 @@ public:
 	void		hideToastsFromScreen();
 	// hide toast by notification id
 	void		hideToast(const LLUUID& notification_id);
+
+	/**
+	 * Closes hidden matched toasts from channel.
+	 */
+	void closeHiddenToasts(const Matcher& matcher);
+
 	// removes all toasts from a channel
 	void		removeToastsFromChannel();
 	// show all toasts in a channel

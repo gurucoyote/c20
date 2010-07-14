@@ -94,7 +94,7 @@ public:
 		payload["object_id"] = object_id;
 		payload["owner_id"] = query_map["owner"];
 		payload["name"] = query_map["name"];
-		payload["slurl"] = query_map["slurl"];
+		payload["slurl"] = LLWeb::escapeURL(query_map["slurl"]);
 		payload["group_owned"] = query_map["groupowned"];
 		LLFloaterReg::showInstance("inspect_remote_object", payload);
 		return true;
@@ -244,7 +244,7 @@ public:
 		gCacheName->get(mAvatarID, FALSE, boost::bind(&LLChatHistoryHeader::nameUpdatedCallback, this, _1, _2, _3, _4));
 
 		//*TODO overly defensive thing, source type should be maintained out there
-		if((chat.mFromID.isNull() && chat.mFromName.empty()) || chat.mFromName == SYSTEM_FROM)
+		if((chat.mFromID.isNull() && chat.mFromName.empty()) || chat.mFromName == SYSTEM_FROM && chat.mFromID.isNull())
 		{
 			mSourceType = CHAT_SOURCE_SYSTEM;
 		}
@@ -448,7 +448,6 @@ LLChatHistory::LLChatHistory(const LLChatHistory::Params& p)
 :	LLUICtrl(p),
 	mMessageHeaderFilename(p.message_header),
 	mMessageSeparatorFilename(p.message_separator),
-	mMessagePlaintextSeparatorFilename(p.message_plaintext_separator),
 	mLeftTextPad(p.left_text_pad),
 	mRightTextPad(p.right_text_pad),
 	mLeftWidgetPad(p.left_widget_pad),
@@ -536,12 +535,6 @@ LLView* LLChatHistory::getSeparator()
 	return separator;
 }
 
-LLView* LLChatHistory::getPlaintextSeparator()
-{
-	LLPanel* separator = LLUICtrlFactory::getInstance()->createFromFile<LLPanel>(mMessagePlaintextSeparatorFilename, NULL, LLPanel::child_registry_t::instance());
-	return separator;
-}
-
 LLView* LLChatHistory::getHeader(const LLChat& chat,const LLStyle::Params& style_params)
 {
 	LLChatHistoryHeader* header = LLChatHistoryHeader::createInstance(mMessageHeaderFilename);
@@ -564,6 +557,11 @@ void LLChatHistory::clear()
 void LLChatHistory::appendMessage(const LLChat& chat, const LLSD &args, const LLStyle::Params& input_append_params)
 {
 	bool use_plain_text_chat_history = args["use_plain_text_chat_history"].asBoolean();
+
+	if(mEditor)
+	{
+		mEditor->setPlainText(use_plain_text_chat_history);
+	}
 
 	if (!mEditor->scrolledToEnd() && chat.mFromID != gAgent.getID() && !chat.mFromName.empty())
 	{
@@ -640,17 +638,14 @@ void LLChatHistory::appendMessage(const LLChat& chat, const LLSD &args, const LL
 
 	if (use_plain_text_chat_history)
 	{
-		// append plaintext separator
-		LLView* separator = getPlaintextSeparator();
-		LLInlineViewSegment::Params p;
-		p.force_newline = true;
-		p.left_pad = mLeftWidgetPad;
-		p.right_pad = mRightWidgetPad;
-		p.view = separator;
-		//mEditor->appendWidget(p, "\n", false);  // TODO: this is absolute minimal fix for EXT-3818 because it's late for 2.0
-		mEditor->appendWidget(p, "", false);      // This should be properly fixed in 2.1
-
-		mEditor->appendText("[" + chat.mTimeStr + "] ", mEditor->getText().size() != 0, style_params);
+		LLStyle::Params timestamp_style(style_params);
+		if (!message_from_log)
+		{
+			LLColor4 timestamp_color = LLUIColorTable::instance().getColor("ChatTimestampColor");
+			timestamp_style.color(timestamp_color);
+			timestamp_style.readonly_color(timestamp_color);
+		}
+		mEditor->appendText("[" + chat.mTimeStr + "] ", mEditor->getText().size() != 0, timestamp_style);
 
 		if (utf8str_trim(chat.mFromName).size() != 0)
 		{
@@ -658,22 +653,21 @@ void LLChatHistory::appendMessage(const LLChat& chat, const LLSD &args, const LL
 			if ( chat.mSourceType == CHAT_SOURCE_OBJECT && chat.mFromID.notNull())
 			{
 				// for object IMs, create a secondlife:///app/objectim SLapp
-				std::string url = LLSLURL::buildCommand("objectim", chat.mFromID, "");
+				std::string url = LLSLURL("objectim", chat.mFromID, "").getSLURLString();
 				url += "?name=" + chat.mFromName;
-				url += "&owner=" + args["owner_id"].asString();
+				url += "&owner=" + chat.mOwnerID.asString();
 
 				std::string slurl = args["slurl"].asString();
 				if (slurl.empty())
 				{
-					LLViewerRegion *region = LLWorld::getInstance()->getRegionFromPosAgent(chat.mPosAgent);
-					if (region)
-					{
-						S32 x, y, z;
-						LLSLURL::globalPosToXYZ(LLVector3d(chat.mPosAgent), x, y, z);
-						slurl = region->getName() + llformat("/%d/%d/%d", x, y, z);
-					}
+				    LLViewerRegion *region = LLWorld::getInstance()->getRegionFromPosAgent(chat.mPosAgent);
+				    if(region)
+				      {
+					LLSLURL region_slurl(region->getName(), chat.mPosAgent);
+					slurl = region_slurl.getLocationString();
+				      }
 				}
-				url += "&slurl=" + slurl;
+				url += "&slurl=" + LLURI::escape(slurl);
 
 				// set the link for the object name to be the objectim SLapp
 				// (don't let object names with hyperlinks override our objectim Url)
@@ -753,7 +747,7 @@ void LLChatHistory::appendMessage(const LLChat& chat, const LLSD &args, const LL
 		if (notification != NULL)
 		{
 			LLIMToastNotifyPanel* notify_box = new LLIMToastNotifyPanel(
-					notification);
+					notification, chat.mSessionID);
 			//we can't set follows in xml since it broke toasts behavior
 			notify_box->setFollowsLeft();
 			notify_box->setFollowsRight();
@@ -857,13 +851,4 @@ void LLChatHistory::draw()
 	}
 
 	LLUICtrl::draw();
-}
-
-void LLChatHistory::reshape(S32 width, S32 height, BOOL called_from_parent)
-{
-	bool is_scrolled_to_end = mEditor->scrolledToEnd();
-	LLUICtrl::reshape( width, height, called_from_parent );
-	// update scroll
-	if (is_scrolled_to_end)
-		mEditor->setCursorAndScrollToEnd();
 }

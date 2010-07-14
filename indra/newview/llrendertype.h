@@ -51,7 +51,7 @@ enum render_pool_type
 	POOL_WATER,
 	POOL_GLOW,
 	POOL_ALPHA,
-	NUM_POOL_TYPES,
+	END_POOL_TYPES,
 	// * invisiprims work by rendering to the depth buffer but not the color buffer, occluding anything rendered after them
 	// - and the LLDrawPool types enum controls what order things are rendered in
 	// - so, it has absolute control over what invisprims block
@@ -61,7 +61,7 @@ enum render_pool_type
 
 enum render_pass_type
 {
-	PASS_SIMPLE = NUM_POOL_TYPES,
+	PASS_SIMPLE = END_POOL_TYPES,
 	PASS_GRASS,
 	PASS_FULLBRIGHT,
 	PASS_INVISIBLE,
@@ -69,21 +69,23 @@ enum render_pass_type
 	PASS_FULLBRIGHT_SHINY,
 	PASS_SHINY,
 	PASS_BUMP,
+	PASS_POST_BUMP,
 	PASS_GLOW,
 	PASS_ALPHA,
 	PASS_ALPHA_MASK,
 	PASS_FULLBRIGHT_ALPHA_MASK,
 	PASS_ALPHA_SHADOW,
-	NUM_RENDER_TYPES,
+	END_PASS_TYPES,
 };
 
 enum render_object_type
 {
-	OBJECT_HUD = NUM_RENDER_TYPES,
+	OBJECT_HUD = END_PASS_TYPES,
 	OBJECT_VOLUME,
 	OBJECT_PARTICLES,
 	OBJECT_CLOUDS,
-	OBJECT_HUD_PARTICLES
+	OBJECT_HUD_PARTICLES,
+	END_RENDER_TYPES,
 };
 
 // Constructor-less 'Plain Old Data' struct, so that compiler optimization can turn
@@ -98,10 +100,11 @@ struct LLRenderTypePOD {
   friend bool operator==(LLRenderTypePOD const& rt1, LLRenderTypePOD const& rt2) { return rt1.mIndex == rt2.mIndex; }
   friend bool operator!=(LLRenderTypePOD const& rt1, LLRenderTypePOD const& rt2) { return rt1.mIndex != rt2.mIndex; }
   friend bool operator<(LLRenderTypePOD const& rt1, LLRenderTypePOD const& rt2) { return rt1.mIndex < rt2.mIndex; }
+  friend bool operator>(LLRenderTypePOD const& rt1, LLRenderTypePOD const& rt2) { return rt1.mIndex > rt2.mIndex; }
   friend std::ostream& operator<<(std::ostream& os, LLRenderTypePOD const& rt) { return os << rt.mIndex; }
 };
 
-// RENDER_TYPE_* constansts.
+// RENDER_TYPE_* constants.
 static LLRenderTypePOD const RENDER_TYPE_NONE = { 0 };
 static LLRenderTypePOD const RENDER_TYPE_POOL_SIMPLE = { POOL_SIMPLE };
 static LLRenderTypePOD const RENDER_TYPE_POOL_TERRAIN = { POOL_TERRAIN };
@@ -126,6 +129,7 @@ static LLRenderTypePOD const RENDER_TYPE_PASS_INVISI_SHINY = { PASS_INVISI_SHINY
 static LLRenderTypePOD const RENDER_TYPE_PASS_FULLBRIGHT_SHINY = { PASS_FULLBRIGHT_SHINY };
 static LLRenderTypePOD const RENDER_TYPE_PASS_SHINY = { PASS_SHINY };
 static LLRenderTypePOD const RENDER_TYPE_PASS_BUMP = { PASS_BUMP };
+static LLRenderTypePOD const RENDER_TYPE_PASS_POST_BUMP = { PASS_POST_BUMP };
 static LLRenderTypePOD const RENDER_TYPE_PASS_GLOW = { PASS_GLOW };
 static LLRenderTypePOD const RENDER_TYPE_PASS_ALPHA = { PASS_ALPHA };
 static LLRenderTypePOD const RENDER_TYPE_PASS_ALPHA_MASK = { PASS_ALPHA_MASK };
@@ -136,6 +140,7 @@ static LLRenderTypePOD const RENDER_TYPE_VOLUME = { OBJECT_VOLUME };
 static LLRenderTypePOD const RENDER_TYPE_PARTICLES = { OBJECT_PARTICLES };
 static LLRenderTypePOD const RENDER_TYPE_CLOUDS = { OBJECT_CLOUDS };
 static LLRenderTypePOD const RENDER_TYPE_HUD_PARTICLES = { OBJECT_HUD_PARTICLES };
+static LLRenderTypePOD const RENDER_TYPE_END_RENDER_TYPES = { END_RENDER_TYPES };
 
 // To protect access to mIndex, the access to the base class is protected.
 class LLRenderType : protected LLRenderTypePOD
@@ -158,6 +163,9 @@ public:
   friend bool operator<(LLRenderType const& rt1, LLRenderTypePOD const& rt2) { return rt1.mIndex < rt2.mIndex; }
   friend bool operator<(LLRenderTypePOD const& rt1, LLRenderType const& rt2) { return rt1.mIndex < rt2.mIndex; }
   friend bool operator<(LLRenderType const& rt1, LLRenderType const& rt2) { return rt1.mIndex < rt2.mIndex; }
+  friend bool operator>(LLRenderType const& rt1, LLRenderTypePOD const& rt2) { return rt1.mIndex > rt2.mIndex; }
+  friend bool operator>(LLRenderTypePOD const& rt1, LLRenderType const& rt2) { return rt1.mIndex > rt2.mIndex; }
+  friend bool operator>(LLRenderType const& rt1, LLRenderType const& rt2) { return rt1.mIndex > rt2.mIndex; }
   friend std::ostream& operator<<(std::ostream& os, LLRenderType const& rt) { return os << rt.mIndex; }
 };
 

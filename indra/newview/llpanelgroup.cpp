@@ -60,6 +60,8 @@
 #include "llaccordionctrltab.h"
 #include "llaccordionctrl.h"
 
+#include "lltrans.h"
+
 static LLRegisterPanelClassWrapper<LLPanelGroup> t_panel_group("panel_group_info_sidetray");
 
 
@@ -91,8 +93,7 @@ LLPanelGroup::LLPanelGroup()
 :	LLPanel(),
 	LLGroupMgrObserver( LLUUID() ),
 	mSkipRefresh(FALSE),
-	mButtonJoin(NULL),
-	mShowingNotifyDialog(false)
+	mButtonJoin(NULL)
 {
 	// Set up the factory callbacks.
 	// Roles sub tabs
@@ -200,7 +201,7 @@ BOOL LLPanelGroup::postBuild()
 		mJoinText = panel_general->getChild<LLUICtrl>("join_cost_text");
 	}
 
-	gVoiceClient->addObserver(this);
+	LLVoiceClient::getInstance()->addObserver(this);
 	
 	return TRUE;
 }
@@ -321,7 +322,7 @@ void LLPanelGroup::onChange(EStatusType status, const std::string &channelURI, b
 		return;
 	}
 
-	childSetEnabled("btn_call", LLVoiceClient::voiceEnabled() && gVoiceClient->voiceWorking());
+	childSetEnabled("btn_call", LLVoiceClient::getInstance()->voiceEnabled() && LLVoiceClient::getInstance()->isVoiceWorking());
 }
 
 void LLPanelGroup::notifyObservers()
@@ -334,8 +335,9 @@ void LLPanelGroup::update(LLGroupChange gc)
 	LLGroupMgrGroupData* gdatap = LLGroupMgr::getInstance()->getGroupData(mID);
 	if(gdatap)
 	{
-		childSetValue("group_name", gdatap->mName);
-		childSetToolTip("group_name",gdatap->mName);
+		std::string group_name =  gdatap->mName.empty() ? LLTrans::getString("LoadingData") : gdatap->mName;
+		childSetValue("group_name", group_name);
+		childSetToolTip("group_name",group_name);
 		
 		LLGroupData agent_gdatap;
 		bool is_member = gAgent.getGroupData(mID,agent_gdatap) || gAgent.isGodlike();
@@ -380,8 +382,9 @@ void LLPanelGroup::setGroupID(const LLUUID& group_id)
 	LLGroupMgrGroupData* gdatap = LLGroupMgr::getInstance()->getGroupData(mID);
 	if(gdatap)
 	{
-		childSetValue("group_name", gdatap->mName);
-		childSetToolTip("group_name",gdatap->mName);
+		std::string group_name =  gdatap->mName.empty() ? LLTrans::getString("LoadingData") : gdatap->mName;
+		childSetValue("group_name", group_name);
+		childSetToolTip("group_name",group_name);
 	}
 
 	LLButton* button_apply = findChild<LLButton>("btn_apply");
@@ -626,69 +629,4 @@ void LLPanelGroup::showNotice(const std::string& subject,
 
 }
 
-bool	LLPanelGroup::canClose()
-{
-	if(getVisible() == false)
-		return true;
-
-	bool need_save = false;
-	std::string mesg;
-	for(std::vector<LLPanelGroupTab* >::iterator it = mTabs.begin();it!=mTabs.end();++it)
-		if(need_save|=(*it)->needsApply(mesg))
-			break;
-	if(!need_save)
-		return false;
-	// If no message was provided, give a generic one.
-	if (mesg.empty())
-	{
-		mesg = mDefaultNeedsApplyMesg;
-	}
-	// Create a notify box, telling the user about the unapplied tab.
-	LLSD args;
-	args["NEEDS_APPLY_MESSAGE"] = mesg;
-	args["WANT_APPLY_MESSAGE"] = mWantApplyMesg;
-
-	LLNotificationsUtil::add("SaveChanges", args, LLSD(), boost::bind(&LLPanelGroup::handleNotifyCallback,this, _1, _2));
-
-	mShowingNotifyDialog = true;
-
-	return false;
-}
-
-bool	LLPanelGroup::notifyChildren(const LLSD& info)
-{
-	if(info.has("request") && mID.isNull() )
-	{
-		std::string str_action = info["request"];
-
-		if (str_action == "quit" )
-		{
-			canClose();
-			return true;
-		}
-		if(str_action == "wait_quit")
-			return mShowingNotifyDialog;
-	}
-	return false;
-}
-bool LLPanelGroup::handleNotifyCallback(const LLSD& notification, const LLSD& response)
-{
-	S32 option = LLNotificationsUtil::getSelectedOption(notification, response);
-	mShowingNotifyDialog = false;
-	switch (option)
-	{
-	case 0: // "Apply Changes"
-		apply();
-		break;
-	case 1: // "Ignore Changes"
-		break;
-	case 2: // "Cancel"
-	default:
-		// Do nothing.  The user is canceling the action.
-		// If we were quitting, we didn't really mean it.
-		LLAppViewer::instance()->abortQuit();
-		break;
-	}
-	return false;
-}
 

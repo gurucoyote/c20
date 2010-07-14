@@ -32,7 +32,7 @@
  */
 
 #include "linden_common.h"
-
+#include <openssl/x509_vfy.h>
 #include "llhttpclient.h"
 
 #include "llassetstorage.h"
@@ -47,7 +47,10 @@
 #include "message.h"
 #include <curl/curl.h>
 
+
 const F32 HTTP_REQUEST_EXPIRY_SECS = 60.0f;
+LLURLRequest::SSLCertVerifyCallback LLHTTPClient::mCertVerifyCallback = NULL;
+
 ////////////////////////////////////////////////////////////////////////////
 
 // Responder class moved to LLCurl
@@ -80,8 +83,10 @@ namespace
 		{
 			if (mResponder.get())
 			{
-				mResponder->completedRaw(mStatus, mReason, channels, buffer);
+				// Allow clients to parse headers before we attempt to parse
+				// the body and provide completed/result/error calls.
 				mResponder->completedHeader(mStatus, mReason, mHeaderOutput);
+				mResponder->completedRaw(mStatus, mReason, channels, buffer);
 			}
 		}
 		virtual void header(const std::string& header, const std::string& value)
@@ -195,6 +200,7 @@ namespace
 			fileBuffer = new U8 [fileSize];
             vfile.read(fileBuffer, fileSize);
             ostream.write((char*)fileBuffer, fileSize);
+			delete [] fileBuffer;
 			eos = true;
 			return STATUS_DONE;
 		}
@@ -207,13 +213,19 @@ namespace
 	LLPumpIO* theClientPump = NULL;
 }
 
+void LLHTTPClient::setCertVerifyCallback(LLURLRequest::SSLCertVerifyCallback callback)
+{
+	LLHTTPClient::mCertVerifyCallback = callback;
+}
+
 static void request(
 	const std::string& url,
 	LLURLRequest::ERequestAction method,
 	Injector* body_injector,
 	LLCurl::ResponderPtr responder,
 	const F32 timeout = HTTP_REQUEST_EXPIRY_SECS,
-	const LLSD& headers = LLSD())
+	const LLSD& headers = LLSD()
+    )
 {
 	if (!LLHTTPClient::hasPump())
 	{
@@ -223,15 +235,20 @@ static void request(
 	LLPumpIO::chain_t chain;
 
 	LLURLRequest* req = new LLURLRequest(method, url);
-	req->checkRootCertificate(LLCurl::getSSLVerify());
+	req->setSSLVerifyCallback(LLHTTPClient::getCertVerifyCallback(), (void *)req);
 
 	
 	lldebugs << LLURLRequest::actionAsVerb(method) << " " << url << " "
 		<< headers << llendl;
 
-    // Insert custom headers is the caller sent any
-    if (headers.isMap())
-    {
+	// Insert custom headers if the caller sent any
+	if (headers.isMap())
+	{
+		if (headers.has("Cookie"))
+		{
+			req->allowCookies();
+		}
+
         LLSD::map_const_iterator iter = headers.beginMap();
         LLSD::map_const_iterator end  = headers.endMap();
 
@@ -418,7 +435,6 @@ static LLSD blocking_request(
 	std::string body_str;
 	
 	// other request method checks root cert first, we skip?
-	//req->checkRootCertificate(true);
 	
 	// * Set curl handle options
 	curl_easy_setopt(curlp, CURLOPT_NOSIGNAL, 1);	// don't use SIGALRM for timeouts

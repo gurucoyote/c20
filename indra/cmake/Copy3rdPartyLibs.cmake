@@ -167,6 +167,7 @@ elseif(DARWIN)
         libexpat.dylib
         libllqtwebkit.dylib
         libndofdev.dylib
+        libexception_handler.dylib
        )
 
     # fmod is statically linked on darwin
@@ -216,6 +217,7 @@ elseif(LINUX)
         libapr-1.so.0
         libaprutil-1.so.0
         libatk-1.0.so
+        libbreakpad_client.so.0
         libcrypto.so.0.9.7
         libdb-4.2.so
         libexpat.so

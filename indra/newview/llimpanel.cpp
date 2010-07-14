@@ -301,7 +301,7 @@ void LLFloaterIMPanel::onVolumeChange(LLUICtrl* source, void* user_data)
 	LLFloaterIMPanel* floaterp = (LLFloaterIMPanel*)user_data;
 	if (floaterp)
 	{
-		gVoiceClient->setUserVolume(floaterp->mOtherParticipantUUID, (F32)source->getValue().asReal());
+		LLVoiceClient::getInstance()->setUserVolume(floaterp->mOtherParticipantUUID, (F32)source->getValue().asReal());
 	}
 }
 
@@ -313,7 +313,7 @@ void LLFloaterIMPanel::draw()
 	
 	BOOL enable_connect = (region && region->getCapability("ChatSessionRequest") != "")
 					  && mSessionInitialized
-					  && LLVoiceClient::voiceEnabled()
+					  && LLVoiceClient::getInstance()->voiceEnabled()
 					  && mCallBackEnabled;
 
 	// hide/show start call and end call buttons
@@ -321,8 +321,8 @@ void LLFloaterIMPanel::draw()
 	if (!voice_channel)
 		return;
 
-	childSetVisible("end_call_btn", LLVoiceClient::voiceEnabled() && voice_channel->getState() >= LLVoiceChannel::STATE_CALL_STARTED);
-	childSetVisible("start_call_btn", LLVoiceClient::voiceEnabled() && voice_channel->getState() < LLVoiceChannel::STATE_CALL_STARTED);
+	childSetVisible("end_call_btn", LLVoiceClient::getInstance()->voiceEnabled() && voice_channel->getState() >= LLVoiceChannel::STATE_CALL_STARTED);
+	childSetVisible("start_call_btn", LLVoiceClient::getInstance()->voiceEnabled() && voice_channel->getState() < LLVoiceChannel::STATE_CALL_STARTED);
 	childSetEnabled("start_call_btn", enable_connect);
 	childSetEnabled("send_btn", !childGetValue("chat_editor").asString().empty());
 	
@@ -385,11 +385,11 @@ void LLFloaterIMPanel::draw()
 	else
 	{
 		// refresh volume and mute checkbox
-		childSetVisible("speaker_volume", LLVoiceClient::voiceEnabled() && voice_channel->isActive());
-		childSetValue("speaker_volume", gVoiceClient->getUserVolume(mOtherParticipantUUID));
+		childSetVisible("speaker_volume", LLVoiceClient::getInstance()->voiceEnabled() && voice_channel->isActive());
+		childSetValue("speaker_volume", LLVoiceClient::getInstance()->getUserVolume(mOtherParticipantUUID));
 
 		childSetValue("mute_btn", LLMuteList::getInstance()->isMuted(mOtherParticipantUUID, LLMute::flagVoiceChat));
-		childSetVisible("mute_btn", LLVoiceClient::voiceEnabled() && voice_channel->isActive());
+		childSetVisible("mute_btn", LLVoiceClient::getInstance()->voiceEnabled() && voice_channel->isActive());
 	}
 	LLFloater::draw();
 }

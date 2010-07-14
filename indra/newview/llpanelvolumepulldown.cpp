@@ -45,7 +45,7 @@
 #include "lltabcontainer.h"
 #include "llfloaterreg.h"
 #include "llfloaterpreference.h"
-#include "llslider.h"
+#include "llsliderctrl.h"
 
 /* static */ const F32 LLPanelVolumePulldown::sAutoCloseFadeStartTimeSec = 4.0f;
 /* static */ const F32 LLPanelVolumePulldown::sAutoCloseTotalTimeSec = 5.0f;
@@ -67,7 +67,7 @@ LLPanelVolumePulldown::LLPanelVolumePulldown()
 BOOL LLPanelVolumePulldown::postBuild()
 {
 	// set the initial volume-slider's position to reflect reality
-	LLSlider* volslider =  getChild<LLSlider>( "mastervolume" );
+	LLSliderCtrl* volslider =  getChild<LLSliderCtrl>( "mastervolume" );
 	volslider->setValue(gSavedSettings.getF32("AudioLevelMaster"));
 
 	return LLPanel::postBuild();

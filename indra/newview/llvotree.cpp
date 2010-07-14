@@ -45,7 +45,7 @@
 #include "material_codes.h"
 #include "object_flags.h"
 
-#include "llagent.h"
+#include "llagentcamera.h"
 #include "lldrawable.h"
 #include "llface.h"
 #include "llviewercamera.h"
@@ -67,12 +67,14 @@ const F32 LEAF_TOP = 1.0f;
 const F32 LEAF_BOTTOM = 0.52f;
 const F32 LEAF_WIDTH = 1.f;
 
-S32 LLVOTree::sLODVertexOffset[4];
-S32 LLVOTree::sLODVertexCount[4];
-S32 LLVOTree::sLODIndexOffset[4];
-S32 LLVOTree::sLODIndexCount[4];
-S32 LLVOTree::sLODSlices[4] = {10, 5, 4, 3};
-F32 LLVOTree::sLODAngles[4] = {30.f, 20.f, 15.f, 0.f};
+const S32 LLVOTree::sMAX_NUM_TREE_LOD_LEVELS = 4 ;
+
+S32 LLVOTree::sLODVertexOffset[sMAX_NUM_TREE_LOD_LEVELS];
+S32 LLVOTree::sLODVertexCount[sMAX_NUM_TREE_LOD_LEVELS];
+S32 LLVOTree::sLODIndexOffset[sMAX_NUM_TREE_LOD_LEVELS];
+S32 LLVOTree::sLODIndexCount[sMAX_NUM_TREE_LOD_LEVELS];
+S32 LLVOTree::sLODSlices[sMAX_NUM_TREE_LOD_LEVELS] = {10, 5, 4, 3};
+F32 LLVOTree::sLODAngles[sMAX_NUM_TREE_LOD_LEVELS] = {30.f, 20.f, 15.f, 0.00001f};
 
 F32 LLVOTree::sTreeFactor = 1.f;
 
@@ -374,12 +376,11 @@ BOOL LLVOTree::idleUpdate(LLAgent &agent, LLWorld &world, const F64 &time)
 		}
 	}
 
-	S32 trunk_LOD = 0;
+	S32 trunk_LOD = sMAX_NUM_TREE_LOD_LEVELS ;
 	F32 app_angle = getAppAngle()*LLVOTree::sTreeFactor;
 
-	for (S32 j = 0; j < 4; j++)
+	for (S32 j = 0; j < sMAX_NUM_TREE_LOD_LEVELS; j++)
 	{
-
 		if (app_angle > LLVOTree::sLODAngles[j])
 		{
 			trunk_LOD = j;
@@ -445,17 +446,16 @@ void LLVOTree::setPixelAreaAndAngle(LLAgent &agent)
 	// Re-calculate mPixelArea accurately
 	
 	// This should be the camera's center, as soon as we move to all region-local.
-	LLVector3 relative_position = getPositionAgent() - agent.getCameraPositionAgent();
-	F32 range = relative_position.length();				// ugh, square root
+	LLVector3 relative_position = getPositionAgent() - gAgentCamera.getCameraPositionAgent();
+	F32 range_squared = relative_position.lengthSquared() ;				
 
 	F32 max_scale = mBillboardScale * getMaxScale();
 	F32 area = max_scale * (max_scale*mBillboardRatio);
 
 	// Compute pixels per meter at the given range
-	F32 pixels_per_meter = LLViewerCamera::getInstance()->getViewHeightInPixels() / 
-						   (tan(LLViewerCamera::getInstance()->getView()) * range);
+	F32 pixels_per_meter = LLViewerCamera::getInstance()->getViewHeightInPixels() / tan(LLViewerCamera::getInstance()->getView());
 
-	mPixelArea = (pixels_per_meter) * (pixels_per_meter) * area;
+	mPixelArea = (pixels_per_meter) * (pixels_per_meter) * area / range_squared;
 #if 0
 	// mAppAngle is a bit of voodoo;
 	// use the one calculated LLViewerObject::setPixelAreaAndAngle above
@@ -507,6 +507,13 @@ BOOL LLVOTree::updateGeometry(LLDrawable *drawable)
 {
 	LLFastTimer ftm(FTM_UPDATE_TREE);
 
+	if(mTrunkLOD >= sMAX_NUM_TREE_LOD_LEVELS) //do not display the tree.
+	{
+		mReferenceBuffer = NULL ;
+		mDrawable->getFace(0)->mVertexBuffer = NULL ;
+		return TRUE ;
+	}
+
 	if (mReferenceBuffer.isNull() || mDrawable->getFace(0)->mVertexBuffer.isNull())
 	{
 		const F32 SRR3 = 0.577350269f; // sqrt(1/3)
@@ -524,7 +531,7 @@ BOOL LLVOTree::updateGeometry(LLDrawable *drawable)
 		face->mCenterAgent = getPositionAgent();
 		face->mCenterLocal = face->mCenterAgent;
 
-		for (lod = 0; lod < 4; lod++)
+		for (lod = 0; lod < sMAX_NUM_TREE_LOD_LEVELS; lod++)
 		{
 			slices = sLODSlices[lod];
 			sLODVertexOffset[lod] = max_vertices;
@@ -701,7 +708,7 @@ BOOL LLVOTree::updateGeometry(LLDrawable *drawable)
 		// Generate the vertices
 		// Generate the indices
 
-		for (lod = 0; lod < 4; lod++)
+		for (lod = 0; lod < sMAX_NUM_TREE_LOD_LEVELS; lod++)
 		{
 			slices = sLODSlices[lod];
 			F32 base_radius = 0.65f;
@@ -893,7 +900,6 @@ void LLVOTree::updateMesh()
 	S32 stop_depth = 0;
 	F32 alpha = 1.0;
 	
-
 	U32 vert_count = 0;
 	U32 index_count = 0;
 	

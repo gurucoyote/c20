@@ -75,7 +75,7 @@ public:
 	virtual const LLSaleInfo& getSaleInfo() const;
 	virtual LLInventoryType::EType getInventoryType() const;
 	virtual bool isWearableType() const;
-	virtual EWearableType getWearableType() const;
+	virtual LLWearableType::EType getWearableType() const;
 	virtual U32 getFlags() const;
 	virtual time_t getCreationDate() const;
 	virtual U32 getCRC32() const; // really more of a checksum.
@@ -139,7 +139,7 @@ public:
 	bool importFileLocal(LLFILE* fp);
 
 	// new methods
-	BOOL isComplete() const { return mIsComplete; }
+	BOOL isFinished() const { return mIsComplete; }
 	void setComplete(BOOL complete) { mIsComplete = complete; }
 	//void updateAssetOnServer() const;
 
@@ -160,6 +160,7 @@ public:
 	
 	// Checks the items permissions (for owner, group, or everyone) and returns true if all mask bits are set.
 	bool checkPermissionsSet(PermissionMask mask) const;
+	PermissionMask getPermissionMask() const;
 
 	// callback
 	void onCallingCardNameLookup(const LLUUID& id, const std::string& first_name, const std::string& last_name);
@@ -213,7 +214,7 @@ public:
 	void setVersion(S32 version) { mVersion = version; }
 
 	// Returns true if a fetch was issued.
-	bool fetchDescendents();
+	bool fetch();
 
 	// used to help make cacheing more robust - for example, if
 	// someone is getting 4 packets but logs out after 3. the viewer
@@ -243,7 +244,13 @@ public:
 
 class WearOnAvatarCallback : public LLInventoryCallback
 {
+public:
+	WearOnAvatarCallback(bool do_replace = false) : mReplace(do_replace) {}
+	
 	void fire(const LLUUID& inv_item);
+
+protected:
+	bool mReplace;
 };
 
 class ModifiedCOFCallback : public LLInventoryCallback
@@ -311,14 +318,14 @@ public:
 extern LLInventoryCallbackManager gInventoryCallbacks;
 
 
-#define NOT_WEARABLE (EWearableType)0
+#define NOT_WEARABLE (LLWearableType::EType)0
 
 // *TODO: Find a home for these
 void create_inventory_item(const LLUUID& agent_id, const LLUUID& session_id,
 						   const LLUUID& parent, const LLTransactionID& transaction_id,
 						   const std::string& name,
 						   const std::string& desc, LLAssetType::EType asset_type,
-						   LLInventoryType::EType inv_type, EWearableType wtype,
+						   LLInventoryType::EType inv_type, LLWearableType::EType wtype,
 						   U32 next_owner_perm,
 						   LLPointer<LLInventoryCallback> cb);
 
@@ -340,6 +347,7 @@ void link_inventory_item(
 	const LLUUID& item_id,
 	const LLUUID& parent_id,
 	const std::string& new_name,
+	const std::string& new_description,
 	const LLAssetType::EType asset_type,
 	LLPointer<LLInventoryCallback> cb);
 
@@ -357,7 +365,7 @@ void copy_inventory_from_notecard(const LLUUID& object_id,
 								  U32 callback_id = 0);
 
 
-void menu_create_inventory_item(LLFolderView* folder,
+void menu_create_inventory_item(LLFolderView* root,
 								LLFolderBridge* bridge,
 								const LLSD& userdata,
 								const LLUUID& default_parent_uuid = LLUUID::null);

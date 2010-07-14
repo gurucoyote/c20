@@ -55,6 +55,7 @@
 #include "llstatusbar.h"
 #include "lltextbox.h"
 #include "lltexturectrl.h"
+#include "lltrans.h"
 #include "llviewchildren.h"
 #include "llviewercontrol.h"
 #include "lluictrlfactory.h"
@@ -668,6 +669,7 @@ void LLFloaterBuyLandUI::updateWebSiteInfo()
 	keywordArgs.appendString(
 		"secureSessionId",
 		gAgent.getSecureSessionID().asString());
+	keywordArgs.appendString("language", LLUI::getLanguage());
 	keywordArgs.appendInt("billableArea", mPreflightAskBillableArea);
 	keywordArgs.appendInt("currencyBuy", mPreflightAskCurrencyBuy);
 	
@@ -831,7 +833,7 @@ void LLFloaterBuyLandUI::updateNames()
 	else
 	{
 		mParcelSellerName =
-			LLSLURL::buildCommand("agent", parcelp->getOwnerID(), "inspect");
+			LLSLURL("agent", parcelp->getOwnerID(), "inspect").getSLURLString();
 	}
 }
 
@@ -860,7 +862,7 @@ void LLFloaterBuyLandUI::startTransaction(TransactionType type, const LLXMLRPCVa
 	static std::string transaction_uri;
 	if (transaction_uri.empty())
 	{
-		transaction_uri = LLViewerLogin::getInstance()->getHelperURI() + "landtool.php";
+		transaction_uri = LLGridManager::getInstance()->getHelperURI() + "landtool.php";
 	}
 	
 	const char* method;
@@ -1173,13 +1175,13 @@ void LLFloaterBuyLandUI::refreshUI()
 		
 		if (!mParcelValid)
 		{
-			message += getString("no_parcel_selected");
+			message += LLTrans::getString("sentences_separator") + getString("no_parcel_selected");
 		}
 		else if (mParcelBillableArea == mParcelActualArea)
 		{
 			LLStringUtil::format_map_t string_args;
 			string_args["[AMOUNT]"] = llformat("%d ", mParcelActualArea);
-			message += getString("parcel_meters", string_args);
+			message += LLTrans::getString("sentences_separator") + getString("parcel_meters", string_args);
 		}
 		else
 		{
@@ -1188,13 +1190,13 @@ void LLFloaterBuyLandUI::refreshUI()
 			{	
 				LLStringUtil::format_map_t string_args;
 				string_args["[AMOUNT]"] = llformat("%d ", mParcelBillableArea);
-				message += getString("premium_land", string_args);
+				message += LLTrans::getString("sentences_separator") + getString("premium_land", string_args);
 			}
 			else
 			{
 				LLStringUtil::format_map_t string_args;
 				string_args["[AMOUNT]"] = llformat("%d ", mParcelBillableArea);
-				message += getString("discounted_land", string_args);
+				message += LLTrans::getString("sentences_separator") + getString("discounted_land", string_args);
 			}
 		}
 

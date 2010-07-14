@@ -57,6 +57,7 @@
 #include "llfloaterreg.h"
 #include "llmenugl.h"
 #include "llmenubutton.h"
+#include "llloadingindicator.h"
 #include "llwindow.h"
 
 // for registration
@@ -95,7 +96,9 @@ std::list<std::string> gUntranslated;
 static LLDefaultChildRegistry::Register<LLFilterEditor> register_filter_editor("filter_editor");
 static LLDefaultChildRegistry::Register<LLFlyoutButton> register_flyout_button("flyout_button");
 static LLDefaultChildRegistry::Register<LLSearchEditor> register_search_editor("search_editor");
-static LLDefaultChildRegistry::Register<LLMenuButton> register_menu_button("menu_button");
+
+// register other widgets which otherwise may not be linked in
+static LLDefaultChildRegistry::Register<LLLoadingIndicator> register_loading_indicator("loading_indicator");
 
 
 //
@@ -1749,6 +1752,33 @@ std::string LLUI::getLanguage()
 	return language;
 }
 
+struct SubDir : public LLInitParam::Block<SubDir>
+{
+	Mandatory<std::string> value;
+
+	SubDir()
+	:	value("value")
+	{}
+};
+
+struct Directory : public LLInitParam::Block<Directory>
+{
+	Multiple<SubDir, AtLeast<1> > subdirs;
+
+	Directory()
+	:	subdirs("subdir")
+	{}
+};
+
+struct Paths : public LLInitParam::Block<Paths>
+{
+	Multiple<Directory, AtLeast<1> > directories;
+
+	Paths()
+	:	directories("directory")
+	{}
+};
+
 //static
 void LLUI::setupPaths()
 {
@@ -1756,21 +1786,36 @@ void LLUI::setupPaths()
 
 	LLXMLNodePtr root;
 	BOOL success  = LLXMLNode::parseFile(filename, root, NULL);
+	Paths paths;
+	LLXUIParser::instance().readXUI(root, paths, filename);
+
 	sXUIPaths.clear();
 	
-	if (success)
+	if (success && paths.validateBlock())
 	{
 		LLStringUtil::format_map_t path_args;
 		path_args["[LANGUAGE]"] = LLUI::getLanguage();
 		
-		for (LLXMLNodePtr path = root->getFirstChild(); path.notNull(); path = path->getNextSibling())
+		for (LLInitParam::ParamIterator<Directory>::const_iterator it = paths.directories().begin(), 
+				end_it = paths.directories().end();
+			it != end_it;
+			++it)
 		{
-			std::string path_val_ui(path->getValue());
+			std::string path_val_ui;
+			for (LLInitParam::ParamIterator<SubDir>::const_iterator subdir_it = it->subdirs().begin(),
+					subdir_end_it = it->subdirs().end();
+				subdir_it != subdir_end_it;)
+			{
+				path_val_ui += subdir_it->value();
+				if (++subdir_it != subdir_end_it)
+					path_val_ui += gDirUtilp->getDirDelimiter();
+			}
 			LLStringUtil::format(path_val_ui, path_args);
 			if (std::find(sXUIPaths.begin(), sXUIPaths.end(), path_val_ui) == sXUIPaths.end())
 			{
 				sXUIPaths.push_back(path_val_ui);
 			}
+
 		}
 	}
 	else // parsing failed
@@ -1915,7 +1960,12 @@ void LLUI::clearPopups()
 	}
 }
 
-
+//static
+void LLUI::reportBadKeystroke()
+{
+	make_ui_sound("UISndBadKeystroke");
+}
+	
 //static
 // spawn_x and spawn_y are top left corner of view in screen GL coordinates
 void LLUI::positionViewNearMouse(LLView* view, S32 spawn_x, S32 spawn_y)

@@ -115,6 +115,12 @@ public:
 	 */
 	void killToastsFromChannel(const LLUUID& channel_id, const LLScreenChannel::Matcher& matcher);
 
+	/**
+	 * Returns notification screen channel.
+	 */
+	static LLNotificationsUI::LLScreenChannel* getNotificationScreenChannel();
+
+	std::vector<ChannelElem>& getChannelList() { return mChannelList;}
 private:
 
 	LLScreenChannel* createChannel(LLChannelManager::Params& p);

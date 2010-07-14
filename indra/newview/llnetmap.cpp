@@ -50,6 +50,7 @@
 
 // Viewer includes
 #include "llagent.h"
+#include "llagentcamera.h"
 #include "llappviewer.h" // for gDisconnected
 #include "llcallingcard.h" // LLAvatarTracker
 #include "llfloaterworldmap.h"
@@ -92,7 +93,7 @@ LLNetMap::LLNetMap (const Params & p)
 	mMouseDown(0, 0),
 	mPanning(false),
 	mUpdateNow(false),
-	mObjectImageCenterGlobal( gAgent.getCameraPositionGlobal() ),
+	mObjectImageCenterGlobal( gAgentCamera.getCameraPositionGlobal() ),
 	mObjectRawImagep(),
 	mObjectImagep(),
 	mClosestAgentToCursor(),
@@ -207,7 +208,7 @@ void LLNetMap::draw()
 			LLViewerRegion* regionp = *iter;
 			// Find x and y position relative to camera's center.
 			LLVector3 origin_agent = regionp->getOriginAgent();
-			LLVector3 rel_region_pos = origin_agent - gAgent.getCameraPositionAgent();
+			LLVector3 rel_region_pos = origin_agent - gAgentCamera.getCameraPositionAgent();
 			F32 relative_x = (rel_region_pos.mV[0] / region_width) * mScale;
 			F32 relative_y = (rel_region_pos.mV[1] / region_width) * mScale;
 
@@ -272,7 +273,7 @@ void LLNetMap::draw()
 			mUpdateNow = false;
 
 			// Locate the centre of the object layer, accounting for panning
-			LLVector3 new_center = globalPosToView(gAgent.getCameraPositionGlobal());	
+			LLVector3 new_center = globalPosToView(gAgentCamera.getCameraPositionGlobal());	
 			new_center.mV[VX] -= mCurPan.mV[VX];
 			new_center.mV[VY] -= mCurPan.mV[VY];
 			new_center.mV[VZ] = 0.f;
@@ -291,7 +292,7 @@ void LLNetMap::draw()
 		}
 
 		LLVector3 map_center_agent = gAgent.getPosAgentFromGlobal(mObjectImageCenterGlobal);
-		map_center_agent -= gAgent.getCameraPositionAgent();
+		map_center_agent -= gAgentCamera.getCameraPositionAgent();
 		map_center_agent.mV[VX] *= mScale/region_width;
 		map_center_agent.mV[VY] *= mScale/region_width;
 
@@ -474,7 +475,7 @@ void LLNetMap::reshape(S32 width, S32 height, BOOL called_from_parent)
 
 LLVector3 LLNetMap::globalPosToView( const LLVector3d& global_pos )
 {
-	LLVector3d relative_pos_global = global_pos - gAgent.getCameraPositionGlobal();
+	LLVector3d relative_pos_global = global_pos - gAgentCamera.getCameraPositionGlobal();
 	LLVector3 pos_local;
 	pos_local.setVec(relative_pos_global);  // convert to floats from doubles
 
@@ -542,7 +543,7 @@ LLVector3d LLNetMap::viewPosToGlobal( S32 x, S32 y )
 	
 	LLVector3d pos_global;
 	pos_global.setVec( pos_local );
-	pos_global += gAgent.getCameraPositionGlobal();
+	pos_global += gAgentCamera.getCameraPositionGlobal();
 
 	return pos_global;
 }

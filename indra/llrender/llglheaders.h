@@ -217,6 +217,9 @@ extern PFNGLGETCOMPRESSEDTEXIMAGEARBPROC glGetCompressedTexImageARB;
 
 extern PFNGLCOLORTABLEEXTPROC glColorTableEXT;
 
+//GL_EXT_blend_func_separate
+extern PFNGLBLENDFUNCSEPARATEEXTPROC glBlendFuncSeparateEXT;
+
 //GL_EXT_framebuffer_object
 extern PFNGLISRENDERBUFFEREXTPROC glIsRenderbufferEXT;
 extern PFNGLBINDRENDERBUFFEREXTPROC glBindRenderbufferEXT;
@@ -250,7 +253,10 @@ extern PFNGLGENERATEMIPMAPEXTPROC glGenerateMipmapEXT;
 # include "GL/glh_extensions.h"
 # undef __APPLE__
 
-#elif LL_LINUX 
+#elif LL_LINUX
+//----------------------------------------------------------------------------
+// LL_LINUX
+
 //----------------------------------------------------------------------------
 // Linux, MESA headers, but not necessarily assuming MESA runtime.
 // quotes so we get libraries/.../GL/ version
@@ -285,6 +291,7 @@ extern PFNGLGENERATEMIPMAPEXTPROC glGenerateMipmapEXT;
 #else
 # define LL_LINUX_NV_GL_HEADERS 0
 #endif // LL_LINUX && defined(WINGDIAPI)
+
 
 #if LL_LINUX_NV_GL_HEADERS
 // Missing functions when using nvidia headers:
@@ -446,6 +453,9 @@ extern PFNGLGETATTRIBLOCATIONARBPROC glGetAttribLocationARB;
 extern PFNGLCOMPRESSEDTEXIMAGE2DARBPROC glCompressedTexImage2DARB;
 extern PFNGLGETCOMPRESSEDTEXIMAGEARBPROC glGetCompressedTexImageARB;
 
+//GL_EXT_blend_func_separate
+extern PFNGLBLENDFUNCSEPARATEEXTPROC glBlendFuncSeparateEXT;
+
 //GL_EXT_framebuffer_object
 extern PFNGLISRENDERBUFFEREXTPROC glIsRenderbufferEXT;
 extern PFNGLBINDRENDERBUFFEREXTPROC glBindRenderbufferEXT;
@@ -474,7 +484,10 @@ extern PFNGLBLITFRAMEBUFFEREXTPROC glBlitFramebufferEXT;
 //GL_ARB_draw_buffers
 extern PFNGLDRAWBUFFERSARBPROC glDrawBuffersARB;
 
+
 #elif LL_WINDOWS
+//----------------------------------------------------------------------------
+// LL_WINDOWS
 
 // windows gl headers depend on things like APIENTRY, so include windows.
 #define WIN32_LEAN_AND_MEAN
@@ -642,6 +655,9 @@ extern PFNGLBINDATTRIBLOCATIONARBPROC glBindAttribLocationARB;
 extern PFNGLGETACTIVEATTRIBARBPROC glGetActiveAttribARB;
 extern PFNGLGETATTRIBLOCATIONARBPROC glGetAttribLocationARB;
 
+//GL_EXT_blend_func_separate
+extern PFNGLBLENDFUNCSEPARATEEXTPROC glBlendFuncSeparateEXT;
+
 //GL_EXT_framebuffer_object
 extern PFNGLISRENDERBUFFEREXTPROC glIsRenderbufferEXT;
 extern PFNGLBINDRENDERBUFFEREXTPROC glBindRenderbufferEXT;
@@ -670,6 +686,7 @@ extern PFNGLBLITFRAMEBUFFEREXTPROC glBlitFramebufferEXT;
 //GL_ARB_draw_buffers
 extern PFNGLDRAWBUFFERSARBPROC glDrawBuffersARB;
 
+
 #elif LL_DARWIN
 //----------------------------------------------------------------------------
 // LL_DARWIN
@@ -685,6 +702,9 @@ extern PFNGLDRAWBUFFERSARBPROC glDrawBuffersARB;
 // These symbols don't exist on 10.3.9, so they have to be declared weak.  Redeclaring them here fixes the problem.
 // Note that they also must not be called on 10.3.9.  This should be taken care of by a runtime check for the existence of the GL extension.
 #include <AvailabilityMacros.h>
+
+//GL_EXT_blend_func_separate
+extern void glBlendFuncSeparateEXT(GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha) AVAILABLE_MAC_OS_X_VERSION_10_4_AND_LATER;
 
 // GL_EXT_framebuffer_object
 extern GLboolean glIsRenderbufferEXT(GLuint renderbuffer) AVAILABLE_MAC_OS_X_VERSION_10_4_AND_LATER;

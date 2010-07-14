@@ -129,7 +129,16 @@ void LLInspectRemoteObject::onOpen(const LLSD& data)
 	update();
 
 	// Position the inspector relative to the mouse cursor
-	LLUI::positionViewNearMouse(this);
+	// Similar to how tooltips are positioned
+	// See LLToolTipMgr::createToolTip
+	if (data.has("pos"))
+	{
+		LLUI::positionViewNearMouse(this, data["pos"]["x"].asInteger(), data["pos"]["y"].asInteger());
+	}
+	else
+	{
+		LLUI::positionViewNearMouse(this);
+	}
 }
 
 void LLInspectRemoteObject::onClickMap()
@@ -177,11 +186,11 @@ void LLInspectRemoteObject::update()
 	{
 		if (mGroupOwned)
 		{
-			owner = LLSLURL::buildCommand("group", mOwnerID, "about");
+			owner = LLSLURL("group", mOwnerID, "about").getSLURLString();
 		}
 		else
 		{
-			owner = LLSLURL::buildCommand("agent", mOwnerID, "about");
+			owner = LLSLURL("agent", mOwnerID, "about").getSLURLString();
 		}
 	}
 	else

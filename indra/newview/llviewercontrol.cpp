@@ -42,7 +42,9 @@
 // For Listeners
 #include "llaudioengine.h"
 #include "llagent.h"
+#include "llagentcamera.h"
 #include "llconsole.h"
+#include "lldrawpoolbump.h"
 #include "lldrawpoolterrain.h"
 #include "llflexibleobject.h"
 #include "llfeaturemanager.h"
@@ -70,10 +72,11 @@
 #include "llvosurfacepatch.h"
 #include "llvowlsky.h"
 #include "llrender.h"
-#include "llbottomtray.h"
 #include "llnavigationbar.h"
 #include "llfloatertools.h"
 #include "llpaneloutfitsinventory.h"
+#include "llpanellogin.h"
+#include "llpaneltopinfobar.h"
 
 #ifdef TOGGLE_HACKED_GODLIKE_VIEWER
 BOOL 				gHackGodmode = FALSE;
@@ -103,7 +106,7 @@ static bool handleRenderAvatarMouselookChanged(const LLSD& newvalue)
 static bool handleRenderFarClipChanged(const LLSD& newvalue)
 {
 	F32 draw_distance = (F32) newvalue.asReal();
-	gAgent.mDrawDistance = draw_distance;
+	gAgentCamera.mDrawDistance = draw_distance;
 	LLWorld::getInstance()->setLandFarClip(draw_distance);
 	return true;
 }
@@ -117,6 +120,10 @@ static bool handleTerrainDetailChanged(const LLSD& newvalue)
 
 static bool handleSetShaderChanged(const LLSD& newvalue)
 {
+	// changing shader level may invalidate existing cached bump maps, as the shader type determines the format of the bump map it expects - clear and repopulate the bump cache
+	gBumpImageList.destroyGL();
+	gBumpImageList.restoreGL();
+
 	LLViewerShaderMgr::instance()->setShaders();
 	return true;
 }
@@ -298,15 +305,6 @@ static bool handleWLSkyDetailChanged(const LLSD&)
 	return true;
 }
 
-static bool handleRenderLightingDetailChanged(const LLSD& newvalue)
-{
-	if (gPipeline.isInit())
-	{
-		gPipeline.setLightingDetail(newvalue.asInteger());
-	}
-	return true;
-}
-
 static bool handleResetVertexBuffersChanged(const LLSD&)
 {
 	if (gPipeline.isInit())
@@ -412,10 +410,7 @@ bool handleHighResSnapshotChanged(const LLSD& newvalue)
 
 bool handleVoiceClientPrefsChanged(const LLSD& newvalue)
 {
-	if(gVoiceClient)
-	{
-		gVoiceClient->updateSettings();
-	}
+	LLVoiceClient::getInstance()->updateSettings();
 	return true;
 }
 
@@ -443,6 +438,12 @@ bool handleVelocityInterpolate(const LLSD& newvalue)
 	return true;
 }
 
+bool handleForceShowGrid(const LLSD& newvalue)
+{
+	LLPanelLogin::updateServer( );
+	return true;
+}
+
 bool toggle_agent_pause(const LLSD& newvalue)
 {
 	if ( newvalue.asBoolean() )
@@ -456,33 +457,13 @@ bool toggle_agent_pause(const LLSD& newvalue)
 	return true;
 }
 
-bool toggle_show_gesture_button(const LLSD& newvalue)
-{
-	LLBottomTray::getInstance()->showGestureButton(newvalue.asBoolean());
-	return true;
-}
-
-bool toggle_show_move_button(const LLSD& newvalue)
-{
-	LLBottomTray::getInstance()->showMoveButton(newvalue.asBoolean());
-	return true;
-}
-
-bool toggle_show_camera_button(const LLSD& newvalue)
-{
-	LLBottomTray::getInstance()->showCameraButton(newvalue.asBoolean());
-	return true;
-}
-
-bool toggle_show_snapshot_button(const LLSD& newvalue)
-{
-	LLBottomTray::getInstance()->showSnapshotButton(newvalue.asBoolean());
-	return true;
-}
-
 bool toggle_show_navigation_panel(const LLSD& newvalue)
 {
-	LLNavigationBar::getInstance()->showNavigationPanel(newvalue.asBoolean());
+	bool value = newvalue.asBoolean();
+
+	LLNavigationBar::getInstance()->showNavigationPanel(value);
+	gSavedSettings.setBOOL("ShowMiniLocationPanel", !value);
+
 	return true;
 }
 
@@ -492,9 +473,13 @@ bool toggle_show_favorites_panel(const LLSD& newvalue)
 	return true;
 }
 
-bool toggle_show_appearance_editor(const LLSD& newvalue)
+bool toggle_show_mini_location_panel(const LLSD& newvalue)
 {
-	LLPanelOutfitsInventory::sShowDebugEditor = newvalue.asBoolean();
+	bool value = newvalue.asBoolean();
+
+	LLPanelTopInfoBar::getInstance()->setVisible(value);
+	gSavedSettings.setBOOL("ShowNavbarNavigationPanel", !value);
+
 	return true;
 }
 
@@ -516,6 +501,10 @@ void settings_setup_listeners()
 	gSavedSettings.getControl("RenderAvatarVP")->getSignal()->connect(boost::bind(&handleSetShaderChanged, _2));
 	gSavedSettings.getControl("VertexShaderEnable")->getSignal()->connect(boost::bind(&handleSetShaderChanged, _2));
 	gSavedSettings.getControl("RenderUIBuffer")->getSignal()->connect(boost::bind(&handleReleaseGLBufferChanged, _2));
+	gSavedSettings.getControl("RenderSpecularResX")->getSignal()->connect(boost::bind(&handleReleaseGLBufferChanged, _2));
+	gSavedSettings.getControl("RenderSpecularResY")->getSignal()->connect(boost::bind(&handleReleaseGLBufferChanged, _2));
+	gSavedSettings.getControl("RenderSpecularExponent")->getSignal()->connect(boost::bind(&handleReleaseGLBufferChanged, _2));
+	gSavedSettings.getControl("RenderFSAASamples")->getSignal()->connect(boost::bind(&handleReleaseGLBufferChanged, _2));
 	gSavedSettings.getControl("RenderShadowResolutionScale")->getSignal()->connect(boost::bind(&handleReleaseGLBufferChanged, _2));
 	gSavedSettings.getControl("RenderGlow")->getSignal()->connect(boost::bind(&handleReleaseGLBufferChanged, _2));
 	gSavedSettings.getControl("RenderGlow")->getSignal()->connect(boost::bind(&handleSetShaderChanged, _2));
@@ -536,7 +525,8 @@ void settings_setup_listeners()
 	gSavedSettings.getControl("RenderMaxPartCount")->getSignal()->connect(boost::bind(&handleMaxPartCountChanged, _2));
 	gSavedSettings.getControl("RenderDynamicLOD")->getSignal()->connect(boost::bind(&handleRenderDynamicLODChanged, _2));
 	gSavedSettings.getControl("RenderDebugTextureBind")->getSignal()->connect(boost::bind(&handleResetVertexBuffersChanged, _2));
-	gSavedSettings.getControl("RenderFastAlpha")->getSignal()->connect(boost::bind(&handleResetVertexBuffersChanged, _2));
+	gSavedSettings.getControl("RenderAutoMaskAlphaDeferred")->getSignal()->connect(boost::bind(&handleResetVertexBuffersChanged, _2));
+	gSavedSettings.getControl("RenderAutoMaskAlphaNonDeferred")->getSignal()->connect(boost::bind(&handleResetVertexBuffersChanged, _2));
 	gSavedSettings.getControl("RenderObjectBump")->getSignal()->connect(boost::bind(&handleResetVertexBuffersChanged, _2));
 	gSavedSettings.getControl("RenderMaxVBOSize")->getSignal()->connect(boost::bind(&handleResetVertexBuffersChanged, _2));
 	gSavedSettings.getControl("RenderUseFBO")->getSignal()->connect(boost::bind(&handleRenderUseFBOChanged, _2));
@@ -546,7 +536,8 @@ void settings_setup_listeners()
 	gSavedSettings.getControl("RenderDebugPipeline")->getSignal()->connect(boost::bind(&handleRenderDebugPipelineChanged, _2));
 	gSavedSettings.getControl("RenderResolutionDivisor")->getSignal()->connect(boost::bind(&handleRenderResolutionDivisorChanged, _2));
 	gSavedSettings.getControl("RenderDeferred")->getSignal()->connect(boost::bind(&handleSetShaderChanged, _2));
-	gSavedSettings.getControl("RenderDeferredShadow")->getSignal()->connect(boost::bind(&handleSetShaderChanged, _2));
+	gSavedSettings.getControl("RenderShadowDetail")->getSignal()->connect(boost::bind(&handleSetShaderChanged, _2));
+	gSavedSettings.getControl("RenderDeferredSSAO")->getSignal()->connect(boost::bind(&handleSetShaderChanged, _2));
 	gSavedSettings.getControl("RenderDeferredGI")->getSignal()->connect(boost::bind(&handleSetShaderChanged, _2));
 	gSavedSettings.getControl("TextureMemory")->getSignal()->connect(boost::bind(&handleVideoMemoryChanged, _2));
 	gSavedSettings.getControl("AuditTexture")->getSignal()->connect(boost::bind(&handleAuditTextureChanged, _2));
@@ -571,8 +562,8 @@ void settings_setup_listeners()
 	gSavedSettings.getControl("MuteAmbient")->getSignal()->connect(boost::bind(&handleAudioVolumeChanged, _2));
 	gSavedSettings.getControl("MuteUI")->getSignal()->connect(boost::bind(&handleAudioVolumeChanged, _2));
 	gSavedSettings.getControl("RenderVBOEnable")->getSignal()->connect(boost::bind(&handleRenderUseVBOChanged, _2));
+	gSavedSettings.getControl("RenderUseStreamVBO")->getSignal()->connect(boost::bind(&handleResetVertexBuffersChanged, _2));
 	gSavedSettings.getControl("WLSkyDetail")->getSignal()->connect(boost::bind(&handleWLSkyDetailChanged, _2));
-	gSavedSettings.getControl("RenderLightingDetail")->getSignal()->connect(boost::bind(&handleRenderLightingDetailChanged, _2));
 	gSavedSettings.getControl("NumpadControl")->getSignal()->connect(boost::bind(&handleNumpadControlChanged, _2));
 	gSavedSettings.getControl("JoystickAxis0")->getSignal()->connect(boost::bind(&handleJoystickChanged, _2));
 	gSavedSettings.getControl("JoystickAxis1")->getSignal()->connect(boost::bind(&handleJoystickChanged, _2));
@@ -640,14 +631,11 @@ void settings_setup_listeners()
 	gSavedSettings.getControl("QAMode")->getSignal()->connect(boost::bind(&show_debug_menus));
 	gSavedSettings.getControl("UseDebugMenus")->getSignal()->connect(boost::bind(&show_debug_menus));
 	gSavedSettings.getControl("AgentPause")->getSignal()->connect(boost::bind(&toggle_agent_pause, _2));
-	gSavedSettings.getControl("ShowGestureButton")->getSignal()->connect(boost::bind(&toggle_show_gesture_button, _2));
-	gSavedSettings.getControl("ShowMoveButton")->getSignal()->connect(boost::bind(&toggle_show_move_button, _2));
-	gSavedSettings.getControl("ShowCameraButton")->getSignal()->connect(boost::bind(&toggle_show_camera_button, _2));
-	gSavedSettings.getControl("ShowSnapshotButton")->getSignal()->connect(boost::bind(&toggle_show_snapshot_button, _2));
 	gSavedSettings.getControl("ShowNavbarNavigationPanel")->getSignal()->connect(boost::bind(&toggle_show_navigation_panel, _2));
 	gSavedSettings.getControl("ShowNavbarFavoritesPanel")->getSignal()->connect(boost::bind(&toggle_show_favorites_panel, _2));
-	gSavedSettings.getControl("ShowDebugAppearanceEditor")->getSignal()->connect(boost::bind(&toggle_show_appearance_editor, _2));
+	gSavedSettings.getControl("ShowMiniLocationPanel")->getSignal()->connect(boost::bind(&toggle_show_mini_location_panel, _2));
 	gSavedSettings.getControl("ShowObjectRenderingCost")->getSignal()->connect(boost::bind(&toggle_show_object_render_cost, _2));
+	gSavedSettings.getControl("ForceShowGrid")->getSignal()->connect(boost::bind(&handleForceShowGrid, _2));
 }
 
 #if TEST_CACHED_CONTROL

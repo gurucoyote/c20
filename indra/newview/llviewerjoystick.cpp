@@ -44,6 +44,7 @@
 #include "llselectmgr.h"
 #include "llviewermenu.h"
 #include "llagent.h"
+#include "llagentcamera.h"
 #include "llfocusmgr.h"
 
 
@@ -56,9 +57,6 @@
 #define RX_I	4
 #define RY_I	5
 #define RZ_I	3
-
-// flycam translations in build mode should be reduced
-const F32 BUILDMODE_FLYCAM_T_SCALE = 3.f;
 
 // minimum time after setting away state before coming back
 const F32 MIN_AFK_TIME = 2.f;
@@ -107,7 +105,7 @@ void LLViewerJoystick::setOverrideCamera(bool val)
 
 	if (mOverrideCamera)
 	{
-		gAgent.changeCameraToDefault();
+		gAgentCamera.changeCameraToDefault();
 	}
 }
 
@@ -163,7 +161,7 @@ LLViewerJoystick::LLViewerJoystick()
 	memset(mBtn, 0, sizeof(mBtn));
 
 	// factor in bandwidth? bandwidth = gViewerStats->mKBitStat
-	mPerfScale = 4000.f / gSysCPU.getMhz();
+	mPerfScale = 4000.f / gSysCPU.getMHz(); // hmm.  why?
 }
 
 // -----------------------------------------------------------------------------
@@ -433,7 +431,7 @@ void LLViewerJoystick::agentPitch(F32 pitch_inc)
 void LLViewerJoystick::agentYaw(F32 yaw_inc)
 {	
 	// Cannot steer some vehicles in mouselook if the script grabs the controls
-	if (gAgent.cameraMouselook() && !gSavedSettings.getBOOL("JoystickMouselookYaw"))
+	if (gAgentCamera.cameraMouselook() && !gSavedSettings.getBOOL("JoystickMouselookYaw"))
 	{
 		gAgent.rotate(-yaw_inc, gAgent.getReferenceUpVector());
 	}
@@ -924,14 +922,15 @@ void LLViewerJoystick::moveFlycam(bool reset)
 			cur_delta[i] = llmin(cur_delta[i]+dead_zone[i], 0.f);
 		}
 
-		// we need smaller camera movements in build mode
+		// We may want to scale camera movements up or down in build mode.
 		// NOTE: this needs to remain after the deadzone calculation, otherwise
 		// we have issues with flycam "jumping" when the build dialog is opened/closed  -Nyx
 		if (in_build_mode)
 		{
 			if (i == X_I || i == Y_I || i == Z_I)
 			{
-				cur_delta[i] /= BUILDMODE_FLYCAM_T_SCALE;
+				static LLCachedControl<F32> build_mode_scale(gSavedSettings,"FlycamBuildModeScale");
+				cur_delta[i] *= build_mode_scale;
 			}
 		}
 
@@ -1006,7 +1005,7 @@ bool LLViewerJoystick::toggleFlycam()
 
 	if (!mOverrideCamera)
 	{
-		gAgent.changeCameraToDefault();
+		gAgentCamera.changeCameraToDefault();
 	}
 
 	if (gAwayTimer.getElapsedTimeF32() > MIN_AFK_TIME)

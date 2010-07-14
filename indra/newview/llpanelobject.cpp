@@ -173,7 +173,6 @@ BOOL	LLPanelObject::postBuild()
 	//--------------------------------------------------------
 		
 	// material type popup
-	mLabelMaterial = getChild<LLTextBox>("label material");
 	mComboMaterial = getChild<LLComboBox>("material");
 	childSetCommitCallback("material",onCommitMaterial,this);
 	mComboMaterial->removeall();
@@ -190,7 +189,6 @@ BOOL	LLPanelObject::postBuild()
 	mComboMaterialItemCount = mComboMaterial->getItemCount();
 
 	// Base Type
-	mLabelBaseType = getChild<LLTextBox>("label basetype");
 	mComboBaseType = getChild<LLComboBox>("comboBaseType");
 	childSetCommitCallback("comboBaseType",onCommitParametric,this);
 
@@ -549,7 +547,6 @@ void LLPanelObject::getState( )
 	if (editable && single_volume && material_same)
 	{
 		mComboMaterial->setEnabled( TRUE );
-		mLabelMaterial->setEnabled( TRUE );
 		if (material_code == LL_MCODE_LIGHT)
 		{
 			if (mComboMaterial->getItemCount() == mComboMaterialItemCount)
@@ -571,7 +568,6 @@ void LLPanelObject::getState( )
 	else
 	{
 		mComboMaterial->setEnabled( FALSE );
-		mLabelMaterial->setEnabled( FALSE );	
 	}
 	//----------------------------------------------------------------------------
 
@@ -980,7 +976,6 @@ void LLPanelObject::getState( )
 	}
 
 	// Update field enablement
-	mLabelBaseType	->setEnabled( enabled );
 	mComboBaseType	->setEnabled( enabled );
 
 	mLabelCut		->setEnabled( enabled );
@@ -1911,12 +1906,10 @@ void LLPanelObject::clearCtrls()
 	mCheckCastShadows->setEnabled( FALSE );
 #endif
 	mComboMaterial	->setEnabled( FALSE );
-	mLabelMaterial	->setEnabled( FALSE );
 	// Disable text labels
 	mLabelPosition	->setEnabled( FALSE );
 	mLabelSize		->setEnabled( FALSE );
 	mLabelRotation	->setEnabled( FALSE );
-	mLabelBaseType	->setEnabled( FALSE );
 	mLabelCut		->setEnabled( FALSE );
 	mLabelHollow	->setEnabled( FALSE );
 	mLabelHoleType	->setEnabled( FALSE );

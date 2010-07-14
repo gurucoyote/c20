@@ -44,6 +44,10 @@ class LLViewerTexture;
 class LLVOAvatar;
 class LLWearable;
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// LLTexLayerParam
+// 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 class LLTexLayerParam : public LLViewerVisualParam
 {
 public: 
@@ -57,9 +61,10 @@ protected:
 	LLVOAvatar*             mAvatar;
 };
 
-//-----------------------------------------------------------------------------
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // LLTexLayerParamAlpha
 // 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 class LLTexLayerParamAlpha : public LLTexLayerParam
 {
 public:
@@ -126,9 +131,10 @@ private:
 // LLTexLayerParamAlpha
 //-----------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // LLTexLayerParamColor
 //
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 class LLTexLayerParamColor : public LLTexLayerParam
 {
 public:
@@ -186,8 +192,9 @@ private:
 	S32					mNumColors;
 };
 
-//
-// LLTexLayerParamColor
-//-----------------------------------------------------------------------------
+typedef std::vector<LLTexLayerParamColor *> param_color_list_t;
+typedef std::vector<LLTexLayerParamAlpha *> param_alpha_list_t;
+typedef std::vector<LLTexLayerParamColorInfo *> param_color_info_list_t;
+typedef std::vector<LLTexLayerParamAlphaInfo *> param_alpha_info_list_t;
 
 #endif

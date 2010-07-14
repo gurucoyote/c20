@@ -43,6 +43,7 @@
 // Project includes
 #include "llui.h"
 #include "llagent.h"
+#include "llagentcamera.h"
 #include "llviewertexture.h"
 #include "llviewertexturelist.h"
 #include "llviewerwindow.h"
@@ -53,7 +54,6 @@
 static LLDefaultChildRegistry::Register<LLJoystickAgentSlide> r1("joystick_slide");
 static LLDefaultChildRegistry::Register<LLJoystickAgentTurn> r2("joystick_turn");
 static LLDefaultChildRegistry::Register<LLJoystickCameraRotate> r3("joystick_rotate");
-static LLDefaultChildRegistry::Register<LLJoystickCameraZoom> r4("joystick_zoom");
 static LLDefaultChildRegistry::Register<LLJoystickCameraTrack> r5("joystick_track");
 
 
@@ -483,25 +483,25 @@ void LLJoystickCameraRotate::onHeldDown()
 	// left-right rotation
 	if (dx > mHorizSlopNear)
 	{
-		gAgent.unlockView();
-		gAgent.setOrbitLeftKey(getOrbitRate());
+		gAgentCamera.unlockView();
+		gAgentCamera.setOrbitLeftKey(getOrbitRate());
 	}
 	else if (dx < -mHorizSlopNear)
 	{
-		gAgent.unlockView();
-		gAgent.setOrbitRightKey(getOrbitRate());
+		gAgentCamera.unlockView();
+		gAgentCamera.setOrbitRightKey(getOrbitRate());
 	}
 
 	// over/under rotation
 	if (dy > mVertSlopNear)
 	{
-		gAgent.unlockView();
-		gAgent.setOrbitUpKey(getOrbitRate());
+		gAgentCamera.unlockView();
+		gAgentCamera.setOrbitUpKey(getOrbitRate());
 	}
 	else if (dy < -mVertSlopNear)
 	{
-		gAgent.unlockView();
-		gAgent.setOrbitDownKey(getOrbitRate());
+		gAgentCamera.unlockView();
+		gAgentCamera.setOrbitDownKey(getOrbitRate());
 	}
 }
 
@@ -626,176 +626,24 @@ void LLJoystickCameraTrack::onHeldDown()
 
 	if (dx > mVertSlopNear)
 	{
-		gAgent.unlockView();
-		gAgent.setPanRightKey(getOrbitRate());
+		gAgentCamera.unlockView();
+		gAgentCamera.setPanRightKey(getOrbitRate());
 	}
 	else if (dx < -mVertSlopNear)
 	{
-		gAgent.unlockView();
-		gAgent.setPanLeftKey(getOrbitRate());
+		gAgentCamera.unlockView();
+		gAgentCamera.setPanLeftKey(getOrbitRate());
 	}
 
 	// over/under rotation
 	if (dy > mVertSlopNear)
 	{
-		gAgent.unlockView();
-		gAgent.setPanUpKey(getOrbitRate());
+		gAgentCamera.unlockView();
+		gAgentCamera.setPanUpKey(getOrbitRate());
 	}
 	else if (dy < -mVertSlopNear)
 	{
-		gAgent.unlockView();
-		gAgent.setPanDownKey(getOrbitRate());
-	}
-}
-
-
-
-//-------------------------------------------------------------------------------
-// LLJoystickCameraZoom
-//-------------------------------------------------------------------------------
-
-LLJoystickCameraZoom::LLJoystickCameraZoom(const LLJoystickCameraZoom::Params& p)
-:	LLJoystick(p),
-	mInTop( FALSE ),
-	mInBottom( FALSE ),
-	mPlusInImage(p.plus_image),
-	mMinusInImage(p.minus_image)
-{
-}
-
-BOOL LLJoystickCameraZoom::handleMouseDown(S32 x, S32 y, MASK mask)
-{
-	BOOL handled = LLJoystick::handleMouseDown(x, y, mask);
-
-	if( handled )
-	{
-		if (mFirstMouse.mY > getRect().getHeight() / 2)
-		{
-			mInitialQuadrant = JQ_UP;
-		}
-		else
-		{
-			mInitialQuadrant = JQ_DOWN;
-		}
-	}
-	return handled;
-}
-
-
-void LLJoystickCameraZoom::onHeldDown()
-{
-	updateSlop();
-
-	const F32 FAST_RATE = 2.5f; // two and a half times the normal rate
-
-	S32 dy = mLastMouse.mY - mFirstMouse.mY + mInitialOffset.mY;
-
-	if (dy > mVertSlopFar)
-	{
-		// Zoom in fast
-		gAgent.unlockView();
-		gAgent.setOrbitInKey(FAST_RATE);
-	}
-	else if (dy > mVertSlopNear)
-	{
-		// Zoom in slow
-		gAgent.unlockView();
-		gAgent.setOrbitInKey(getOrbitRate());
-	}
-	else if (dy < -mVertSlopFar)
-	{
-		// Zoom out fast
-		gAgent.unlockView();
-		gAgent.setOrbitOutKey(FAST_RATE);
-	}
-	else if (dy < -mVertSlopNear)
-	{
-		// Zoom out slow
-		gAgent.unlockView();
-		gAgent.setOrbitOutKey(getOrbitRate());
-	}
-}
-
-// Only used for drawing
-void LLJoystickCameraZoom::setToggleState( BOOL top, BOOL bottom )
-{
-	mInTop = top;
-	mInBottom = bottom;
-}
-
-void LLJoystickCameraZoom::draw()
-{
-	if( mInTop )
-	{
-		mPlusInImage->draw(0,0);
-	}
-	else
-	if( mInBottom )
-	{
-		mMinusInImage->draw(0,0);
-	}
-	else
-	{
-		getImageUnselected()->draw( 0, 0 );
-	}
-}
-
-void LLJoystickCameraZoom::updateSlop()
-{
-	mVertSlopNear = getRect().getHeight() / 4;
-	mVertSlopFar = getRect().getHeight() / 2;
-
-	mHorizSlopNear = getRect().getWidth() / 4;
-	mHorizSlopFar = getRect().getWidth() / 2;
-
-	// Compute initial mouse offset based on initial quadrant.
-	// Place the mouse evenly between the near and far zones.
-	switch (mInitialQuadrant)
-	{
-	case JQ_ORIGIN:
-		mInitialOffset.set(0, 0);
-		break;
-
-	case JQ_UP:
-		mInitialOffset.mX = 0;
-		mInitialOffset.mY = (mVertSlopNear + mVertSlopFar) / 2;
-		break;
-
-	case JQ_DOWN:
-		mInitialOffset.mX = 0;
-		mInitialOffset.mY = - (mVertSlopNear + mVertSlopFar) / 2;
-		break;
-
-	case JQ_LEFT:
-		mInitialOffset.mX = - (mHorizSlopNear + mHorizSlopFar) / 2;
-		mInitialOffset.mY = 0;
-		break;
-
-	case JQ_RIGHT:
-		mInitialOffset.mX = (mHorizSlopNear + mHorizSlopFar) / 2;
-		mInitialOffset.mY = 0;
-		break;
-
-	default:
-		llerrs << "LLJoystick::LLJoystick() - bad switch case" << llendl;
-		break;
-	}
-
-	return;
-}
-
-
-F32 LLJoystickCameraZoom::getOrbitRate()
-{
-	F32 time = getElapsedHeldDownTime();
-	if( time < NUDGE_TIME )
-	{
-		F32 rate = ORBIT_NUDGE_RATE + time * (1 - ORBIT_NUDGE_RATE)/ NUDGE_TIME;
-//		llinfos << "rate " << rate << " time " << time << llendl;
-		return rate;
-	}
-	else
-	{
-		return 1;
+		gAgentCamera.unlockView();
+		gAgentCamera.setPanDownKey(getOrbitRate());
 	}
 }

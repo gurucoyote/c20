@@ -42,6 +42,7 @@
 #include "llfloaterworldmap.h"
 
 #include "llagent.h"
+#include "llagentcamera.h"
 #include "llbutton.h"
 #include "llcallingcard.h"
 #include "llcombobox.h"
@@ -51,10 +52,12 @@
 //#include "llfirstuse.h"
 #include "llfloaterreg.h"		// getTypedInstance()
 #include "llfocusmgr.h"
+#include "llinventoryfunctions.h"
 #include "llinventorymodel.h"
+#include "llinventorymodelbackgroundfetch.h"
 #include "llinventoryobserver.h"
 #include "lllandmarklist.h"
-#include "lllineeditor.h"
+#include "llsearcheditor.h"
 #include "llnotificationsutil.h"
 #include "llregionhandle.h"
 #include "llscrolllistctrl.h"
@@ -123,7 +126,7 @@ public:
 		}
 
 		// support the secondlife:///app/worldmap/{LOCATION}/{COORDS} SLapp
-		const std::string region_name = params[0].asString();
+		const std::string region_name = LLURI::unescape(params[0].asString());
 		S32 x = (params.size() > 1) ? params[1].asInteger() : 128;
 		S32 y = (params.size() > 2) ? params[2].asInteger() : 128;
 		S32 z = (params.size() > 3) ? params[3].asInteger() : 0;
@@ -214,6 +217,8 @@ LLFloaterWorldMap::LLFloaterWorldMap(const LLSD& key)
 	mCommitCallbackRegistrar.add("WMap.ShowAgent",		boost::bind(&LLFloaterWorldMap::onShowAgentBtn, this));		
 	mCommitCallbackRegistrar.add("WMap.Clear",			boost::bind(&LLFloaterWorldMap::onClearBtn, this));		
 	mCommitCallbackRegistrar.add("WMap.CopySLURL",		boost::bind(&LLFloaterWorldMap::onCopySLURL, this));
+
+	gSavedSettings.getControl("PreferredMaturity")->getSignal()->connect(boost::bind(&LLFloaterWorldMap::onChangeMaturity, this));
 }
 
 // static
@@ -227,30 +232,20 @@ BOOL LLFloaterWorldMap::postBuild()
 	mPanel = getChild<LLPanel>("objects_mapview");
 
 	LLComboBox *avatar_combo = getChild<LLComboBox>("friend combo");
-	if (avatar_combo)
-	{
-		avatar_combo->selectFirstItem();
-		avatar_combo->setPrearrangeCallback( boost::bind(&LLFloaterWorldMap::onAvatarComboPrearrange, this) );
-		avatar_combo->setTextEntryCallback( boost::bind(&LLFloaterWorldMap::onComboTextEntry, this) );
-	}
+	avatar_combo->selectFirstItem();
+	avatar_combo->setPrearrangeCallback( boost::bind(&LLFloaterWorldMap::onAvatarComboPrearrange, this) );
+	avatar_combo->setTextEntryCallback( boost::bind(&LLFloaterWorldMap::onComboTextEntry, this) );
 
-	getChild<LLScrollListCtrl>("location")->setFocusChangedCallback(boost::bind(&LLFloaterWorldMap::onLocationFocusChanged, this, _1));
-
-	LLLineEditor *location_editor = getChild<LLLineEditor>("location");
-	if (location_editor)
-	{
-		location_editor->setKeystrokeCallback( boost::bind(&LLFloaterWorldMap::onSearchTextEntry, this, _1), NULL );
-	}
+	LLSearchEditor *location_editor = getChild<LLSearchEditor>("location");
+	location_editor->setFocusChangedCallback(boost::bind(&LLFloaterWorldMap::onLocationFocusChanged, this, _1));
+	location_editor->setKeystrokeCallback( boost::bind(&LLFloaterWorldMap::onSearchTextEntry, this));
 	
 	getChild<LLScrollListCtrl>("search_results")->setDoubleClickCallback( boost::bind(&LLFloaterWorldMap::onClickTeleportBtn, this));
 
 	LLComboBox *landmark_combo = getChild<LLComboBox>( "landmark combo");
-	if (landmark_combo)
-	{
-		landmark_combo->selectFirstItem();
-		landmark_combo->setPrearrangeCallback( boost::bind(&LLFloaterWorldMap::onLandmarkComboPrearrange, this) );
-		landmark_combo->setTextEntryCallback( boost::bind(&LLFloaterWorldMap::onComboTextEntry, this) );
-	}
+	landmark_combo->selectFirstItem();
+	landmark_combo->setPrearrangeCallback( boost::bind(&LLFloaterWorldMap::onLandmarkComboPrearrange, this) );
+	landmark_combo->setTextEntryCallback( boost::bind(&LLFloaterWorldMap::onComboTextEntry, this) );
 
 	mCurZoomVal = log(LLWorldMapView::sMapScale)/log(2.f);
 	childSetValue("zoom slider", LLWorldMapView::sMapScale);
@@ -258,6 +253,8 @@ BOOL LLFloaterWorldMap::postBuild()
 	setDefaultBtn(NULL);
 
 	mZoomTimer.stop();
+
+	onChangeMaturity();
 
 	return TRUE;
 }
@@ -322,7 +319,7 @@ void LLFloaterWorldMap::onOpen(const LLSD& key)
 
 		// Start speculative download of landmarks
 		const LLUUID landmark_folder_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_LANDMARK);
-		gInventory.startBackgroundFetch(landmark_folder_id);
+		LLInventoryModelBackgroundFetch::instance().start(landmark_folder_id);
 
 		childSetFocus("location", TRUE);
 		gFocusMgr.triggerFocusFlash();
@@ -386,21 +383,6 @@ void LLFloaterWorldMap::draw()
 	static LLUIColor map_track_color = LLUIColorTable::instance().getColor("MapTrackColor", LLColor4::white);
 	static LLUIColor map_track_disabled_color = LLUIColorTable::instance().getColor("MapTrackDisabledColor", LLColor4::white);
 	
-	// Hide/Show Mature Events controls
-	childSetVisible("events_mature_icon", gAgent.canAccessMature());
-	childSetVisible("events_mature_label", gAgent.canAccessMature());
-	childSetVisible("event_mature_chk", gAgent.canAccessMature());
-
-	childSetVisible("events_adult_icon", gAgent.canAccessMature());
-	childSetVisible("events_adult_label", gAgent.canAccessMature());
-	childSetVisible("event_adult_chk", gAgent.canAccessMature());
-	bool adult_enabled = gAgent.canAccessAdult();
-	if (!adult_enabled)
-	{
-		childSetValue("event_adult_chk", FALSE);
-	}
-	childSetEnabled("event_adult_chk", adult_enabled);
-
 	// On orientation island, users don't have a home location yet, so don't
 	// let them teleport "home".  It dumps them in an often-crowed welcome
 	// area (infohub) and they get confused. JC
@@ -459,7 +441,7 @@ void LLFloaterWorldMap::draw()
 	childSetEnabled("Teleport", (BOOL)tracking_status);
 //	childSetEnabled("Clear", (BOOL)tracking_status);
 	childSetEnabled("Show Destination", (BOOL)tracking_status || LLWorldMap::getInstance()->isTracking());
-	childSetEnabled("copy_slurl", (mSLURL.size() > 0) );
+	childSetEnabled("copy_slurl", (mSLURL.isValid()) );
 
 	setMouseOpaque(TRUE);
 	getDragHandle()->setMouseOpaque(TRUE);
@@ -488,8 +470,8 @@ void LLFloaterWorldMap::draw()
 	childSetEnabled("telehub_chk", enable);
 	childSetEnabled("land_for_sale_chk", enable);
 	childSetEnabled("event_chk", enable);
-	childSetEnabled("event_mature_chk", enable);
-	childSetEnabled("event_adult_chk", enable);
+	childSetEnabled("events_mature_chk", enable);
+	childSetEnabled("events_adult_chk", enable);
 	
 	LLFloater::draw();
 }
@@ -658,14 +640,8 @@ void LLFloaterWorldMap::updateLocation()
 				childSetValue("location", agent_sim_name);
 
 				// Figure out where user is
-				LLVector3d agentPos = gAgent.getPositionGlobal();
-
-				S32 agent_x = llround( (F32)fmod( agentPos.mdV[VX], (F64)REGION_WIDTH_METERS ) );
-				S32 agent_y = llround( (F32)fmod( agentPos.mdV[VY], (F64)REGION_WIDTH_METERS ) );
-				S32 agent_z = llround( (F32)agentPos.mdV[VZ] );
-
 				// Set the current SLURL
-				mSLURL = LLSLURL::buildSLURL(agent_sim_name, agent_x, agent_y, agent_z);
+				mSLURL = LLSLURL(agent_sim_name, gAgent.getPositionGlobal());
 			}
 		}
 
@@ -692,18 +668,15 @@ void LLFloaterWorldMap::updateLocation()
 		}
 
 		childSetValue("location", sim_name);
-		
-		F32 region_x = (F32)fmod( pos_global.mdV[VX], (F64)REGION_WIDTH_METERS );
-		F32 region_y = (F32)fmod( pos_global.mdV[VY], (F64)REGION_WIDTH_METERS );
 
 		// simNameFromPosGlobal can fail, so don't give the user an invalid SLURL
 		if ( gotSimName )
 		{
-			mSLURL = LLSLURL::buildSLURL(sim_name, llround(region_x), llround(region_y), llround((F32)pos_global.mdV[VZ]));
+		  mSLURL = LLSLURL(sim_name, pos_global);
 		}
 		else
 		{	// Empty SLURL will disable the "Copy SLURL to clipboard" button
-			mSLURL = "";
+			mSLURL = LLSLURL();
 		}
 	}
 }
@@ -1010,7 +983,7 @@ void LLFloaterWorldMap::onComboTextEntry()
 	LLTracker::clearFocus();
 }
 
-void LLFloaterWorldMap::onSearchTextEntry( LLLineEditor* ctrl )
+void LLFloaterWorldMap::onSearchTextEntry( )
 {
 	onComboTextEntry();
 	updateSearchEnabled();
@@ -1172,7 +1145,7 @@ void LLFloaterWorldMap::onClearBtn()
 	mTrackedStatus = LLTracker::TRACKING_NOTHING;
 	LLTracker::stopTracking((void *)(intptr_t)TRUE);
 	LLWorldMap::getInstance()->cancelTracking();
-	mSLURL = "";					// Clear the SLURL since it's invalid
+	mSLURL = LLSLURL();					// Clear the SLURL since it's invalid
 	mSetToUserPosition = TRUE;	// Revert back to the current user position
 }
 
@@ -1195,10 +1168,10 @@ void LLFloaterWorldMap::onClickTeleportBtn()
 
 void LLFloaterWorldMap::onCopySLURL()
 {
-	getWindow()->copyTextToClipboard(utf8str_to_wstring(mSLURL));
+	getWindow()->copyTextToClipboard(utf8str_to_wstring(mSLURL.getSLURLString()));
 	
 	LLSD args;
-	args["SLURL"] = mSLURL;
+	args["SLURL"] = mSLURL.getSLURLString();
 
 	LLNotificationsUtil::add("CopySLURL", args);
 }
@@ -1221,12 +1194,12 @@ void LLFloaterWorldMap::centerOnTarget(BOOL animate)
 		{
 			// We've got the position finally, so we're no longer busy. JC
 //			getWindow()->decBusyCount();
-			pos_global = LLTracker::getTrackedPositionGlobal() - gAgent.getCameraPositionGlobal();
+			pos_global = LLTracker::getTrackedPositionGlobal() - gAgentCamera.getCameraPositionGlobal();
 		}
 	}
 	else if(LLWorldMap::getInstance()->isTracking())
 	{
-		pos_global = LLWorldMap::getInstance()->getTrackedPositionGlobal() - gAgent.getCameraPositionGlobal();;
+		pos_global = LLWorldMap::getInstance()->getTrackedPositionGlobal() - gAgentCamera.getCameraPositionGlobal();;
 	}
 	else
 	{
@@ -1496,4 +1469,28 @@ void LLFloaterWorldMap::onCommitSearchResult()
 	}
 
 	onShowTargetBtn();
+}
+
+void LLFloaterWorldMap::onChangeMaturity()
+{
+	bool can_access_mature = gAgent.canAccessMature();
+	bool can_access_adult = gAgent.canAccessAdult();
+
+	childSetVisible("events_mature_icon", can_access_mature);
+	childSetVisible("events_mature_label", can_access_mature);
+	childSetVisible("events_mature_chk", can_access_mature);
+
+	childSetVisible("events_adult_icon", can_access_adult);
+	childSetVisible("events_adult_label", can_access_adult);
+	childSetVisible("events_adult_chk", can_access_adult);
+
+	// disable mature / adult events.
+	if (!can_access_mature)
+	{
+		gSavedSettings.setBOOL("ShowMatureEvents", FALSE);
+	}
+	if (!can_access_adult)
+	{
+		gSavedSettings.setBOOL("ShowAdultEvents", FALSE);
+	}
 }

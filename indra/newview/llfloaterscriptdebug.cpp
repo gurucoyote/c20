@@ -64,6 +64,8 @@ LLFloaterScriptDebug::LLFloaterScriptDebug(const LLSD& key)
 	// avoid resizing of the window to match 
 	// the initial size of the tabbed-childs, whenever a tab is opened or closed
 	mAutoResize = FALSE;
+	// enabled autocous blocks controling focus via  LLFloaterReg::showInstance
+	setAutoFocus(FALSE);
 }
 
 LLFloaterScriptDebug::~LLFloaterScriptDebug()
@@ -94,7 +96,8 @@ LLFloater* LLFloaterScriptDebug::addOutputWindow(const LLUUID &object_id)
 		return NULL;
 
 	LLFloater::setFloaterHost(host);
-	LLFloater* floaterp = LLFloaterReg::showInstance("script_debug_output", object_id);
+	// prevent stealing focus, see EXT-8040
+	LLFloater* floaterp = LLFloaterReg::showInstance("script_debug_output", object_id, FALSE);
 	LLFloater::setFloaterHost(NULL);
 
 	return floaterp;
@@ -104,6 +107,10 @@ void LLFloaterScriptDebug::addScriptLine(const std::string &utf8mesg, const std:
 {
 	LLViewerObject* objectp = gObjectList.findObject(source_id);
 	std::string floater_label;
+
+	// Handle /me messages.
+	std::string prefix = utf8mesg.substr(0, 4);
+	std::string message = (prefix == "/me " || prefix == "/me'") ? user_name + utf8mesg.substr(3) : utf8mesg;
 
 	if (objectp)
 	{
@@ -122,14 +129,14 @@ void LLFloaterScriptDebug::addScriptLine(const std::string &utf8mesg, const std:
 	LLFloaterScriptDebugOutput* floaterp = 	LLFloaterReg::getTypedInstance<LLFloaterScriptDebugOutput>("script_debug_output", LLUUID::null);
 	if (floaterp)
 	{
-		floaterp->addLine(utf8mesg, user_name, color);
+		floaterp->addLine(message, user_name, color);
 	}
 	
 	// add to specific script instance floater
 	floaterp = LLFloaterReg::getTypedInstance<LLFloaterScriptDebugOutput>("script_debug_output", source_id);
 	if (floaterp)
 	{
-		floaterp->addLine(utf8mesg, floater_label, color);
+		floaterp->addLine(message, floater_label, color);
 	}
 }
 
@@ -142,6 +149,9 @@ LLFloaterScriptDebugOutput::LLFloaterScriptDebugOutput(const LLSD& object_id)
 	mObjectID(object_id.asUUID())
 {
 	//LLUICtrlFactory::getInstance()->buildFloater(this, "floater_script_debug_panel.xml");
+	
+	// enabled autocous blocks controling focus via  LLFloaterReg::showInstance
+	setAutoFocus(FALSE);
 }
 
 BOOL LLFloaterScriptDebugOutput::postBuild()

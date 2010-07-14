@@ -319,7 +319,7 @@ LLFloaterChatterBox* LLFloaterChatterBox::getInstance()
 //static 
 LLFloater* LLFloaterChatterBox::getCurrentVoiceFloater()
 {
-	if (!LLVoiceClient::voiceEnabled())
+	if (!LLVoiceClient::getInstance()->voiceEnabled())
 	{
 		return NULL;
 	}

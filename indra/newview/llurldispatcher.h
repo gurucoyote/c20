@@ -2,9 +2,9 @@
  * @file llurldispatcher.h
  * @brief Central registry for all SL URL handlers
  *
- * $LicenseInfo:firstyear=2007&license=viewergpl$
+ * $LicenseInfo:firstyear=2010&license=viewergpl$
  * 
- * Copyright (c) 2007-2010, Linden Research, Inc.
+ * Copyright (c) 2010, Linden Research, Inc.
  * 
  * Second Life Viewer Source Code
  * The source code in this file ("Source Code") is provided by Linden Lab
@@ -32,16 +32,16 @@
  */
 #ifndef LLURLDISPATCHER_H
 #define LLURLDISPATCHER_H
-
 class LLMediaCtrl;
 
 
 class LLURLDispatcher
 {
 public:
-	static bool dispatch(const std::string& url,
+	
+	static bool dispatch(const std::string& slurl,
 						 LLMediaCtrl* web,
-						 bool trusted_browser);
+						 bool trusted_browser);	
 		// At startup time and on clicks in internal web browsers,
 		// teleport, open map, or run requested command.
 		// @param url
@@ -55,9 +55,9 @@ public:
 		//   that navigates to trusted (Linden Lab) pages.
 		// Returns true if someone handled the URL.
 
-	static bool dispatchRightClick(const std::string& url);
+	static bool dispatchRightClick(const std::string& slurl);
 
-	static bool dispatchFromTextEditor(const std::string& url);
+	static bool dispatchFromTextEditor(const std::string& slurl);
 };
 
 #endif

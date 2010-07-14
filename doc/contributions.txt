@@ -210,6 +210,8 @@ Dale Glass
 	VWR-2502
 	VWR-1358
 	VWR-2041
+Drew Dri
+	VWR-19683
 Drewan Keats
 	VWR-28
 	VWR-248
@@ -358,6 +360,8 @@ Khyota Wulluf
 	VWR-8885
 	VWR-9256
 	VWR-9966
+Kitty Barnett
+	VWR-19699
 Kunnis Basiat
 	VWR-82
 	VWR-102

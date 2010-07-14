@@ -569,7 +569,7 @@ void LLFloaterAnimPreview::onBtnPlay(void* user_data)
 	{
 		LLVOAvatar* avatarp = previewp->mAnimPreview->getDummyAvatar();
 		
-		if(!avatarp->isMotionActive(previewp->mMotionID))
+		if (!avatarp->isMotionActive(previewp->mMotionID))
 		{
 			previewp->resetMotion();
 			previewp->mPauseRequest = NULL;
@@ -594,7 +594,7 @@ void LLFloaterAnimPreview::onBtnPause(void* user_data)
 	{
 		LLVOAvatar* avatarp = previewp->mAnimPreview->getDummyAvatar();
 
-		if(avatarp->isMotionActive(previewp->mMotionID))
+		if (avatarp->isMotionActive(previewp->mMotionID))
 		{
 			if (!avatarp->areAnimationsPaused())
 			{

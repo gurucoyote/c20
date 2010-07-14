@@ -111,7 +111,8 @@ public:
 								save_rect,
 								save_visibility,
 								save_dock_state,
-								can_dock;
+								can_dock,
+								open_centered;
 		Optional<S32>			header_height,
 								legacy_header_height; // HACK see initFromXML()
 
@@ -149,7 +150,7 @@ public:
 	static void setupParamsForExport(Params& p, LLView* parent);
 
 	void initFromParams(const LLFloater::Params& p);
-	bool initFloaterXML(LLXMLNodePtr node, LLView *parent, LLXMLNodePtr output_node = NULL);
+	bool initFloaterXML(LLXMLNodePtr node, LLView *parent, const std::string& filename, LLXMLNodePtr output_node = NULL);
 
 	/*virtual*/ void handleReshape(const LLRect& new_rect, bool by_user = false);
 	/*virtual*/ BOOL canSnapTo(const LLView* other_view);
@@ -195,6 +196,8 @@ public:
 	/// The static isShown() can accept a NULL pointer (which of course
 	/// returns false). When non-NULL, it calls the non-static isShown().
 	static bool		isShown(const LLFloater* floater);
+	static bool     isVisible(const LLFloater* floater);
+	static bool     isMinimized(const LLFloater* floater);
 	BOOL			isFirstLook() { return mFirstLook; } // EXT-2653: This function is necessary to prevent overlapping for secondary showed toasts
 	BOOL			isFrontmost();
 	BOOL			isDependent()					{ return !mDependeeHandle.isDead(); }
@@ -310,19 +313,26 @@ protected:
 
 	virtual	void	onClickCloseBtn();
 
+	virtual void	updateTitleButtons();
+
 private:
 	void			setForeground(BOOL b);	// called only by floaterview
 	void			cleanupHandles(); // remove handles to dead floaters
 	void			createMinimizeButton();
-	void			updateButtons();
 	void			buildButtons(const Params& p);
 	
 	// Images and tooltips are named in the XML, but we want to look them
 	// up by index.
 	static LLUIImage*	getButtonImage(const Params& p, EFloaterButton e);
 	static LLUIImage*	getButtonPressedImage(const Params& p, EFloaterButton e);
-	static std::string	getButtonTooltip(const Params& p, EFloaterButton e);
 	
+	/**
+	 * @params is_chrome - if floater is Chrome it means that floater will never get focus.
+	 * Therefore it can't be closed with 'Ctrl+W'. So the tooltip text of close button( X )
+	 * should be 'Close' not 'Close(Ctrl+W)' as for usual floaters.
+	 */
+	static std::string	getButtonTooltip(const Params& p, EFloaterButton e, bool is_chrome);
+
 	BOOL			offerClickToButton(S32 x, S32 y, MASK mask, EFloaterButton index);
 	void			addResizeCtrls();
 	void			layoutResizeCtrls();
@@ -365,6 +375,7 @@ private:
 	BOOL			mCanClose;
 	BOOL			mDragOnLeft;
 	BOOL			mResizable;
+	bool			mOpenCentered;
 	
 	S32				mMinWidth;
 	S32				mMinHeight;
@@ -424,11 +435,15 @@ private:
 
 class LLFloaterView : public LLUICtrl
 {
+public:
+	struct Params : public LLInitParam::Block<Params, LLUICtrl::Params>{};
+
 protected:
 	LLFloaterView (const Params& p);
 	friend class LLUICtrlFactory;
 
 public:
+
 	/*virtual*/ void reshape(S32 width, S32 height, BOOL called_from_parent = TRUE);
 	void reshapeFloater(S32 width, S32 height, BOOL called_from_parent, BOOL adjust_vertical);
 

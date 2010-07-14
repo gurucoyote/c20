@@ -36,20 +36,19 @@
 #define LL_LLPANELOUTFITSINVENTORY_H
 
 #include "llpanel.h"
-#include "llinventoryobserver.h"
 
-class LLFolderView;
-class LLFolderViewItem;
-class LLFolderViewEventListener;
-class LLInventoryPanel;
-class LLSaveFolderState;
-class LLButton;
+class LLOutfitsList;
+class LLOutfitListGearMenu;
+class LLPanelAppearanceTab;
+class LLPanelWearing;
 class LLMenuGL;
 class LLSidepanelAppearance;
 class LLTabContainer;
+class LLSaveOutfitComboBtn;
 
 class LLPanelOutfitsInventory : public LLPanel
 {
+	LOG_CLASS(LLPanelOutfitsInventory);
 public:
 	LLPanelOutfitsInventory();
 	virtual ~LLPanelOutfitsInventory();
@@ -58,79 +57,56 @@ public:
 	/*virtual*/ void onOpen(const LLSD& key);
 	
 	void onSearchEdit(const std::string& string);
-	void onAdd();
-	void onRemove();
-	void onEdit();
 	void onSave();
 	
-	void onSaveCommit(const std::string& item_name);
+	bool onSaveCommit(const LLSD& notification, const LLSD& response);
 
-	void onSelectionChange(const std::deque<LLFolderViewItem*> &items, BOOL user_action);
-	void onSelectorButtonClicked();
+	static LLSidepanelAppearance* getAppearanceSP();
 
-	// If a compatible listener type is selected, then return a pointer to that.
-	// Otherwise, return NULL.
-	LLFolderViewEventListener* getCorrectListenerForAction();
-	void setParent(LLSidepanelAppearance *parent);
-
-	LLFolderView* getRootFolder();
+	static LLPanelOutfitsInventory* findInstance();
 
 protected:
 	void updateVerbs();
-	bool getIsCorrectType(const LLFolderViewEventListener *listenerp) const;
 
 private:
-	LLSidepanelAppearance*  mParent;
-	LLSaveFolderState*		mSavedFolderState;
 	LLTabContainer*			mAppearanceTabs;
 	std::string 			mFilterSubString;
+	std::auto_ptr<LLSaveOutfitComboBtn> mSaveComboBtn;
 
-public:
 	//////////////////////////////////////////////////////////////////////////////////
-	// tab panels
-	LLInventoryPanel* 		getActivePanel() { return mActivePanel; }
-	const LLInventoryPanel* getActivePanel() const { return mActivePanel; }
-	BOOL 					isTabPanel(LLInventoryPanel *panel) const;
-	
+	// tab panels                                                                   //
 protected:
 	void 					initTabPanels();
-	void 					onTabSelectionChange(LLInventoryPanel* tab_panel, const std::deque<LLFolderViewItem*> &items, BOOL user_action);
 	void 					onTabChange();
-	BOOL 					isCOFPanelActive() const;
+	bool 					isCOFPanelActive() const;
 
 private:
-	LLInventoryPanel* 		mActivePanel;
-	typedef std::vector<LLInventoryPanel *> tabpanels_vec_t;
-	tabpanels_vec_t 		mTabPanels;
+	LLPanelAppearanceTab*	mActivePanel;
+	LLOutfitsList*			mMyOutfitsPanel;
+	LLPanelWearing*			mCurrentOutfitPanel;
 
-	// tab panels                                                               //
-	////////////////////////////////////////////////////////////////////////////////
-	
+	// tab panels                                                                   //
+	//////////////////////////////////////////////////////////////////////////////////
 
 	//////////////////////////////////////////////////////////////////////////////////
 	// List Commands                                                                //
 protected:
 	void initListCommandsHandlers();
 	void updateListCommands();
-	void onGearButtonClick();
 	void onWearButtonClick();
-	void onAddButtonClick();
-	void showActionMenu(LLMenuGL* menu, std::string spawning_view_name);
+	void showGearMenu();
 	void onTrashButtonClick();
-	void onClipboardAction(const LLSD& userdata);
-	BOOL isActionEnabled(const LLSD& command_name);
-	void onCustomAction(const LLSD& command_name);
-	bool handleDragAndDropToTrash(BOOL drop, EDragAndDropType cargo_type, EAcceptance* accept);
-	bool hasItemsSelected();
+	bool isActionEnabled(const LLSD& userdata);
+	void setWearablesLoading(bool val);
+	void onWearablesLoaded();
+	void onWearablesLoading();
 private:
 	LLPanel*					mListCommands;
-	LLMenuGL*					mMenuGearDefault;
 	LLMenuGL*					mMenuAdd;
-	// List Commands                                                              //
-	////////////////////////////////////////////////////////////////////////////////
-	///
-public:
-	static bool sShowDebugEditor;
+	// List Commands                                                                //
+	//////////////////////////////////////////////////////////////////////////////////
+
+	bool mInitialized;
 };
 
 #endif //LL_LLPANELOUTFITSINVENTORY_H

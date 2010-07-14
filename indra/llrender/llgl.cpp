@@ -186,6 +186,9 @@ PFNGLRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC glRenderbufferStorageMultisampleEXT =
 // GL_EXT_framebuffer_blit
 PFNGLBLITFRAMEBUFFEREXTPROC glBlitFramebufferEXT = NULL;
 
+// GL_EXT_blend_func_separate
+PFNGLBLENDFUNCSEPARATEEXTPROC glBlendFuncSeparateEXT = NULL;
+
 // GL_ARB_draw_buffers
 PFNGLDRAWBUFFERSARBPROC glDrawBuffersARB = NULL;
 
@@ -325,6 +328,7 @@ LLGLManager::LLGLManager() :
 	mHasCompressedTextures(FALSE),
 	mHasFramebufferObject(FALSE),
 	mHasFramebufferMultisample(FALSE),
+	mHasBlendFuncSeparate(FALSE),
 
 	mHasVertexBufferObject(FALSE),
 	mHasPBuffer(FALSE),
@@ -639,6 +643,11 @@ void LLGLManager::initExtensions()
 #else
 	mHasDepthClamp = FALSE;
 #endif
+# if GL_EXT_blend_func_separate
+	mHasBlendFuncSeparate = TRUE;
+#else
+	mHasBlendFuncSeparate = FALSE;
+# endif
 	mHasMipMapGeneration = FALSE;
 	mHasSeparateSpecularColor = FALSE;
 	mHasAnisotropic = FALSE;
@@ -666,6 +675,7 @@ void LLGLManager::initExtensions()
 	mHasFramebufferMultisample = mHasFramebufferObject && ExtensionExists("GL_EXT_framebuffer_multisample", gGLHExts.mSysExts);
 	mHasDrawBuffers = ExtensionExists("GL_ARB_draw_buffers", gGLHExts.mSysExts);
 	mHasDepthClamp = ExtensionExists("GL_ARB_depth_clamp", gGLHExts.mSysExts) || ExtensionExists("GL_NV_depth_clamp", gGLHExts.mSysExts);
+	mHasBlendFuncSeparate = ExtensionExists("GL_EXT_blend_func_separate", gGLHExts.mSysExts);
 	mHasTextureRectangle = ExtensionExists("GL_ARB_texture_rectangle", gGLHExts.mSysExts);
 #if !LL_DARWIN
 	mHasPointParameters = !mIsATI && ExtensionExists("GL_ARB_point_parameters", gGLHExts.mSysExts);
@@ -690,6 +700,7 @@ void LLGLManager::initExtensions()
 		mHasFramebufferMultisample = FALSE;
 		mHasDrawBuffers = FALSE;
 		mHasDepthClamp = FALSE;
+		mHasBlendFuncSeparate = FALSE;
 		mHasMipMapGeneration = FALSE;
 		mHasSeparateSpecularColor = FALSE;
 		mHasAnisotropic = FALSE;
@@ -714,6 +725,7 @@ void LLGLManager::initExtensions()
 		mHasShaderObjects = FALSE;
 		mHasVertexShader = FALSE;
 		mHasFragmentShader = FALSE;
+		mHasBlendFuncSeparate = FALSE;
 		LL_WARNS("RenderInit") << "GL extension support forced to SIMPLE level via LL_GL_BASICEXT" << LL_ENDL;
 	}
 	if (getenv("LL_GL_BLACKLIST"))	/* Flawfinder: ignore */
@@ -744,6 +756,8 @@ void LLGLManager::initExtensions()
 		if (strchr(blacklist,'t')) mHasTextureRectangle = FALSE;
 		if (strchr(blacklist,'u')) mHasDepthClamp = FALSE;
 
+		if (strchr(blacklist,'u')) mHasBlendFuncSeparate = FALSE;//S
+		
 	}
 #endif // LL_LINUX || LL_SOLARIS
 
@@ -790,6 +804,14 @@ void LLGLManager::initExtensions()
 	if (!mHasFragmentShader)
 	{
 		LL_INFOS("RenderInit") << "Couldn't initialize GL_ARB_fragment_shader" << LL_ENDL;
+	}
+	if (!mHasBlendFuncSeparate)
+	{
+		LL_INFOS("RenderInit") << "Couldn't initialize GL_EXT_blend_func_separate" << LL_ENDL;
+	}
+	if (!mHasDrawBuffers)
+	{
+		LL_INFOS("RenderInit") << "Couldn't initialize GL_ARB_draw_buffers" << LL_ENDL;
 	}
 
 	// Disable certain things due to known bugs
@@ -860,6 +882,10 @@ void LLGLManager::initExtensions()
 	if (mHasDrawBuffers)
 	{
 		glDrawBuffersARB = (PFNGLDRAWBUFFERSARBPROC) GLH_EXT_GET_PROC_ADDRESS("glDrawBuffersARB");
+	}
+	if (mHasBlendFuncSeparate)
+	{
+		glBlendFuncSeparateEXT = (PFNGLBLENDFUNCSEPARATEEXTPROC) GLH_EXT_GET_PROC_ADDRESS("glBlendFuncSeparateEXT");
 	}
 #if (!LL_LINUX && !LL_SOLARIS) || LL_LINUX_NV_GL_HEADERS
 	// This is expected to be a static symbol on Linux GL implementations, except if we use the nvidia headers - bah
@@ -1023,24 +1049,9 @@ void flush_glerror()
 	glGetError();
 }
 
-void assert_glerror()
+void do_assert_glerror()
 {
-	if (!gGLActive)
-	{
-		//llwarns << "GL used while not active!" << llendl;
-
-		if (gDebugSession)
-		{
-			//ll_fail("GL used while not active");
-		}
-	}
-
-	if (gNoRender || !gDebugGL) 
-	{
-		return;
-	}
-	
-	if (!gGLManager.mInited)
+	if (LL_UNLIKELY(!gGLManager.mInited))
 	{
 		LL_ERRS("RenderInit") << "GL not initialized" << LL_ENDL;
 	}
@@ -1048,10 +1059,9 @@ void assert_glerror()
 	GLenum error;
 	error = glGetError();
 	BOOL quit = FALSE;
-	while (error)
+	while (LL_UNLIKELY(error))
 	{
 		quit = TRUE;
-#ifndef LL_LINUX // *FIX: !  This should be an error for linux as well.
 		GLubyte const * gl_error_msg = gluErrorString(error);
 		if (NULL != gl_error_msg)
 		{
@@ -1075,7 +1085,6 @@ void assert_glerror()
 			}
 		}
 		error = glGetError();
-#endif
 	}
 
 	if (quit)
@@ -1090,6 +1099,25 @@ void assert_glerror()
 		}
 	}
 }
+
+void assert_glerror()
+{
+	if (!gGLActive)
+	{
+		//llwarns << "GL used while not active!" << llendl;
+
+		if (gDebugSession)
+		{
+			//ll_fail("GL used while not active");
+		}
+	}
+
+	if (!gNoRender && gDebugGL) 
+	{
+		do_assert_glerror();
+	}
+}
+	
 
 void clear_glerror()
 {

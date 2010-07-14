@@ -85,6 +85,7 @@ public:
 								image_hover_unselected,
 								image_disabled_selected,
 								image_disabled,
+								image_flash,
 								image_pressed,
 								image_pressed_selected,
 								image_overlay;
@@ -152,6 +153,7 @@ public:
 	virtual BOOL	handleHover(S32 x, S32 y, MASK mask);
 	virtual BOOL	handleRightMouseDown(S32 x, S32 y, MASK mask);
 	virtual BOOL	handleRightMouseUp(S32 x, S32 y, MASK mask);	
+	virtual BOOL	handleDoubleClick(S32 x, S32 y, MASK mask);
 	virtual void	draw();
 	/*virtual*/ BOOL postBuild();
 
@@ -229,6 +231,8 @@ public:
 	
 	void			setFont(const LLFontGL *font)		
 		{ mGLFont = ( font ? font : LLFontGL::getFontSansSerif()); }
+	const LLFontGL* getFont() const { return mGLFont; }
+
 
 	S32				getLastDrawCharsCount() const { return mLastDrawCharsCount; }
 
@@ -247,6 +251,8 @@ public:
 	void			setImageHoverUnselected(LLPointer<LLUIImage> image);
 	void			setImageDisabled(LLPointer<LLUIImage> image);
 	void			setImageDisabledSelected(LLPointer<LLUIImage> image);
+	void			setImageFlash(LLPointer<LLUIImage> image);
+	void			setImagePressed(LLPointer<LLUIImage> image);
 
 	void			setCommitOnReturn(BOOL commit) { mCommitOnReturn = commit; }
 	BOOL			getCommitOnReturn() const { return mCommitOnReturn; }
@@ -309,6 +315,11 @@ private:
 
 	LLPointer<LLUIImage>		mImagePressed;
 	LLPointer<LLUIImage>		mImagePressedSelected;
+
+	/* There are two ways an image can flash- by making changes in color according to flash_color attribute
+	   or by changing icon from current to the one specified in image_flash. Second way is used only if
+	   flash icon name is set in attributes(by default it isn't). First way is used otherwise. */
+	LLPointer<LLUIImage>		mImageFlash;
 
 	LLUIColor					mHighlightColor;
 	LLUIColor					mFlashBgColor;

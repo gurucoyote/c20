@@ -38,17 +38,17 @@
 #include "llinventoryobserver.h"
 
 #include "llinventory.h"
-#include "llpanellookinfo.h"
+#include "llpaneloutfitedit.h"
 
 class LLFilterEditor;
 class LLCurrentlyWornFetchObserver;
-class LLWatchForOutfitRenameObserver;
 class LLPanelEditWearable;
 class LLWearable;
 class LLPanelOutfitsInventory;
 
 class LLSidepanelAppearance : public LLPanel
 {
+	LOG_CLASS(LLSidepanelAppearance);
 public:
 	LLSidepanelAppearance();
 	virtual ~LLSidepanelAppearance();
@@ -58,51 +58,52 @@ public:
 
 	void refreshCurrentOutfitName(const std::string& name = "");
 
-	static void editWearable(LLWearable *wearable, void *data);
+	static void editWearable(LLWearable *wearable, LLView *data);
 
 	void fetchInventory();
 	void inventoryFetched();
-	void updateVerbs();
 	void onNewOutfitButtonClicked();
+
+	void showOutfitsInventoryPanel();
+	void showOutfitEditPanel();
+	void showWearableEditPanel(LLWearable *wearable = NULL);
+	void setWearablesLoading(bool val);
+	void showDefaultSubpart();
+	void updateScrollingPanelList();
 
 private:
 	void onFilterEdit(const std::string& search_string);
+	void onVisibilityChange ( const LLSD& new_visibility );
 
 	void onOpenOutfitButtonClicked();
 	void onEditAppearanceButtonClicked();
-	void onEditButtonClicked();
-	void onBackButtonClicked();
-	void onEditWearBackClicked();
-	void toggleLookInfoPanel(BOOL visible);
-	void toggleWearableEditPanel(BOOL visible, LLWearable* wearable);
+
+	void togglMyOutfitsPanel(BOOL visible);
+	void toggleOutfitEditPanel(BOOL visible, BOOL disable_camera_switch = FALSE);
+	void toggleWearableEditPanel(BOOL visible, LLWearable* wearable = NULL, BOOL disable_camera_switch = FALSE);
 
 	LLFilterEditor*			mFilterEditor;
 	LLPanelOutfitsInventory* mPanelOutfitsInventory;
-	LLPanelLookInfo*		mLookInfo;
+	LLPanelOutfitEdit*		mOutfitEdit;
 	LLPanelEditWearable*	mEditWearable;
 
 	LLButton*					mOpenOutfitBtn;
 	LLButton*					mEditAppearanceBtn;
-	LLButton*					mEditBtn;
 	LLButton*					mNewOutfitBtn;
 	LLPanel*					mCurrOutfitPanel;
 
 	LLTextBox*					mCurrentLookName;
-	LLTextBox*					mOutfitDirtyTag;
+	LLTextBox*					mOutfitStatus;
 
 	// Used to make sure the user's inventory is in memory.
 	LLCurrentlyWornFetchObserver* mFetchWorn;
-
-	// Used to update title when currently worn outfit gets renamed.
-	LLWatchForOutfitRenameObserver* mOutfitRenameWatcher;
 
 	// Search string for filtering landmarks and teleport
 	// history locations
 	std::string					mFilterSubString;
 
-	// Information type currently shown in Look Information panel
-	std::string					mLookInfoType;
-
+	// Gets set to true when we're opened for the first time.
+	bool mOpened;
 };
 
 #endif //LL_LLSIDEPANELAPPEARANCE_H

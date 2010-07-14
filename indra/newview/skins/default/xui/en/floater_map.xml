@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <floater
- legacy_header_height="18"
+ bg_alpha_image_overlay="DkGray_66"
+ legacy_header_height="0"
  can_minimize="true" 
  can_resize="true"
  follows="top|right"
- height="218"
+ height="174"
  layout="topleft"
  min_height="128"
  min_width="128"
  name="Map"
- title="Mini Map"
+ title=""
  help_topic="map"
  save_rect="true"
  save_visibility="true"
@@ -21,6 +22,9 @@
      name="ToolTipMsg">
         [REGION](Double-click to open Map, shift-drag to pan)
     </floater.string>
+    <floater.string name="mini_map_caption">
+	MINIMAP
+    </floater.string>
     <net_map
      bg_color="NetMapBackgroundColor"
      follows="top|left|bottom|right"
@@ -29,8 +33,8 @@
      mouse_opaque="false"
      name="Net Map"
      width="200"
-     height="200"
-     top="18"/>
+     height="218"
+     top="0"/>
     <text
      type="string"
      length="1"

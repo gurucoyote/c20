@@ -53,6 +53,7 @@
 #include "llsurface.h"
 #include "llvlmanager.h"
 #include "llagent.h"
+#include "llagentcamera.h"
 #include "llviewercontrol.h"
 #include "llfloatertools.h"
 #include "lldebugview.h"
@@ -578,11 +579,11 @@ void update_statistics(U32 frame_count)
 	// make sure we have a valid time delta for this frame
 	if (gFrameIntervalSeconds > 0.f)
 	{
-		if (gAgent.getCameraMode() == CAMERA_MODE_MOUSELOOK)
+		if (gAgentCamera.getCameraMode() == CAMERA_MODE_MOUSELOOK)
 		{
 			LLViewerStats::getInstance()->incStat(LLViewerStats::ST_MOUSELOOK_SECONDS, gFrameIntervalSeconds);
 		}
-		else if (gAgent.getCameraMode() == CAMERA_MODE_CUSTOMIZE_AVATAR)
+		else if (gAgentCamera.getCameraMode() == CAMERA_MODE_CUSTOMIZE_AVATAR)
 		{
 			LLViewerStats::getInstance()->incStat(LLViewerStats::ST_AVATAR_EDIT_SECONDS, gFrameIntervalSeconds);
 		}
@@ -592,7 +593,7 @@ void update_statistics(U32 frame_count)
 		}
 	}
 	LLViewerStats::getInstance()->setStat(LLViewerStats::ST_ENABLE_VBO, (F64)gSavedSettings.getBOOL("RenderVBOEnable"));
-	LLViewerStats::getInstance()->setStat(LLViewerStats::ST_LIGHTING_DETAIL, (F64)gSavedSettings.getS32("RenderLightingDetail"));
+	LLViewerStats::getInstance()->setStat(LLViewerStats::ST_LIGHTING_DETAIL, (F64)gPipeline.getLightingDetail());
 	LLViewerStats::getInstance()->setStat(LLViewerStats::ST_DRAW_DIST, (F64)gSavedSettings.getF32("RenderFarClip"));
 	LLViewerStats::getInstance()->setStat(LLViewerStats::ST_CHAT_BUBBLES, (F64)gSavedSettings.getBOOL("UseChatBubbles"));
 #if 0 // 1.9.2
@@ -768,9 +769,11 @@ void send_stats()
 	system["ram"] = (S32) gSysMemory.getPhysicalMemoryKB();
 	system["os"] = LLAppViewer::instance()->getOSInfo().getOSStringSimple();
 	system["cpu"] = gSysCPU.getCPUString();
+	unsigned char MACAddress[MAC_ADDRESS_BYTES];
+	LLUUID::getNodeID(MACAddress);
 	std::string macAddressString = llformat("%02x-%02x-%02x-%02x-%02x-%02x",
-											gMACAddress[0],gMACAddress[1],gMACAddress[2],
-											gMACAddress[3],gMACAddress[4],gMACAddress[5]);
+											MACAddress[0],MACAddress[1],MACAddress[2],
+											MACAddress[3],MACAddress[4],MACAddress[5]);
 	system["mac_address"] = macAddressString;
 	system["serial_number"] = LLAppViewer::instance()->getSerialNumber();
 	std::string gpu_desc = llformat(

@@ -93,6 +93,7 @@ class LLMotionController
 public:
 	typedef std::list<LLMotion*> motion_list_t;
 	typedef std::set<LLMotion*> motion_set_t;
+	BOOL mIsSelf;
 	
 public:
 	// Constructor
@@ -169,6 +170,10 @@ public:
 	bool isMotionActive( LLMotion *motion );
 	bool isMotionLoading( LLMotion *motion );
 	LLMotion *findMotion( const LLUUID& id ) const;
+
+	void dumpMotions();
+
+	const LLFrameTimer& getFrameTimer() { return mTimer; }
 
 protected:
 	// internal operations act on motion instances directly

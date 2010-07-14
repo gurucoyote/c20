@@ -96,7 +96,6 @@ private:
 	BOOL			mChanged;
 	BOOL			mFirstUse;
 	std::string		mIncompleteMemberDataStr;
-	LLUUID			mDefaultIconID;
 
 	// Group information (include any updates in updateChanged)
 	LLLineEditor		*mGroupNameEditor;

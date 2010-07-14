@@ -106,7 +106,6 @@ private:
 	static void onClickMediaToggle(void* data);
 
 private:
-	LLTextBox	*mTextHealth;
 	LLTextBox	*mTextTime;
 
 	LLStatGraph *mSGBandwidth;

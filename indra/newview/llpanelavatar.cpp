@@ -52,6 +52,7 @@
 #include "llnotificationsutil.h"
 #include "llvoiceclient.h"
 #include "llnamebox.h"
+#include "lltrans.h"
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Class LLDropTarget
@@ -164,7 +165,7 @@ BOOL LLPanelAvatarNotes::postBuild()
 	resetControls();
 	resetData();
 
-	gVoiceClient->addObserver((LLVoiceClientStatusObserver*)this);
+	LLVoiceClient::getInstance()->addObserver((LLVoiceClientStatusObserver*)this);
 
 	return TRUE;
 }
@@ -375,7 +376,7 @@ void LLPanelAvatarNotes::onChange(EStatusType status, const std::string &channel
 		return;
 	}
 
-	childSetEnabled("call", LLVoiceClient::voiceEnabled() && gVoiceClient->voiceWorking());
+	childSetEnabled("call", LLVoiceClient::getInstance()->voiceEnabled() && LLVoiceClient::getInstance()->isVoiceWorking());
 }
 
 void LLPanelAvatarNotes::setAvatarId(const LLUUID& id)
@@ -513,13 +514,7 @@ BOOL LLPanelAvatarProfile::postBuild()
 
 	mProfileMenu = LLUICtrlFactory::getInstance()->createFromFile<LLToggleableMenu>("menu_profile_overflow.xml", gMenuHolder, LLViewerMenuHolderGL::child_registry_t::instance());
 
-	LLTextureCtrl* pic = getChild<LLTextureCtrl>("2nd_life_pic");
-	pic->setFallbackImageName("default_profile_picture.j2c");
-
-	pic = getChild<LLTextureCtrl>("real_world_pic");
-	pic->setFallbackImageName("default_profile_picture.j2c");
-
-	gVoiceClient->addObserver((LLVoiceClientStatusObserver*)this);
+	LLVoiceClient::getInstance()->addObserver((LLVoiceClientStatusObserver*)this);
 
 	resetControls();
 	resetData();
@@ -646,7 +641,11 @@ void LLPanelAvatarProfile::fillCommonData(const LLAvatarData* avatar_data)
 	LLAvatarIconIDCache::getInstance()->remove(avatar_data->avatar_id);
 
 	LLStringUtil::format_map_t args;
-	args["[REG_DATE]"] = avatar_data->born_on;
+	{
+		std::string birth_date = LLTrans::getString("AvatarBirthDateFormat");
+		LLStringUtil::format(birth_date, LLSD().with("datetime", (S32) avatar_data->born_on.secondsSinceEpoch()));
+		args["[REG_DATE]"] = birth_date;
+	}
 	args["[AGE]"] = LLDateUtil::ageFromDate( avatar_data->born_on, LLDate::now());
 	std::string register_date = getString("RegisterDateFormat", args);
 	childSetValue("register_date", register_date );
@@ -810,7 +809,7 @@ void LLPanelAvatarProfile::onChange(EStatusType status, const std::string &chann
 		return;
 	}
 
-	childSetEnabled("call", LLVoiceClient::voiceEnabled() && gVoiceClient->voiceWorking());
+	childSetEnabled("call", LLVoiceClient::getInstance()->voiceEnabled() && LLVoiceClient::getInstance()->isVoiceWorking());
 }
 
 void LLPanelAvatarProfile::setAvatarId(const LLUUID& id)
@@ -839,9 +838,6 @@ BOOL LLPanelMyProfile::postBuild()
 {
 	LLPanelAvatarProfile::postBuild();
 
-	mStatusCombobox = getChild<LLComboBox>("status_combo");
-
-	childSetCommitCallback("status_combo", boost::bind(&LLPanelMyProfile::onStatusChanged, this), NULL);
 	childSetCommitCallback("status_me_message_text", boost::bind(&LLPanelMyProfile::onStatusMessageChanged, this), NULL);
 
 	resetControls();
@@ -861,28 +857,7 @@ void LLPanelMyProfile::processProfileProperties(const LLAvatarData* avatar_data)
 
 	fillPartnerData(avatar_data);
 
-	fillStatusData(avatar_data);
-
 	fillAccountStatus(avatar_data);
-}
-
-void LLPanelMyProfile::fillStatusData(const LLAvatarData* avatar_data)
-{
-	std::string status;
-	if (gAgent.getAFK())
-	{
-		status = "away";
-	}
-	else if (gAgent.getBusy())
-	{
-		status = "busy";
-	}
-	else
-	{
-		status = "online";
-	}
-
-	mStatusCombobox->setValue(status);
 }
 
 void LLPanelMyProfile::resetControls()
@@ -895,27 +870,6 @@ void LLPanelMyProfile::resetControls()
 	childSetVisible("profile_me_buttons_panel", true);
 }
 
-void LLPanelMyProfile::onStatusChanged()
-{
-	LLSD::String status = mStatusCombobox->getValue().asString();
-
-	if ("online" == status)
-	{
-		gAgent.clearAFK();
-		gAgent.clearBusy();
-	}
-	else if ("away" == status)
-	{
-		gAgent.clearBusy();
-		gAgent.setAFK();
-	}
-	else if ("busy" == status)
-	{
-		gAgent.clearAFK();
-		gAgent.setBusy();
-		LLNotificationsUtil::add("BusyModeSet");
-	}
-}
 
 void LLPanelMyProfile::onStatusMessageChanged()
 {

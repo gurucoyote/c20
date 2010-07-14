@@ -49,6 +49,7 @@
 #include "llfoldervieweventlistener.h"
 #include "llinventory.h"
 #include "llinventoryfunctions.h"
+#include "llinventorymodelbackgroundfetch.h"
 #include "llinventoryobserver.h"
 #include "llinventorypanel.h"
 #include "llfloaterinventory.h"
@@ -100,7 +101,7 @@ public:
 		PermissionMask immediate_filter_perm_mask,
 		PermissionMask non_immediate_filter_perm_mask,
 		BOOL can_apply_immediately,
-		const std::string& fallback_image_name);
+		LLUIImagePtr fallback_image_name);
 
 	virtual ~LLFloaterTexturePicker();
 
@@ -153,7 +154,7 @@ protected:
 	LLTextureCtrl*		mOwner;
 
 	LLUUID				mImageAssetID; // Currently selected texture
-	std::string			mFallbackImageName; // What to show if currently selected texture is null.
+	LLUIImagePtr		mFallbackImage; // What to show if currently selected texture is null.
 
 	LLUUID				mWhiteImageAssetID;
 	LLUUID				mSpecialCurrentImageAssetID;  // Used when the asset id has no corresponding texture in the user's inventory.
@@ -183,11 +184,11 @@ LLFloaterTexturePicker::LLFloaterTexturePicker(
 	PermissionMask immediate_filter_perm_mask,
 	PermissionMask non_immediate_filter_perm_mask,
 	BOOL can_apply_immediately,
-	const std::string& fallback_image_name)
+	LLUIImagePtr fallback_image)
 :	LLFloater(LLSD()),
 	mOwner( owner ),
 	mImageAssetID( owner->getImageAssetID() ),
-	mFallbackImageName( fallback_image_name ),
+	mFallbackImage( fallback_image ),
 	mWhiteImageAssetID( gSavedSettings.getString( "UIImgWhiteUUID" ) ),
 	mOriginalImageAssetID(owner->getImageAssetID()),
 	mLabel(label),
@@ -423,8 +424,9 @@ BOOL LLFloaterTexturePicker::postBuild()
 		mInventoryPanel->setShowFolderState(LLInventoryFilter::SHOW_NON_EMPTY_FOLDERS);
 		mInventoryPanel->setAllowMultiSelect(FALSE);
 
-		// store this filter as the default one
-		mInventoryPanel->getRootFolder()->getFilter()->markDefault();
+		// Commented out to scroll to currently selected texture. See EXT-5403.
+		// // store this filter as the default one
+		// mInventoryPanel->getRootFolder()->getFilter()->markDefault();
 
 		// Commented out to stop opening all folders with textures
 		// mInventoryPanel->openDefaultFolderForType(LLFolderType::FT_TEXTURE);
@@ -533,11 +535,6 @@ void LLFloaterTexturePicker::draw()
 			mTexturep = LLViewerTextureManager::getFetchedTexture(mImageAssetID, MIPMAP_YES);
 			mTexturep->setBoostLevel(LLViewerTexture::BOOST_PREVIEW);
 		}
-		else if (!mFallbackImageName.empty())
-		{
-			mTexturep = LLViewerTextureManager::getFetchedTextureFromFile(mFallbackImageName);
-			mTexturep->setBoostLevel(LLViewerTexture::BOOST_PREVIEW);
-		}
 
 		if (mTentativeLabel)
 		{
@@ -578,13 +575,10 @@ void LLFloaterTexturePicker::draw()
 
 			// Pump the priority
 			mTexturep->addTextureStats( (F32)(interior.getWidth() * interior.getHeight()) );
-
-			// Draw Tentative Label over the image
-			if( mOwner->getTentative() && !mViewModel->isDirty() )
-			{
-				mTentativeLabel->setVisible( TRUE );
-				drawChild(mTentativeLabel);
-			}
+		}
+		else if (!mFallbackImage.isNull())
+		{
+			mFallbackImage->draw(interior);
 		}
 		else
 		{
@@ -592,6 +586,13 @@ void LLFloaterTexturePicker::draw()
 
 			// Draw X
 			gl_draw_x(interior, LLColor4::black );
+		}
+
+		// Draw Tentative Label over the image
+		if( mOwner->getTentative() && !mViewModel->isDirty() )
+		{
+			mTentativeLabel->setVisible( TRUE );
+			drawChild(mTentativeLabel);
 		}
 	}
 }
@@ -826,7 +827,7 @@ void LLFloaterTexturePicker::onFilterEdit(const std::string& search_string )
 		}
 	}
 
-	mInventoryPanel->setFilterSubString(upper_case_search_string);
+	mInventoryPanel->setFilterSubString(search_string);
 }
 
 void LLFloaterTexturePicker::onTextureSelect( const LLTextureEntry& te )
@@ -875,7 +876,8 @@ LLTextureCtrl::LLTextureCtrl(const LLTextureCtrl::Params& p)
 	mShowLoadingPlaceholder( TRUE ),
 	mImageAssetID(p.image_id),
 	mDefaultImageAssetID(p.default_image_id),
-	mDefaultImageName(p.default_image_name)
+	mDefaultImageName(p.default_image_name),
+	mFallbackImage(p.fallback_image)
 {
 	setAllowNoTexture(p.allow_no_texture);
 	setCanApplyImmediately(p.can_apply_immediately);
@@ -1019,7 +1021,7 @@ void LLTextureCtrl::showPicker(BOOL take_focus)
 			mImmediateFilterPermMask,
 			mNonImmediateFilterPermMask,
 			mCanApplyImmediately,
-			mFallbackImageName);
+			mFallbackImage);
 
 		mFloaterHandle = floaterp->getHandle();
 
@@ -1054,7 +1056,7 @@ public:
 	{
 		// We need to find textures in all folders, so get the main
 		// background download going.
-		gInventory.startBackgroundFetch();
+		LLInventoryModelBackgroundFetch::instance().start();
 		gInventory.removeObserver(this);
 		delete this;
 	}
@@ -1075,9 +1077,9 @@ BOOL LLTextureCtrl::handleMouseDown(S32 x, S32 y, MASK mask)
 	{
 		showPicker(FALSE);
 		//grab textures first...
-		gInventory.startBackgroundFetch(gInventory.findCategoryUUIDForType(LLFolderType::FT_TEXTURE));
+		LLInventoryModelBackgroundFetch::instance().start(gInventory.findCategoryUUIDForType(LLFolderType::FT_TEXTURE));
 		//...then start full inventory fetch.
-		gInventory.startBackgroundFetch();
+		LLInventoryModelBackgroundFetch::instance().start();
 		handled = TRUE;
 	}
 
@@ -1133,6 +1135,20 @@ void LLTextureCtrl::onFloaterCommit(ETexturePickOp op)
 				if (mCommitOnSelection || op == TEXTURE_SELECT)
 					onCommit();
 			}
+		}
+	}
+}
+
+void	LLTextureCtrl::setImageAssetName(const std::string& name)
+{
+	LLPointer<LLUIImage> imagep = LLUI::getUIImage(name);
+	if(imagep)
+	{
+		LLViewerFetchedTexture* pTexture = dynamic_cast<LLViewerFetchedTexture*>(imagep->getImage().get());
+		if(pTexture)
+		{
+			LLUUID id = pTexture->getID();
+			setImageAssetID(id);
 		}
 	}
 }
@@ -1209,12 +1225,6 @@ void LLTextureCtrl::draw()
 
 		mTexturep = texture;
 	}
-	else if (!mFallbackImageName.empty())
-	{
-		// Show fallback image.
-		mTexturep = LLViewerTextureManager::getFetchedTextureFromFile(mFallbackImageName);
-		mTexturep->setBoostLevel(LLViewerTexture::BOOST_PREVIEW);
-	}
 	else//mImageAssetID == LLUUID::null
 	{
 		mTexturep = NULL;
@@ -1238,6 +1248,10 @@ void LLTextureCtrl::draw()
 		gl_draw_scaled_image( interior.mLeft, interior.mBottom, interior.getWidth(), interior.getHeight(), mTexturep);
 		mTexturep->addTextureStats( (F32)(interior.getWidth() * interior.getHeight()) );
 	}
+	else if (!mFallbackImage.isNull())
+	{
+		mFallbackImage->draw(interior);
+	}
 	else
 	{
 		gl_rect_2d( interior, LLColor4::grey, TRUE );
@@ -1248,25 +1262,52 @@ void LLTextureCtrl::draw()
 
 	mTentativeLabel->setVisible( !mTexturep.isNull() && getTentative() );
 	
-	
 	// Show "Loading..." string on the top left corner while this texture is loading.
 	// Using the discard level, do not show the string if the texture is almost but not 
 	// fully loaded.
-	if ( mTexturep.notNull() &&
-		 (!mTexturep->isFullyLoaded()) &&
-		 (mShowLoadingPlaceholder == TRUE) && 
-		 (mTexturep->getDiscardLevel() != 1) &&
-		 (mTexturep->getDiscardLevel() != 0))
+	if (mTexturep.notNull() &&
+		(!mTexturep->isFullyLoaded()) &&
+		(mShowLoadingPlaceholder == TRUE))
 	{
+		U32 v_offset = 25;
 		LLFontGL* font = LLFontGL::getFontSansSerif();
-		font->renderUTF8(
-			mLoadingPlaceholderString, 0,
-			llfloor(interior.mLeft+3), 
-			llfloor(interior.mTop-25),
-			LLColor4::white,
-			LLFontGL::LEFT,
-			LLFontGL::BASELINE,
-			LLFontGL::DROP_SHADOW);
+
+		// Don't show as loaded if the texture is almost fully loaded (i.e. discard1) unless god
+		if ((mTexturep->getDiscardLevel() > 1) || gAgent.isGodlike())
+		{
+			font->renderUTF8(
+				mLoadingPlaceholderString, 
+				0,
+				llfloor(interior.mLeft+3), 
+				llfloor(interior.mTop-v_offset),
+				LLColor4::white,
+				LLFontGL::LEFT,
+				LLFontGL::BASELINE,
+				LLFontGL::DROP_SHADOW);
+		}
+
+		// Optionally show more detailed information.
+		if (gSavedSettings.getBOOL("DebugAvatarRezTime"))
+		{
+			LLFontGL* font = LLFontGL::getFontSansSerif();
+			std::string tdesc;
+			// Show what % the texture has loaded (0 to 100%, 100 is highest), and what level of detail (5 to 0, 0 is best).
+
+			v_offset += 12;
+			tdesc = llformat("  PK  : %d%%", U32(mTexturep->getDownloadProgress()*100.0));
+			font->renderUTF8(tdesc, 0, llfloor(interior.mLeft+3), llfloor(interior.mTop-v_offset),
+							 LLColor4::white, LLFontGL::LEFT, LLFontGL::BASELINE, LLFontGL::DROP_SHADOW);
+
+			v_offset += 12;
+			tdesc = llformat("  LVL: %d", mTexturep->getDiscardLevel());
+			font->renderUTF8(tdesc, 0, llfloor(interior.mLeft+3), llfloor(interior.mTop-v_offset),
+							 LLColor4::white, LLFontGL::LEFT, LLFontGL::BASELINE, LLFontGL::DROP_SHADOW);
+
+			v_offset += 12;
+			tdesc = llformat("  ID  : %s...", (mImageAssetID.asString().substr(0,7)).c_str());
+			font->renderUTF8(tdesc, 0, llfloor(interior.mLeft+3), llfloor(interior.mTop-v_offset),
+							 LLColor4::white, LLFontGL::LEFT, LLFontGL::BASELINE, LLFontGL::DROP_SHADOW);
+		}
 	}
 
 	LLUICtrl::draw();

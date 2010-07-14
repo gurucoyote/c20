@@ -136,10 +136,10 @@ BOOL LLFloaterAbout::postBuild()
 
 	// Render the LLSD from getInfo() as a format_map_t
 	LLStringUtil::format_map_t args;
-	// For reasons I don't yet understand, [ReleaseNotes] is not part of the
-	// default substitution strings whereas [APP_NAME] is. But it works to
-	// simply copy it into these specific args.
+
+	// allow the "Release Notes" URL label to be localized
 	args["ReleaseNotes"] = LLTrans::getString("ReleaseNotes");
+
 	for (LLSD::map_const_iterator ii(info.beginMap()), iend(info.endMap());
 		 ii != iend; ++ii)
 	{
@@ -267,8 +267,18 @@ LLSD LLFloaterAbout::getInfo()
 	info["J2C_VERSION"] = LLImageJ2C::getEngineInfo();
 	bool want_fullname = true;
 	info["AUDIO_DRIVER_VERSION"] = gAudiop ? LLSD(gAudiop->getDriverName(want_fullname)) : LLSD();
-	info["VIVOX_VERSION"] = gVoiceClient ? gVoiceClient->getAPIVersion() : LLTrans::getString("NotConnected");
-
+	if(LLVoiceClient::getInstance()->voiceEnabled())
+	{
+		LLVoiceVersionInfo version = LLVoiceClient::getInstance()->getVersion();
+		std::ostringstream version_string;
+		version_string << version.serverType << " " << version.serverVersion << std::endl;
+		info["VOICE_VERSION"] = version_string.str();
+	}
+	else 
+	{
+		info["VOICE_VERSION"] = LLTrans::getString("NotConnected");
+	}
+	
 	// TODO: Implement media plugin version query
 	info["QT_WEBKIT_VERSION"] = "4.6 (version number hard-coded)";
 
@@ -284,14 +294,14 @@ LLSD LLFloaterAbout::getInfo()
 
 static std::string get_viewer_release_notes_url()
 {
-	LLSD query;
-	query["channel"] = gSavedSettings.getString("VersionChannelName");
-	query["version"] = LLVersionInfo::getVersion();
-
-	std::ostringstream url;
-	url << LLTrans::getString("RELEASE_NOTES_BASE_URL") << LLURI::mapToQueryString(query);
-
-	return LLWeb::escapeURL(url.str());
+	// return a URL to the release notes for this viewer, such as:
+	// http://wiki.secondlife.com/wiki/Release_Notes/Second Life Beta Viewer/2.1.0
+	std::string url = LLTrans::getString("RELEASE_NOTES_BASE_URL");
+	if (! LLStringUtil::endsWith(url, "/"))
+		url += "/";
+	url += gSavedSettings.getString("VersionChannelName") + "/";
+	url += LLVersionInfo::getShortVersion();
+	return LLWeb::escapeURL(url);
 }
 
 class LLFloaterAboutListener: public LLEventAPI

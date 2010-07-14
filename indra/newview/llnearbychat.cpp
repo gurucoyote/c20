@@ -50,7 +50,6 @@
 #include "llchannelmanager.h"
 
 #include "llagent.h" 			// gAgent
-#include "llfloaterscriptdebug.h"
 #include "llchathistory.h"
 #include "llstylemap.h"
 
@@ -108,7 +107,9 @@ BOOL LLNearbyChat::postBuild()
 			getDockTongue(), LLDockControl::TOP, boost::bind(&LLNearbyChat::getAllowedRect, this, _1)));
 	}
 
-	setIsChrome(true);
+        //fix for EXT-4621 
+        //chrome="true" prevents floater from stilling capture
+        setIsChrome(true);
 	//chrome="true" hides floater caption 
 	if (mDragHandle)
 		mDragHandle->setTitleVisible(TRUE);
@@ -162,25 +163,6 @@ std::string appendTime()
 
 void	LLNearbyChat::addMessage(const LLChat& chat,bool archive,const LLSD &args)
 {
-	if (chat.mChatType == CHAT_TYPE_DEBUG_MSG)
-	{
-		if(gSavedSettings.getBOOL("ShowScriptErrors") == FALSE)
-			return;
-		if (gSavedSettings.getS32("ShowScriptErrorsLocation")== 1)// show error in window //("ScriptErrorsAsChat"))
-		{
-
-			LLColor4 txt_color;
-
-			LLViewerChat::getChatColor(chat,txt_color);
-			
-			LLFloaterScriptDebug::addScriptLine(chat.mText,
-												chat.mFromName, 
-												txt_color, 
-												chat.mFromID);
-			return;
-		}
-	}
-
 	LLChat& tmp_chat = const_cast<LLChat&>(chat);
 
 	if(tmp_chat.mTimeStr.empty())
@@ -352,3 +334,14 @@ void LLNearbyChat::onFocusLost()
 	LLPanel::onFocusLost();
 }
 
+BOOL	LLNearbyChat::handleMouseDown(S32 x, S32 y, MASK mask)
+{
+	//fix for EXT-6625
+	//highlight NearbyChat history whenever mouseclick happen in NearbyChat
+	//setting focus to eidtor will force onFocusLost() call that in its turn will change 
+	//background opaque. This all happenn since NearByChat is "chrome" and didn't process focus change.
+	
+	if(mChatHistory)
+		mChatHistory->setFocus(TRUE);
+	return LLDockableFloater::handleMouseDown(x, y, mask);
+}

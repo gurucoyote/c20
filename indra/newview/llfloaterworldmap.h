@@ -44,6 +44,7 @@
 #include "llhudtext.h"
 #include "llmapimagetype.h"
 #include "lltracker.h"
+#include "llslurl.h"
 
 class LLEventInfo;
 class LLFriendObserver;
@@ -112,7 +113,7 @@ public:
 
 	// teleport to the tracked item, if there is one
 	void			teleport();
-
+	void			onChangeMaturity();
 protected:	
 	void			onGoHome();
 
@@ -123,7 +124,7 @@ protected:
 	void		    onAvatarComboCommit();
 
 	void			onComboTextEntry( );
-	void			onSearchTextEntry( LLLineEditor* ctrl );
+	void			onSearchTextEntry( );
 
 	void			onClearBtn();
 	void			onClickTeleportBtn();
@@ -184,7 +185,7 @@ private:
 	LLTracker::ETrackingStatus mTrackedStatus;
 	std::string				mTrackedSimName;
 	std::string				mTrackedAvatarName;
-	std::string				mSLURL;
+	LLSLURL  				mSLURL;
 };
 
 extern LLFloaterWorldMap* gFloaterWorldMap;

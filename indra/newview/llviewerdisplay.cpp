@@ -39,6 +39,7 @@
 #include "llrender.h"
 #include "llglheaders.h"
 #include "llagent.h"
+#include "llagentcamera.h"
 #include "llviewercontrol.h"
 #include "llcoord.h"
 #include "llcriticaldamp.h"
@@ -170,14 +171,13 @@ void display_startup()
 void display_update_camera()
 {
 	LLMemType mt_uc(LLMemType::MTYPE_DISPLAY_UPDATE_CAMERA);
-	llpushcallstacks ;
 	// TODO: cut draw distance down if customizing avatar?
 	// TODO: cut draw distance on per-parcel basis?
 
 	// Cut draw distance in half when customizing avatar,
 	// but on the viewer only.
-	F32 final_far = gAgent.mDrawDistance;
-	if (CAMERA_MODE_CUSTOMIZE_AVATAR == gAgent.getCameraMode())
+	F32 final_far = gAgentCamera.mDrawDistance;
+	if (CAMERA_MODE_CUSTOMIZE_AVATAR == gAgentCamera.getCameraMode())
 	{
 		final_far *= 0.5f;
 	}
@@ -346,9 +346,9 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 		const F32 TELEPORT_ARRIVAL_DELAY = 2.f; // Time to preload the world before raising the curtain after we've actually already arrived.
 
 		S32 attach_count = 0;
-		if (gAgent.getAvatarObject())
+		if (isAgentAvatarValid())
 		{
-			attach_count = gAgent.getAvatarObject()->getAttachmentCount();
+			attach_count = gAgentAvatarp->getAttachmentCount();
 		}
 		F32 teleport_save_time = TELEPORT_EXPIRY + TELEPORT_EXPIRY_PER_ATTACHMENT * attach_count;
 		F32 teleport_elapsed = gTeleportDisplayTimer.getElapsedTimeF32();
@@ -395,7 +395,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			gAgent.setTeleportMessage(
 				LLAgent::sTeleportProgressMessages["arriving"]);
 			gTextureList.mForceResetTextureStats = TRUE;
-			gAgent.resetView(TRUE, TRUE);
+			gAgentCamera.resetView(TRUE, TRUE);
 			break;
 
 		case LLAgent::TELEPORT_ARRIVING:
@@ -610,9 +610,10 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			LLPipeline::sUseOcclusion = 3;
 		}
 
-		LLPipeline::sFastAlpha = gSavedSettings.getBOOL("RenderFastAlpha");
+		LLPipeline::sAutoMaskAlphaDeferred = gSavedSettings.getBOOL("RenderAutoMaskAlphaDeferred");
+		LLPipeline::sAutoMaskAlphaNonDeferred = gSavedSettings.getBOOL("RenderAutoMaskAlphaNonDeferred");
 		LLPipeline::sUseFarClip = gSavedSettings.getBOOL("RenderUseFarClip");
-		LLVOAvatar::sMaxVisible = gSavedSettings.getS32("RenderAvatarMaxVisible");
+		LLVOAvatar::sMaxVisible = (U32)gSavedSettings.getS32("RenderAvatarMaxVisible");
 		LLPipeline::sDelayVBUpdate = gSavedSettings.getBOOL("RenderDelayVBUpdate");
 
 		S32 occlusion = LLPipeline::sUseOcclusion;
@@ -714,8 +715,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 		// Doing this here gives hardware occlusion queries extra time to complete
 		LLAppViewer::instance()->pingMainloopTimeout("Display:UpdateImages");
 		LLError::LLCallStacks::clear() ;
-		llpushcallstacks ;
-
+		
 		{
 			LLMemType mt_iu(LLMemType::MTYPE_DISPLAY_IMAGE_UPDATE);
 			LLFastTimer t(FTM_IMAGE_UPDATE);
@@ -733,7 +733,6 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			LLImageGL::deleteDeadTextures();
 			stop_glerror();
 		}
-		llpushcallstacks ;
 		///////////////////////////////////
 		//
 		// StateSort
@@ -746,6 +745,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 		{
 			LLViewerCamera::sCurCameraID = LLViewerCamera::CAMERA_WORLD;
 			LLMemType mt_ss(LLMemType::MTYPE_DISPLAY_STATE_SORT);
+			gPipeline.sAllowRebuildPriorityGroup = TRUE ;
 			gPipeline.stateSort(*LLViewerCamera::getInstance(), result);
 			stop_glerror();
 				
@@ -883,12 +883,6 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			}
 		}
 
-		/// We copy the frame buffer straight into a texture here,
-		/// and then display it again with compositor effects.
-		/// Using render to texture would be faster/better, but I don't have a 
-		/// grasp of their full display stack just yet.
-		// gPostProcess->apply(gViewerWindow->getWindowWidthRaw(), gViewerWindow->getWindowHeightRaw());
-		
 		if (LLPipeline::sRenderDeferred && !LLPipeline::sUnderWaterRender)
 		{
 			gPipeline.renderDeferredLighting();
@@ -935,9 +929,9 @@ void render_hud_attachments()
 	glh::matrix4f current_mod = glh_get_current_modelview();
 
 	// clamp target zoom level to reasonable values
-	gAgent.mHUDTargetZoom = llclamp(gAgent.mHUDTargetZoom, 0.1f, 1.f);
+	gAgentCamera.mHUDTargetZoom = llclamp(gAgentCamera.mHUDTargetZoom, 0.1f, 1.f);
 	// smoothly interpolate current zoom level
-	gAgent.mHUDCurZoom = lerp(gAgent.mHUDCurZoom, gAgent.mHUDTargetZoom, LLCriticalDamp::getInterpolant(0.03f));
+	gAgentCamera.mHUDCurZoom = lerp(gAgentCamera.mHUDCurZoom, gAgentCamera.mHUDTargetZoom, LLCriticalDamp::getInterpolant(0.03f));
 
 	if (LLPipeline::sShowHUDAttachments && !gDisconnected && setup_hud_matrices())
 	{
@@ -950,9 +944,10 @@ void render_hud_attachments()
 		bool render_particles = gPipeline.hasRenderType(RENDER_TYPE_PARTICLES) && gSavedSettings.getBOOL("RenderHUDParticles");
 		
 		//only render hud objects
-		LLRenderTypeMask mask = gPipeline.getRenderTypeMask();
+		gPipeline.pushRenderTypeMask();
+		
 		// turn off everything
-		gPipeline.clearRenderTypeMask();
+		gPipeline.andRenderTypeMask(RENDER_TYPE_END_RENDER_TYPES);
 		// turn on HUD
 		gPipeline.toggleRenderType(RENDER_TYPE_HUD);
 		// turn on HUD particles
@@ -1006,7 +1001,8 @@ void render_hud_attachments()
 		render_hud_elements();
 
 		//restore type mask
-		gPipeline.setRenderTypeMask(mask);
+		gPipeline.popRenderTypeMask();
+
 		if (has_ui)
 		{
 			gPipeline.toggleRenderDebugFeature((void*) LLPipeline::RENDER_DEBUG_FEATURE_UI);
@@ -1046,11 +1042,10 @@ LLRect get_whole_screen_region()
 
 bool get_hud_matrices(const LLRect& screen_region, glh::matrix4f &proj, glh::matrix4f &model)
 {
-	LLVOAvatar* my_avatarp = gAgent.getAvatarObject();
-	if (my_avatarp && my_avatarp->hasHUDAttachment())
+	if (isAgentAvatarValid() && gAgentAvatarp->hasHUDAttachment())
 	{
-		F32 zoom_level = gAgent.mHUDCurZoom;
-		LLBBox hud_bbox = my_avatarp->getHUDBBox();
+		F32 zoom_level = gAgentCamera.mHUDCurZoom;
+		LLBBox hud_bbox = gAgentAvatarp->getHUDBBox();
 		
 		F32 hud_depth = llmax(1.f, hud_bbox.getExtentLocal().mV[VX] * 1.1f);
 		proj = gl_ortho(-0.5f * LLViewerCamera::getInstance()->getAspect(), 0.5f * LLViewerCamera::getInstance()->getAspect(), -0.5f, 0.5f, 0.f, hud_depth);
@@ -1132,7 +1127,7 @@ void render_ui(F32 zoom_factor, int subfield)
 		{
 			gPipeline.renderBloom(gSnapshot, zoom_factor, subfield);
 		}
-
+		
 		render_hud_elements();
 		render_hud_attachments();
 	}
@@ -1314,14 +1309,14 @@ void render_ui_2d()
 	gGL.getTexUnit(0)->setTextureBlendType(LLTexUnit::TB_MULT);
 
 	// render outline for HUD
-	if (gAgent.getAvatarObject() && gAgent.mHUDCurZoom < 0.98f)
+	if (isAgentAvatarValid() && gAgentCamera.mHUDCurZoom < 0.98f)
 	{
 		glPushMatrix();
 		S32 half_width = (gViewerWindow->getWorldViewWidthScaled() / 2);
 		S32 half_height = (gViewerWindow->getWorldViewHeightScaled() / 2);
 		glScalef(LLUI::sGLScaleFactor.mV[0], LLUI::sGLScaleFactor.mV[1], 1.f);
 		glTranslatef((F32)half_width, (F32)half_height, 0.f);
-		F32 zoom = gAgent.mHUDCurZoom;
+		F32 zoom = gAgentCamera.mHUDCurZoom;
 		glScalef(zoom,zoom,1.f);
 		gGL.color4fv(LLColor4::white.mV);
 		gl_rect_2d(-half_width, half_height, half_width, -half_height, FALSE);

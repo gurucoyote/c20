@@ -40,6 +40,7 @@
 #include "llpanelprimmediacontrols.h"
 #include "llpluginclassmedia.h"
 #include "llagent.h"
+#include "llagentcamera.h"
 #include "lltoolpie.h"
 #include "llviewercamera.h"
 #include "llviewermedia.h"
@@ -203,7 +204,7 @@ void LLViewerMediaFocus::setCameraZoom(LLViewerObject* object, LLVector3 normal,
 {
 	if (object)
 	{
-		gAgent.setFocusOnAvatar(FALSE, ANIMATE);
+		gAgentCamera.setFocusOnAvatar(FALSE, ANIMATE);
 
 		LLBBox bbox = object->getBoundingBoxAgent();
 		LLVector3d center = gAgent.getPosGlobalFromAgent(bbox.getCenterAgent());
@@ -216,6 +217,8 @@ void LLViewerMediaFocus::setCameraZoom(LLViewerObject* object, LLVector3 normal,
 		// We need the aspect ratio, and the 3 components of the bbox as height, width, and depth.
 		F32 aspect_ratio = getBBoxAspectRatio(bbox, normal, &height, &width, &depth);
 		F32 camera_aspect = LLViewerCamera::getInstance()->getAspect();
+		
+		lldebugs << "normal = " << normal << ", aspect_ratio = " << aspect_ratio << ", camera_aspect = " << camera_aspect << llendl;
 
 		// We will normally use the side of the volume aligned with the short side of the screen (i.e. the height for 
 		// a screen in a landscape aspect ratio), however there is an edge case where the aspect ratio of the object is 
@@ -232,11 +235,15 @@ void LLViewerMediaFocus::setCameraZoom(LLViewerObject* object, LLVector3 normal,
 		{
 			angle_of_view = llmax(0.1f, LLViewerCamera::getInstance()->getView() * LLViewerCamera::getInstance()->getAspect());
 			distance = width * 0.5 * padding_factor / tan(angle_of_view * 0.5f );
+
+			lldebugs << "using width (" << width << "), angle_of_view = " << angle_of_view << ", distance = " << distance << llendl;
 		}
 		else
 		{
 			angle_of_view = llmax(0.1f, LLViewerCamera::getInstance()->getView());
 			distance = height * 0.5 * padding_factor / tan(angle_of_view * 0.5f );
+
+			lldebugs << "using height (" << height << "), angle_of_view = " << angle_of_view << ", distance = " << distance << llendl;
 		}
 
 		distance += depth * 0.5;
@@ -262,7 +269,7 @@ void LLViewerMediaFocus::setCameraZoom(LLViewerObject* object, LLVector3 normal,
 			// orientation with respect to the face.  In other words, if before zoom
 			// the media appears "upside down" from the camera, after zooming it will
 			// still be upside down, but at least it will not flip.
-            LLVector3d cur_camera_pos = LLVector3d(gAgent.getCameraPositionGlobal());
+            LLVector3d cur_camera_pos = LLVector3d(gAgentCamera.getCameraPositionGlobal());
             LLVector3d delta = (cur_camera_pos - camera_pos);
             F64 len = delta.length();
             delta.normalize();
@@ -273,18 +280,18 @@ void LLViewerMediaFocus::setCameraZoom(LLViewerObject* object, LLVector3 normal,
 		// If we are not allowing zooming out and the old camera position is closer to 
 		// the center then the new intended camera position, don't move camera and return
 		if (zoom_in_only &&
-		    (dist_vec_squared(gAgent.getCameraPositionGlobal(), target_pos) < dist_vec_squared(camera_pos, target_pos)))
+		    (dist_vec_squared(gAgentCamera.getCameraPositionGlobal(), target_pos) < dist_vec_squared(camera_pos, target_pos)))
 		{
 			return;
 		}
 
-		gAgent.setCameraPosAndFocusGlobal(camera_pos, target_pos, object->getID() );
+		gAgentCamera.setCameraPosAndFocusGlobal(camera_pos, target_pos, object->getID() );
 
 	}
 	else
 	{
 		// If we have no object, focus back on the avatar.
-		gAgent.setFocusOnAvatar(TRUE, ANIMATE);
+		gAgentCamera.setFocusOnAvatar(TRUE, ANIMATE);
 	}
 }
 void LLViewerMediaFocus::onFocusReceived()
@@ -441,40 +448,38 @@ F32 LLViewerMediaFocus::getBBoxAspectRatio(const LLBBox& bbox, const LLVector3& 
 	LLVector3 bbox_max = bbox.getExtentLocal();
 	F32 dot1 = 0.f;
 	F32 dot2 = 0.f;
+	
+	lldebugs << "bounding box local size = " << bbox_max << ", local_normal = " << local_normal << llendl;
 
 	// The largest component of the localized normal vector is the depth component
 	// meaning that the other two are the legs of the rectangle.
 	local_normal.abs();
-	if(local_normal.mV[VX] > local_normal.mV[VY])
+	
+	// Using temporary variables for these makes the logic a bit more readable.
+	bool XgtY = (local_normal.mV[VX] > local_normal.mV[VY]);
+	bool XgtZ = (local_normal.mV[VX] > local_normal.mV[VZ]);
+	bool YgtZ = (local_normal.mV[VY] > local_normal.mV[VZ]);
+	
+	if(XgtY && XgtZ)
 	{
-		if(local_normal.mV[VX] > local_normal.mV[VZ])
-		{
-			// Use the y and z comps
-			comp1.mV[VY] = bbox_max.mV[VY];
-			comp2.mV[VZ] = bbox_max.mV[VZ];
-			*depth = bbox_max.mV[VX];
-		}
-		else
-		{
-			// Use the x and y comps
-			comp1.mV[VY] = bbox_max.mV[VY];
-			comp2.mV[VZ] = bbox_max.mV[VZ];
-			*depth = bbox_max.mV[VZ];
-		}
+		lldebugs << "x component of normal is longest, using y and z" << llendl;
+		comp1.mV[VY] = bbox_max.mV[VY];
+		comp2.mV[VZ] = bbox_max.mV[VZ];
+		*depth = bbox_max.mV[VX];
 	}
-	else if(local_normal.mV[VY] > local_normal.mV[VZ])
+	else if(!XgtY && YgtZ)
 	{
-		// Use the x and z comps
+		lldebugs << "y component of normal is longest, using x and z" << llendl;
 		comp1.mV[VX] = bbox_max.mV[VX];
 		comp2.mV[VZ] = bbox_max.mV[VZ];
 		*depth = bbox_max.mV[VY];
 	}
 	else
 	{
-		// Use the x and y comps
-		comp1.mV[VY] = bbox_max.mV[VY];
-		comp2.mV[VZ] = bbox_max.mV[VZ];
-		*depth = bbox_max.mV[VX];
+		lldebugs << "z component of normal is longest, using x and y" << llendl;
+		comp1.mV[VX] = bbox_max.mV[VX];
+		comp2.mV[VY] = bbox_max.mV[VY];
+		*depth = bbox_max.mV[VZ];
 	}
 	
 	// The height is the vector closest to vertical in the bbox coordinate space (highest dot product value)
@@ -484,12 +489,20 @@ F32 LLViewerMediaFocus::getBBoxAspectRatio(const LLBBox& bbox, const LLVector3& 
 	{
 		*height = comp1.length();
 		*width = comp2.length();
+
+		lldebugs << "comp1 = " << comp1 << ", height = " << *height << llendl;
+		lldebugs << "comp2 = " << comp2 << ", width = " << *width << llendl;
 	}
 	else
 	{
 		*height = comp2.length();
 		*width = comp1.length();
+
+		lldebugs << "comp2 = " << comp2 << ", height = " << *height << llendl;
+		lldebugs << "comp1 = " << comp1 << ", width = " << *width << llendl;
 	}
+	
+	lldebugs << "returning " << (*width / *height) << llendl;
 
 	// Return the aspect ratio.
 	return *width / *height;

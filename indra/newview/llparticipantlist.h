@@ -33,12 +33,13 @@
 
 #include "llviewerprecompiledheaders.h"
 #include "llevent.h"
-#include "llpanelpeoplemenus.h"
 #include "llavatarlist.h" // for LLAvatarItemRecentSpeakerComparator
+#include "lllistcontextmenu.h"
 
 class LLSpeakerMgr;
 class LLAvatarList;
 class LLUICtrl;
+class LLAvalineUpdater;
 
 class LLParticipantList
 {
@@ -47,7 +48,7 @@ class LLParticipantList
 
 		typedef boost::function<bool (const LLUUID& speaker_id)> validate_speaker_callback_t;
 
-		LLParticipantList(LLSpeakerMgr* data_source, LLAvatarList* avatar_list, bool use_context_menu = true, bool exclude_agent = true);
+		LLParticipantList(LLSpeakerMgr* data_source, LLAvatarList* avatar_list, bool use_context_menu = true, bool exclude_agent = true, bool can_toggle_icons = true);
 		~LLParticipantList();
 		void setSpeakingIndicatorsVisible(BOOL visible);
 
@@ -148,16 +149,17 @@ class LLParticipantList
 		/**
 		 * Menu used in the participant list.
 		 */
-		class LLParticipantListMenu : public LLPanelPeopleMenus::ContextMenu
+		class LLParticipantListMenu : public LLListContextMenu
 		{
 		public:
 			LLParticipantListMenu(LLParticipantList& parent):mParent(parent){};
 			/*virtual*/ LLContextMenu* createMenu();
-			/*virtual*/ void show(LLView* spawning_view, const std::vector<LLUUID>& uuids, S32 x, S32 y);
+			/*virtual*/ void show(LLView* spawning_view, const uuid_vec_t& uuids, S32 x, S32 y);
 		protected:
 			LLParticipantList& mParent;
 		private:
 			bool enableContextMenuItem(const LLSD& userdata);
+			bool enableModerateContextMenuItem(const LLSD& userdata);
 			bool checkContextMenuItem(const LLSD& userdata);
 
 			void sortParticipantList(const LLSD& userdata);
@@ -186,7 +188,7 @@ class LLParticipantList
 			 * @param userdata can be "selected" or "others".
 			 *
 			 * @see moderateVoiceParticipant()
-			 * @see moderateVoiceOtherParticipants()
+			 * @see moderateVoiceAllParticipants()
 			 */
 			void moderateVoice(const LLSD& userdata);
 
@@ -199,22 +201,22 @@ class LLParticipantList
 			 * @param[in] avatar_id UUID of avatar to be processed
 			 * @param[in] unmute if true - specified avatar will be muted, otherwise - unmuted.
 			 *
-			 * @see moderateVoiceOtherParticipants()
+			 * @see moderateVoiceAllParticipants()
 			 */
 			void moderateVoiceParticipant(const LLUUID& avatar_id, bool unmute);
 
 			/**
-			 * Mutes/Unmutes all avatars except specified for current group voice chat.
+			 * Mutes/Unmutes all avatars for current group voice chat.
 			 *
 			 * It only marks avatars as muted for session and does not use local Agent's Block list.
-			 * It based call moderateVoiceParticipant() for each avatar should be muted/unmuted.
 			 *
-			 * @param[in] excluded_avatar_id UUID of avatar NOT to be processed
 			 * @param[in] unmute if true - avatars will be muted, otherwise - unmuted.
 			 *
 			 * @see moderateVoiceParticipant()
 			 */
-			void moderateVoiceOtherParticipants(const LLUUID& excluded_avatar_id, bool unmute);
+			void moderateVoiceAllParticipants(bool unmute);
+
+			static void confirmMuteAllCallback(const LLSD& notification, const LLSD& response);
 		};
 
 		/**
@@ -235,6 +237,9 @@ class LLParticipantList
 	private:
 		void onAvatarListDoubleClicked(LLUICtrl* ctrl);
 		void onAvatarListRefreshed(LLUICtrl* ctrl, const LLSD& param);
+
+		void onAvalineCallerFound(const LLUUID& participant_id);
+		void onAvalineCallerRemoved(const LLUUID& participant_id);
 
 		/**
 		 * Adjusts passed participant to work properly.
@@ -269,7 +274,9 @@ class LLParticipantList
 		boost::signals2::connection mAvatarListDoubleClickConnection;
 		boost::signals2::connection mAvatarListRefreshConnection;
 		boost::signals2::connection mAvatarListReturnConnection;
+		boost::signals2::connection mAvatarListToggleIconsConnection;
 
 		LLPointer<LLAvatarItemRecentSpeakerComparator> mSortByRecentSpeakers;
 		validate_speaker_callback_t mValidateSpeakerCallback;
+		LLAvalineUpdater* mAvalineUpdater;
 };

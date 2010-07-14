@@ -9,6 +9,7 @@ include(Linking)
 include(Boost)
 include(Pth)
 include(LLSharedLibs)
+include(GoogleBreakpad)
 include(GooglePerfTools)
 include(Copy3rdPartyLibs)
 
@@ -35,6 +36,7 @@ set(llcommon_SOURCE_FILES
     llbase32.cpp
     llbase64.cpp
     llcommon.cpp
+    llcommonutils.cpp
     llcoros.cpp
     llcrc.cpp
     llcriticaldamp.cpp
@@ -124,6 +126,7 @@ set(llcommon_HEADER_FILES
     llchat.h
     llclickaction.h
     llcommon.h
+    llcommonutils.h
     llcoros.h
     llcrc.h
     llcriticaldamp.h
@@ -230,7 +233,6 @@ set(llcommon_HEADER_FILES
     metaclasst.h
     metaproperty.h
     metapropertyt.h
-    processor.h
     reflective.h
     reflectivet.h
     roles_constants.h
@@ -266,6 +268,7 @@ endif(NOT CMAKE_SIZEOF_VOID_P MATCHES 4)
 
 target_link_libraries(
     llcommon
+    ${BREAKPAD_EXCEPTION_HANDLER_LIBRARIES}
     ${APRUTIL_LIBRARIES}
     ${APR_LIBRARIES}
     ${EXPAT_LIBRARIES}
@@ -297,6 +300,7 @@ if (LL_TESTS)
   LL_ADD_INTEGRATION_TEST(llframetimer "" "${test_libs}")
   LL_ADD_INTEGRATION_TEST(llinstancetracker "" "${test_libs}")
   LL_ADD_INTEGRATION_TEST(lllazy "" "${test_libs}")
+  LL_ADD_INTEGRATION_TEST(llprocessor "" "${test_libs}")
   LL_ADD_INTEGRATION_TEST(llrand "" "${test_libs}")
   LL_ADD_INTEGRATION_TEST(llsdserialize "" "${test_libs}")
   LL_ADD_INTEGRATION_TEST(llstring "" "${test_libs}")

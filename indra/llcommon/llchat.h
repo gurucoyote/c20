@@ -83,6 +83,7 @@ public:
 		mFromName(),
 		mFromID(),
 		mNotifId(),
+		mOwnerID(),
 		mSourceType(CHAT_SOURCE_AGENT),
 		mChatType(CHAT_TYPE_NORMAL),
 		mAudible(CHAT_AUDIBLE_FULLY),
@@ -99,6 +100,7 @@ public:
 	std::string		mFromName;	// agent or object name
 	LLUUID			mFromID;	// agent id or object id
 	LLUUID			mNotifId;
+	LLUUID			mOwnerID;
 	EChatSourceType	mSourceType;
 	EChatType		mChatType;
 	EChatAudible	mAudible;

@@ -11,6 +11,7 @@
  save_rect="true"
  short_title="BUILD TOOLS"
  single_instance="true"
+ save_visibility="true"
  sound_flags="0"
  width="295">
     <floater.string
@@ -219,8 +220,8 @@
 	</radio_group>
 	<radio_group
      follows="left|top"
-	 left="10"
-	 top="54"
+	 left="5"
+	 top="59"
 	 height="70"
      layout="topleft"
 	 name="edit_radio_group">
@@ -253,7 +254,8 @@
 	 control_name="EditLinkedParts"
      label="Edit linked"
      layout="topleft"     
-     name="checkbox edit linked parts" >
+     name="checkbox edit linked parts"
+     top_pad="0">
 		  <check_box.commit_callback
 			function="BuildTool.selectComponent"/>
 	</check_box>
@@ -273,20 +275,31 @@
 	<check_box
      control_name="ScaleUniform"
      height="19"
-     label="Stretch Both Sides"
+     label=""
      layout="topleft"
      left="143"
      name="checkbox uniform"
 	 top="50"
-     width="134" />
+     width="20" />
+    <text
+     height="19"
+     label="Stretch Both Sides"
+     left="163"
+     name="checkbox uniform label"
+     top="55"
+     width="120"
+     wrap="true">
+     	Stretch Both Sides
+    </text>
     <check_box
      control_name="ScaleStretchTextures"
      height="19"
      initial_value="true"
      label="Stretch Textures"
      layout="topleft"
+     left="143"
      name="checkbox stretch textures"
-     top_pad="0"
+     top_pad="7"
      width="134" />
    <check_box
      control_name="SnapEnabled"
@@ -294,7 +307,7 @@
      initial_value="true"
      label="Snap to grid"
      layout="topleft"
-     top_pad="7"
+     top_pad="0"
      name="checkbox snap to grid"
      width="134" />
     <combo_box
@@ -303,6 +316,7 @@
      follows="left|top"
      name="combobox grid mode"
      tool_tip="Choose the type of grid ruler for positioning the object"
+     top_pad="0"
      width="108">
         <combo_box.item
          label="World grid"
@@ -321,7 +335,6 @@
     </combo_box>
     <button
      left_pad="0"
-     image_disabled="ForwardArrow_Disabled"
      image_selected="ForwardArrow_Press"
      image_unselected="ForwardArrow_Off"
      layout="topleft"
@@ -580,7 +593,7 @@
          layout="topleft"
          left="0"
          name="radio select land"
-         top="-1"
+         top="-106"
          width="134" />
         <radio_item
          height="19"
@@ -998,7 +1011,7 @@
             follows="left|top"
             allow_text_entry="false"
             height="23"
-            intial_value="2"
+            initial_value="2"
             max_chars="20"
             mouse_opaque="true"
             name="sale type"
@@ -2162,8 +2175,6 @@ even though the user gets a free copy.
              width="60" />
             <color_swatch
              can_apply_immediately="true"
-	     bevel_style="none"
-	     border_style="line"
              color="0.5 0.5 0.5 1"
 	     border.border_thickness="0"
              follows="left|top"
@@ -2198,43 +2209,71 @@ even though the user gets a free copy.
              name="Light Intensity"
              top_pad="3"
              width="128" />
-          <spinner bottom_delta="0" decimal_digits="3" follows="left|top" height="16"
- increment="0.1" initial_val="0.5" label="FOV" label_width="55"
- left="144" max_val="3" min_val="0" mouse_opaque="true"
- name="Light FOV" width="120" />
-          <spinner
-             follows="left|top"
-             height="19"
-             initial_value="5"
-             label="Radius"
-             label_width="70"
-             layout="topleft"
-             left="10"
-             max_val="20"
-             name="Light Radius"
-             top_pad="3"
-             width="128" />
-          <spinner bottom_delta="0" decimal_digits="3" follows="left|top" height="16"
-        increment="0.5" initial_val="0.5" label="Focus" label_width="55"
-        left="144" max_val="20" min_val="-20" mouse_opaque="true"
-        name="Light Focus" width="120" />
-            <spinner
-             follows="left|top"
-             height="19"
-             increment="0.25"
-             initial_value="1"
-             label="Falloff"
-             label_width="70"
-             layout="topleft"
-             left="10"
-             max_val="2"
-             name="Light Falloff"
-             top_pad="3"
-             width="128" />
-          <spinner bottom_delta="0" decimal_digits="3" follows="left|top" height="16"
-           increment="0.05" initial_val="1" label="Ambiance" label_width="55"
-           left="144" max_val="1" min_val="0" mouse_opaque="true"
-           name="Light Ambiance" width="120" />
+          <spinner bottom_delta="0"
+                   decimal_digits="3"
+                   follows="left|top"
+                   height="16"
+                   increment="0.1"
+                   initial_value="0.5"
+                   label="FOV"
+                   label_width="55"
+                   left="144"
+                   max_val="3"
+                   min_val="0"
+                   mouse_opaque="true"
+                   name="Light FOV"
+                   width="120" />
+          <spinner follows="left|top"
+                   height="19"
+                   initial_value="5"
+                   label="Radius"
+                   label_width="70"
+                   layout="topleft"
+                   left="10"
+                   max_val="20"
+                   name="Light Radius"
+                   top_pad="3"
+                   width="128" />
+          <spinner bottom_delta="0"
+                   decimal_digits="3"
+                   follows="left|top"
+                   height="16"
+                   increment="0.5"
+                   initial_value="0.5"
+                   label="Focus"
+                   label_width="55"
+                   left="144"
+                   max_val="20"
+                   min_val="-20"
+                   mouse_opaque="true"
+                   name="Light Focus"
+                   width="120" />
+          <spinner follows="left|top"
+                   height="19"
+                   increment="0.25"
+                   initial_value="1"
+                   label="Falloff"
+                   label_width="70"
+                   layout="topleft"
+                   left="10"
+                   max_val="2"
+                   name="Light Falloff"
+                   top_pad="3"
+                   width="128" />
+          <spinner bottom_delta="0"
+                   decimal_digits="3"
+                   follows="left|top"
+                   height="16"
+                   increment="0.05"
+                   initial_value="1"
+                   label="Ambiance"
+                   label_width="55"
+                   left="144"
+                   max_val="1"
+                   min_val="0"
+                   mouse_opaque="true"
+                   name="Light Ambiance"
+                   width="120" />
         </panel>
          <panel
          border="false"
@@ -2259,6 +2298,7 @@ even though the user gets a free copy.
             <texture_picker
              can_apply_immediately="true"
              default_image_name="Default"
+             fallback_image="locked_image.j2c"
              follows="left|top"
              height="80"
              label="Texture"
@@ -2329,7 +2369,7 @@ even though the user gets a free copy.
              height="19"
              label="Full Bright"
              layout="topleft"
-             left_delta="0"
+             left_delta="-5"
              name="checkbox fullbright"
              top_pad="4"
              width="81" />
@@ -2551,18 +2591,18 @@ even though the user gets a free copy.
              height="19"
              initial_value="0"
              label="Horizontal (U)"
-             label_width="90"
+             label_width="125"
              layout="topleft"
              left="20"
              max_val="100"
              name="TexScaleU"
              top_pad="5"
-             width="160" />
+             width="185" />
             <check_box
              height="19"
              label="Flip"
              layout="topleft"
-             left_pad="10"
+             left_pad="5"
              name="checkbox flip s"
              top_delta="0"
              width="70" />
@@ -2571,17 +2611,17 @@ even though the user gets a free copy.
              height="19"
              initial_value="0"
              label="Vertical (V)"
-             label_width="90"
+             label_width="125"
              layout="topleft"
              left="20"
              max_val="100"
              name="TexScaleV"
-             width="160" />
+             width="185" />
             <check_box
              height="19"
              label="Flip"
              layout="topleft"
-             left_pad="10"
+             left_pad="5"
              name="checkbox flip t"
              top_delta="0"
              width="70" />
@@ -2593,12 +2633,12 @@ even though the user gets a free copy.
              initial_value="0"
 			 label="Rotation˚"
              layout="topleft"
-			 label_width="100"
+			 label_width="135"
              left="10"
              max_val="9999"
              min_val="-9999"
              name="TexRot"
-             width="170" />
+             width="195" />
 
             <spinner
              decimal_digits="1"
@@ -2607,19 +2647,19 @@ even though the user gets a free copy.
              initial_value="1"
 			 label="Repeats / Meter"
              layout="topleft"
-			 label_width="100"
+			 label_width="135"
              left="10"
              max_val="10"
              min_val="0.1"
              name="rptctrl"
-             width="170" />
+             width="195" />
             <button
              follows="left|top"
              height="23"
              label="Apply"
              label_selected="Apply"
              layout="topleft"
-             left_pad="10"
+             left_pad="5"
              name="button apply"
              width="75" />
             <text
@@ -2638,24 +2678,24 @@ even though the user gets a free copy.
              height="19"
              initial_value="0"
              label="Horizontal (U)"
-             label_width="90"
+             label_width="125"
              layout="topleft"
              left="20"
              min_val="-1"
              name="TexOffsetU"
-             width="160" />
+             width="185" />
             <spinner
              follows="left|top"
              height="19"
              initial_value="0"
              label="Vertical (V)"
-             label_width="90"
+             label_width="125"
              layout="topleft"
              left_delta="0"
              min_val="-1"
              name="TexOffsetV"
              top_pad="1"
-             width="160" />
+             width="185" />
         <panel
          border="false"
          follows="left|top"
@@ -2712,15 +2752,15 @@ even though the user gets a free copy.
 			<button
 			 follows="top|left"
 			 tool_tip="Edit this Media"
-			 height="18"
-			 image_disabled="OptionsMenu_Disabled"
-			 image_selected="OptionsMenu_Press"
-			 image_unselected="OptionsMenu_Off"
+			 height="12"
+			 image_disabled="Icon_Gear_Foreground"
+			 image_selected="Icon_Gear_Background"
+			 image_unselected="Icon_Gear_Press"
 			 layout="topleft"
 			 left_pad="10"
 			 name="edit_media"
-			 top_delta="0"
-			 width="18">
+			 top_delta="3"
+			 width="12">
 				<button.commit_callback
 				function="BuildTool.EditMedia"/>
 			</button>

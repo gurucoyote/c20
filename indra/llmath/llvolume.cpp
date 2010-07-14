@@ -87,6 +87,8 @@ const F32 SKEW_MAX	=  0.95f;
 const F32 SCULPT_MIN_AREA = 0.002f;
 const S32 SCULPT_MIN_AREA_DETAIL = 1;
 
+#define GEN_TRI_STRIP 0
+
 BOOL check_same_clock_dir( const LLVector3& pt1, const LLVector3& pt2, const LLVector3& pt3, const LLVector3& norm)
 {    
 	LLVector3 test = (pt2-pt1)%(pt3-pt2);
@@ -1689,7 +1691,7 @@ LLVolume::LLVolume(const LLVolumeParams &params, const F32 detail, const BOOL ge
 	mGenerateSingleFace = generate_single_face;
 
 	generate();
-	if (mParams.getSculptID().isNull())
+	if (mParams.getSculptID().isNull() && params.getSculptType() == LL_SCULPT_TYPE_NONE)
 	{
 		createVolumeFaces();
 	}
@@ -1865,6 +1867,11 @@ void LLVolume::createVolumeFaces()
 			LLProfile::Face& face = mProfilep->mFaces[i];
 			vf.mBeginS = face.mIndex;
 			vf.mNumS = face.mCount;
+			if (vf.mNumS < 0)
+			{
+				llerrs << "Volume face corruption detected." << llendl;
+			}
+
 			vf.mBeginT = 0;
 			vf.mNumT= getPath().mPath.size();
 			vf.mID = i;
@@ -1908,6 +1915,10 @@ void LLVolume::createVolumeFaces()
 					if (face.mFlat && vf.mNumS > 2)
 					{ //flat inner faces have to copy vert normals
 						vf.mNumS = vf.mNumS*2;
+						if (vf.mNumS < 0)
+						{
+							llerrs << "Volume face corruption detected." << llendl;
+						}
 					}
 				}
 				else
@@ -4522,7 +4533,9 @@ BOOL LLVolumeFace::createUnCutCubeCap(LLVolume* volume, BOOL partial_build)
 
 	if (!partial_build)
 	{
+#if GEN_TRI_STRIP
 		mTriStrip.clear();
+#endif
 		S32 idxs[] = {0,1,(grid_size+1)+1,(grid_size+1)+1,(grid_size+1),0};
 		for(S32 gx = 0;gx<grid_size;gx++)
 		{
@@ -4536,6 +4549,7 @@ BOOL LLVolumeFace::createUnCutCubeCap(LLVolume* volume, BOOL partial_build)
 						mIndices.push_back(vtop+(gy*(grid_size+1))+gx+idxs[i]);
 					}
 					
+#if GEN_TRI_STRIP
 					if (gy == 0)
 					{
 						mTriStrip.push_back((gx+1)*(grid_size+1));
@@ -4551,6 +4565,7 @@ BOOL LLVolumeFace::createUnCutCubeCap(LLVolume* volume, BOOL partial_build)
 					{
 						mTriStrip.push_back(gy+1+gx*(grid_size+1));
 					}
+#endif
 				}
 				else
 				{
@@ -4559,6 +4574,7 @@ BOOL LLVolumeFace::createUnCutCubeCap(LLVolume* volume, BOOL partial_build)
 						mIndices.push_back(vtop+(gy*(grid_size+1))+gx+idxs[i]);
 					}
 
+#if GEN_TRI_STRIP
 					if (gy == 0)
 					{
 						mTriStrip.push_back(gx*(grid_size+1));
@@ -4573,15 +4589,18 @@ BOOL LLVolumeFace::createUnCutCubeCap(LLVolume* volume, BOOL partial_build)
 					{
 						mTriStrip.push_back(gy+1+(gx+1)*(grid_size+1));
 					}
+#endif
 				}
 			}
 			
 		}
 
+#if GEN_TRI_STRIP
 		if (mTriStrip.size()%2 == 1)
 		{
 			mTriStrip.push_back(mTriStrip[mTriStrip.size()-1]);
 		}
+#endif
 	}
 		
 	return TRUE;
@@ -4951,6 +4970,7 @@ BOOL LLVolumeFace::createCap(LLVolume* volume, BOOL partial_build)
 			mIndices[3*i+v2] = i + 1;
 		}
 
+#if GEN_TRI_STRIP
 		//make tri strip
 		if (mTypeMask & OPEN_MASK)
 		{
@@ -4993,6 +5013,7 @@ BOOL LLVolumeFace::createCap(LLVolume* volume, BOOL partial_build)
 				mTriStrip.push_back(mTriStrip[mTriStrip.size()-1]);
 			}
 		}
+#endif
 	}
 		
 	return TRUE;
@@ -5000,6 +5021,7 @@ BOOL LLVolumeFace::createCap(LLVolume* volume, BOOL partial_build)
 
 void LLVolumeFace::makeTriStrip()
 {
+#if GEN_TRI_STRIP
 	for (U32 i = 0; i < mIndices.size(); i+=3)
 	{
 		U16 i0 = mIndices[i];
@@ -5028,6 +5050,7 @@ void LLVolumeFace::makeTriStrip()
 	{
 		mTriStrip.push_back(mTriStrip[mTriStrip.size()-1]);
 	}
+#endif
 }
 
 void LLVolumeFace::createBinormals()
@@ -5113,12 +5136,6 @@ BOOL LLVolumeFace::createSide(LLVolume* volume, BOOL partial_build)
 		mHasBinormals = FALSE;
 	}
 
-
-	LLVector3& face_min = mExtents[0];
-	LLVector3& face_max = mExtents[1];
-
-	mCenter.clearVec();
-
 	S32 begin_stex = llfloor( profile[mBeginS].mV[2] );
 	S32 num_s = ((mTypeMask & INNER_MASK) && (mTypeMask & FLAT_MASK) && mNumS > 2) ? mNumS/2 : mNumS;
 
@@ -5174,15 +5191,6 @@ BOOL LLVolumeFace::createSide(LLVolume* volume, BOOL partial_build)
 		
 			mVertices[cur_vertex].mNormal = LLVector3(0,0,0);
 			mVertices[cur_vertex].mBinormal = LLVector3(0,0,0);
-			
-			if (cur_vertex == 0)
-			{
-				face_min = face_max = mesh[i].mPos;
-			}
-			else
-			{
-				update_min_max(face_min, face_max, mesh[i].mPos);
-			}
 
 			cur_vertex++;
 
@@ -5216,12 +5224,22 @@ BOOL LLVolumeFace::createSide(LLVolume* volume, BOOL partial_build)
 			mVertices[cur_vertex].mNormal = LLVector3(0,0,0);
 			mVertices[cur_vertex].mBinormal = LLVector3(0,0,0);
 
-			update_min_max(face_min,face_max,mesh[i].mPos);
-
 			cur_vertex++;
 		}
 	}
 	
+
+	//get bounding box for this side
+	LLVector3& face_min = mExtents[0];
+	LLVector3& face_max = mExtents[1];
+	mCenter.clearVec();
+
+	face_min = face_max = mVertices[0].mPosition;
+	for (U32 i = 1; i < mVertices.size(); ++i)
+	{
+		update_min_max(face_min, face_max, mVertices[i].mPosition);
+	}
+
 	mCenter = (face_min + face_max) * 0.5f;
 
 	S32 cur_index = 0;
@@ -5230,13 +5248,17 @@ BOOL LLVolumeFace::createSide(LLVolume* volume, BOOL partial_build)
 
 	if (!partial_build)
 	{
+#if GEN_TRI_STRIP
 		mTriStrip.clear();
+#endif
 
 		// Now we generate the indices.
 		for (t = 0; t < (mNumT-1); t++)
 		{
+#if GEN_TRI_STRIP
 			//prepend terminating index to strip
 			mTriStrip.push_back(mNumS*t);
+#endif
 
 			for (s = 0; s < (mNumS-1); s++)
 			{	
@@ -5247,6 +5269,7 @@ BOOL LLVolumeFace::createSide(LLVolume* volume, BOOL partial_build)
 				mIndices[cur_index++] = s+1 + mNumS*t;			//bottom right
 				mIndices[cur_index++] = s+1 + mNumS*(t+1);		//top right
 
+#if GEN_TRI_STRIP
 				if (s == 0)
 				{
 					mTriStrip.push_back(s+mNumS*t);
@@ -5254,6 +5277,7 @@ BOOL LLVolumeFace::createSide(LLVolume* volume, BOOL partial_build)
 				}
 				mTriStrip.push_back(s+1+mNumS*t);
 				mTriStrip.push_back(s+1+mNumS*(t+1));
+#endif
 				
 				mEdge[cur_edge++] = (mNumS-1)*2*t+s*2+1;						//bottom left/top right neighbor face 
 				if (t < mNumT-2) {												//top right/top left neighbor face 
@@ -5295,44 +5319,37 @@ BOOL LLVolumeFace::createSide(LLVolume* volume, BOOL partial_build)
 				}
 				mEdge[cur_edge++] = (mNumS-1)*2*t+s*2;							//top right/bottom left neighbor face	
 			}
+#if GEN_TRI_STRIP
 			//append terminating vertex to strip
 			mTriStrip.push_back(mNumS-1+mNumS*(t+1));
+#endif
 		}
 
+#if GEN_TRI_STRIP
 		if (mTriStrip.size()%2 == 1)
 		{
 			mTriStrip.push_back(mTriStrip[mTriStrip.size()-1]);
 		}
+#endif
 	}
 
 	//generate normals 
 	for (U32 i = 0; i < mIndices.size()/3; i++) //for each triangle
 	{
-		const S32 i0 = mIndices[i*3+0];
-		const S32 i1 = mIndices[i*3+1];
-		const S32 i2 = mIndices[i*3+2];
-		const VertexData& v0 = mVertices[i0];
-		const VertexData& v1 = mVertices[i1];
-		const VertexData& v2 = mVertices[i2];
+		const U16* idx = &(mIndices[i*3]);
+			
+		VertexData* v[] = 
+		{	&mVertices[idx[0]], &mVertices[idx[1]], &mVertices[idx[2]] };
 					
 		//calculate triangle normal
-		LLVector3 norm = (v0.mPosition-v1.mPosition) % (v0.mPosition-v2.mPosition);
+		LLVector3 norm = (v[0]->mPosition-v[1]->mPosition) % (v[0]->mPosition-v[2]->mPosition);
 
-		for (U32 j = 0; j < 3; j++) 
-		{ //add triangle normal to vertices
-			const S32 idx = mIndices[i*3+j];
-			mVertices[idx].mNormal += norm; // * (weight_sum - d[j])/weight_sum;
-		}
+		v[0]->mNormal += norm;
+		v[1]->mNormal += norm;
+		v[2]->mNormal += norm;
 
 		//even out quad contributions
-		if ((i & 1) == 0) 
-		{
-			mVertices[i2].mNormal += norm;
-		}
-		else 
-		{
-			mVertices[i1].mNormal += norm;
-		}
+		v[i%2+1]->mNormal += norm;
 	}
 	
 	// adjust normals based on wrapping and stitching

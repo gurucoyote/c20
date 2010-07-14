@@ -59,13 +59,13 @@
 				/>
 				<combo_box.item name="item1" label="Shopping"
 				/>
-				<combo_box.item name="item2" label="Aluguél de Terras"
+				<combo_box.item name="item2" label="Aluguel de terrenos"
 				/>
-				<combo_box.item name="item3" label="Aluguél de Propriedades"
+				<combo_box.item name="item3" label="Aluguél de propriedades"
 				/>
-				<combo_box.item name="item4" label="Atração Especial"
+				<combo_box.item name="item4" label="Atração especial"
 				/>
-				<combo_box.item name="item5" label="Novos Produtos"
+				<combo_box.item name="item5" label="Novos produtos"
 				/>
 				<combo_box.item name="item6" label="Emprego"
 				/>
@@ -76,9 +76,9 @@
 				<combo_box.item name="item9" label="Pessoal"
 				/>
 			</combo_box>
-			<button label="Procura" label_selected="Procura" name="Browse"/>
+			<button label="Procurar" label_selected="Procurar" name="Browse"/>
 			<button label="Buscar" label_selected="Buscar" name="Search"/>
-			<button label="Colocar Anúncio..." label_selected="Colocar Anúncio..." name="Place an Ad..."/>
+			<button label="Anuncie..." label_selected="Anuncie..." name="Place an Ad..."/>
 			<button label="Apagar" label_selected="Apagar" name="Delete"/>
 			<scroll_list name="results">
 				<column label="Nome" name="name"/>
@@ -166,7 +166,7 @@
 				Feito
 			</string>
 		</panel>
-		<panel label="Venda de Terrenos" name="land_sales_panel">
+		<panel label="Venda de terrenos" name="land_sales_panel">
 			<string name="searching_text">
 				Buscando...
 			</string>
@@ -174,8 +174,8 @@
 				Nada foi encontrado.
 			</string>
 			<string name="land_help_text">
-				Terra pode ser comprada direto por Linden dólares (L$) ou em leilão por ambos L$ ou US$.
-Para comprar direto, visite a terra e clique no nome do lugar, na barra de título.
+				Terrenos podem ser adquiridos diretamente, com dólares Linden (L$) ou em leilão por L$ ou US$.
+Para comprar direto, visite o terreno e clique no nome do lugar, na barra de título.
 			</string>
 			<text name="find" width="60">
 				Encontrar:
@@ -188,7 +188,7 @@ Para comprar direto, visite a terra e clique no nome do lugar, na barra de títu
 				/>
 				<combo_box.item name="Auction" label="Leilão"
 				/>
-				<combo_box.item name="MainlandSales" label="À venda - Mainland"
+				<combo_box.item name="MainlandSales" label="À venda - Continente"
 				/>
 				<combo_box.item name="EstateSales" label="À venda - Propriedade"
 				/>

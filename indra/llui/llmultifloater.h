@@ -81,6 +81,7 @@ public:
 	void onTabSelected();
 
 	virtual void updateResizeLimits();
+	virtual void updateFloaterTitle(LLFloater* floaterp);
 
 protected:
 	struct LLFloaterData

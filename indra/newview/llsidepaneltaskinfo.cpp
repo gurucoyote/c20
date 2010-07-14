@@ -81,6 +81,7 @@ static LLRegisterPanelClassWrapper<LLSidepanelTaskInfo> t_task_info("sidepanel_t
 LLSidepanelTaskInfo::LLSidepanelTaskInfo()
 {
 	setMouseOpaque(FALSE);
+	LLSelectMgr::instance().mUpdateSignal.connect(boost::bind(&LLSidepanelTaskInfo::refreshAll, this));
 }
 
 
@@ -126,10 +127,8 @@ BOOL LLSidepanelTaskInfo::postBuild()
 	return TRUE;
 }
 
-// virtual
-void LLSidepanelTaskInfo::setVisible(BOOL visible)
+/*virtual*/ void LLSidepanelTaskInfo::handleVisibilityChange ( BOOL visible )
 {
-	LLPanel::setVisible(visible);
 	if (visible)
 	{
 		sActivePanel = this;
@@ -138,8 +137,11 @@ void LLSidepanelTaskInfo::setVisible(BOOL visible)
 	else
 	{
 		sActivePanel = NULL;
+		// drop selection reference
+		mObjectSelection = NULL;
 	}
 }
+
 
 void LLSidepanelTaskInfo::disableAll()
 {
@@ -271,7 +273,6 @@ void LLSidepanelTaskInfo::refresh()
 	// BUG: fails if a root and non-root are both single-selected.
 	const BOOL is_perm_modify = (mObjectSelection->getFirstRootNode() && LLSelectMgr::getInstance()->selectGetRootsModify()) ||
 		LLSelectMgr::getInstance()->selectGetModify();
-	const LLFocusableElement* keyboard_focus_view = gFocusMgr.getKeyboardFocus();
 
 	S32 string_index = 0;
 	std::string MODIFY_INFO_STRINGS[] =
@@ -365,14 +366,14 @@ void LLSidepanelTaskInfo::refresh()
 
 	if (is_one_object)
 	{
-		if (keyboard_focus_view != LineEditorObjectName)
+		if (!LineEditorObjectName->hasFocus())
 		{
 			childSetText("Object Name",nodep->mName);
 		}
 
 		if (LineEditorObjectDesc)
 		{
-			if (keyboard_focus_view != LineEditorObjectDesc)
+			if (!LineEditorObjectDesc->hasFocus())
 			{
 				LineEditorObjectDesc->setText(nodep->mDescription);
 			}
@@ -1178,9 +1179,30 @@ void LLSidepanelTaskInfo::save()
 	onCommitIncludeInSearch(getChild<LLCheckBoxCtrl>("search_check"), this);
 }
 
+// removes keyboard focus so that all fields can be updated
+// and then restored focus
+void LLSidepanelTaskInfo::refreshAll()
+{
+	// update UI as soon as we have an object
+	// but remove keyboard focus first so fields are free to update
+	LLFocusableElement* focus = NULL;
+	if (hasFocus())
+	{
+		focus = gFocusMgr.getKeyboardFocus();
+		setFocus(FALSE);
+	}
+	refresh();
+	if (focus)
+	{
+		focus->setFocus(TRUE);
+	}
+}
+
+
 void LLSidepanelTaskInfo::setObjectSelection(LLObjectSelectionHandle selection)
 {
 	mObjectSelection = selection;
+	refreshAll();
 }
 
 LLSidepanelTaskInfo* LLSidepanelTaskInfo::getActivePanel()

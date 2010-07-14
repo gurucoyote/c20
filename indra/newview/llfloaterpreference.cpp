@@ -71,6 +71,7 @@
 #include "llscrolllistctrl.h"
 #include "llscrolllistitem.h"
 #include "llsliderctrl.h"
+#include "llsidetray.h"
 #include "lltabcontainer.h"
 #include "lltrans.h"
 #include "llviewercontrol.h"
@@ -107,6 +108,8 @@
 #include "llviewermedia.h"
 #include "llpluginclassmedia.h"
 #include "llteleporthistorystorage.h"
+
+#include "lllogininstance.h"        // to check if logged in yet
 
 const F32 MAX_USER_FAR_CLIP = 512.f;
 const F32 MIN_USER_FAR_CLIP = 64.f;
@@ -183,7 +186,6 @@ void LLVoiceSetKeyDialog::onCancel(void* user_data)
 // if creating/destroying these is too slow, we'll need to create
 // a static member and update all our static callbacks
 
-void handleNameTagOptionChanged(const LLSD& newvalue);	
 bool callback_clear_browser_cache(const LLSD& notification, const LLSD& response);
 
 //bool callback_skip_dialogs(const LLSD& notification, const LLSD& response, LLFloaterPreference* floater);
@@ -217,15 +219,6 @@ bool callback_clear_browser_cache(const LLSD& notification, const LLSD& response
 	}
 	
 	return false;
-}
-
-void handleNameTagOptionChanged(const LLSD& newvalue)
-{
-	S32 name_tag_option = S32(newvalue);
-	if(name_tag_option==2)
-	{
-		gSavedSettings.setBOOL("SmallAvatarNames", TRUE);
-	}
 }
 
 /*bool callback_skip_dialogs(const LLSD& notification, const LLSD& response, LLFloaterPreference* floater)
@@ -318,10 +311,9 @@ LLFloaterPreference::LLFloaterPreference(const LLSD& key)
 	mCommitCallbackRegistrar.add("Pref.applyUIColor",			boost::bind(&LLFloaterPreference::applyUIColor, this ,_1, _2));
 	mCommitCallbackRegistrar.add("Pref.getUIColor",				boost::bind(&LLFloaterPreference::getUIColor, this ,_1, _2));
 	mCommitCallbackRegistrar.add("Pref.MaturitySettings",		boost::bind(&LLFloaterPreference::onChangeMaturity, this));
+	mCommitCallbackRegistrar.add("Pref.BlockList",				boost::bind(&LLFloaterPreference::onClickBlockList, this));
 
 	sSkin = gSavedSettings.getString("SkinCurrent");
-	
-	gSavedSettings.getControl("AvatarNameTagMode")->getCommitSignal()->connect(boost::bind(&handleNameTagOptionChanged,  _2));
 }
 
 BOOL LLFloaterPreference::postBuild()
@@ -337,13 +329,30 @@ BOOL LLFloaterPreference::postBuild()
 	LLTabContainer* tabcontainer = getChild<LLTabContainer>("pref core");
 	if (!tabcontainer->selectTab(gSavedSettings.getS32("LastPrefTab")))
 		tabcontainer->selectFirstTab();
-	S32 show_avatar_nametag_options = gSavedSettings.getS32("AvatarNameTagMode");
-	handleNameTagOptionChanged(LLSD(show_avatar_nametag_options));
 
 	std::string cache_location = gDirUtilp->getExpandedFilename(LL_PATH_CACHE, "");
 	childSetText("cache_location", cache_location);
 
+	// if floater is opened before login set default localized busy message
+	if (LLStartUp::getStartupState() < STATE_STARTED)
+	{
+		gSavedPerAccountSettings.setString("BusyModeResponse", LLTrans::getString("BusyModeResponseDefault"));
+	}
+
 	return TRUE;
+}
+
+void LLFloaterPreference::onBusyResponseChanged()
+{
+	// set "BusyResponseChanged" TRUE if user edited message differs from default, FALSE otherwise
+	if(LLTrans::getString("BusyModeResponseDefault") != getChild<LLUICtrl>("busy_response")->getValue().asString())
+	{
+		gSavedPerAccountSettings.setBOOL("BusyResponseChanged", TRUE );
+	}
+	else
+	{
+		gSavedPerAccountSettings.setBOOL("BusyResponseChanged", FALSE );
+	}
 }
 
 LLFloaterPreference::~LLFloaterPreference()
@@ -459,8 +468,6 @@ void LLFloaterPreference::apply()
 			gAgent.sendAgentUpdateUserInfo(new_im_via_email,mDirectoryVisibility);
 		}
 	}
-
-	applyResolution();
 }
 
 void LLFloaterPreference::cancel()
@@ -500,6 +507,22 @@ void LLFloaterPreference::cancel()
 
 void LLFloaterPreference::onOpen(const LLSD& key)
 {
+	// this variable and if that follows it are used to properly handle busy mode response message
+	static bool initialized = FALSE;
+	// if user is logged in and we haven't initialized busy_response yet, do it
+	if (!initialized && LLStartUp::getStartupState() == STATE_STARTED)
+	{
+		// Special approach is used for busy response localization, because "BusyModeResponse" is
+		// in non-localizable xml, and also because it may be changed by user and in this case it shouldn't be localized.
+		// To keep track of whether busy response is default or changed by user additional setting BusyResponseChanged
+		// was added into per account settings.
+
+		// initialization should happen once,so setting variable to TRUE
+		initialized = TRUE;
+		// this connection is needed to properly set "BusyResponseChanged" setting when user makes changes in
+		// busy response message.
+		gSavedPerAccountSettings.getControl("BusyModeResponse")->getSignal()->connect(boost::bind(&LLFloaterPreference::onBusyResponseChanged, this));
+	}
 	gAgent.sendAgentUserInfoRequest();
 
 	/////////////////////////// From LLPanelGeneral //////////////////////////
@@ -514,7 +537,7 @@ void LLFloaterPreference::onOpen(const LLSD& key)
 	if (can_choose_maturity)
 	{		
 		// if they're not adult or a god, they shouldn't see the adult selection, so delete it
-		if (!gAgent.isAdult() && !gAgent.isGodlike())
+		if (!gAgent.isAdult() && !gAgent.isGodlikeWithoutAdminMenuFakery())
 		{
 			// we're going to remove the adult entry from the combo
 			LLScrollListCtrl* maturity_list = maturity_combo->findChild<LLScrollListCtrl>("ComboBox");
@@ -552,6 +575,16 @@ void LLFloaterPreference::onVertexShaderEnable()
 {
 	refreshEnabledGraphics();
 }
+
+//static
+void LLFloaterPreference::initBusyResponse()
+	{
+		if (!gSavedPerAccountSettings.getBOOL("BusyResponseChanged"))
+		{
+			//LLTrans::getString("BusyModeResponseDefault") is used here for localization (EXT-5885)
+			gSavedPerAccountSettings.setString("BusyModeResponse", LLTrans::getString("BusyModeResponseDefault"));
+		}
+	}
 
 void LLFloaterPreference::setHardwareDefaults()
 {
@@ -612,7 +645,7 @@ void LLFloaterPreference::onBtnOK()
 		llinfos << "Can't close preferences!" << llendl;
 	}
 
-	LLPanelLogin::refreshLocation( false );
+	LLPanelLogin::updateLocationCombo( false );
 }
 
 // static 
@@ -629,7 +662,7 @@ void LLFloaterPreference::onBtnApply( )
 	apply();
 	saveSettings();
 
-	LLPanelLogin::refreshLocation( false );
+	LLPanelLogin::updateLocationCombo( false );
 }
 
 // static 
@@ -812,7 +845,7 @@ void LLFloaterPreference::buildPopupLists()
 
 void LLFloaterPreference::refreshEnabledState()
 {	
-	LLCheckBoxCtrl* ctrl_reflections = getChild<LLCheckBoxCtrl>("Reflections");
+	LLComboBox* ctrl_reflections = getChild<LLComboBox>("Reflections");
 	LLRadioGroup* radio_reflection_detail = getChild<LLRadioGroup>("ReflectionDetailRadio");
 	
 	// Reflections
@@ -825,7 +858,7 @@ void LLFloaterPreference::refreshEnabledState()
 	bool bumpshiny = gGLManager.mHasCubeMap && LLCubeMap::sUseCubeMaps && LLFeatureManager::getInstance()->isFeatureAvailable("RenderObjectBump");
 	getChild<LLCheckBoxCtrl>("BumpShiny")->setEnabled(bumpshiny ? TRUE : FALSE);
 	
-	radio_reflection_detail->setEnabled(ctrl_reflections->get() && reflections);
+	radio_reflection_detail->setEnabled(reflections);
 	
 	// Avatar Mode
 	// Enable Avatar Shaders
@@ -871,18 +904,47 @@ void LLFloaterPreference::refreshEnabledState()
 	// *HACK just checks to see if we can use shaders... 
 	// maybe some cards that use shaders, but don't support windlight
 	ctrl_wind_light->setEnabled(ctrl_shader_enable->getEnabled() && shaders);
+
+	//Deferred/SSAO/Shadows
+	LLCheckBoxCtrl* ctrl_deferred = getChild<LLCheckBoxCtrl>("UseLightShaders");
+	if (LLFeatureManager::getInstance()->isFeatureAvailable("RenderUseFBO") &&
+	    LLFeatureManager::getInstance()->isFeatureAvailable("RenderDeferred") &&
+		shaders)
+	{
+		BOOL enabled = (ctrl_wind_light->get()) ? TRUE : FALSE;
+
+		ctrl_deferred->setEnabled(enabled);
+	
+		LLCheckBoxCtrl* ctrl_ssao = getChild<LLCheckBoxCtrl>("UseSSAO");
+		LLComboBox* ctrl_shadow = getChild<LLComboBox>("ShadowDetail");
+
+		enabled = enabled && LLFeatureManager::getInstance()->isFeatureAvailable("RenderDeferredSSAO") && (ctrl_deferred->get() ? TRUE : FALSE);
+		
+		ctrl_ssao->setEnabled(enabled);
+
+		enabled = enabled && LLFeatureManager::getInstance()->isFeatureAvailable("RenderShadowDetail");
+
+		ctrl_shadow->setEnabled(enabled);
+	}
+
+
 	// now turn off any features that are unavailable
 	disableUnavailableSettings();
+
+	childSetEnabled ("block_list", LLLoginInstance::getInstance()->authSuccess());
 }
 
 void LLFloaterPreference::disableUnavailableSettings()
 {	
-	LLCheckBoxCtrl* ctrl_reflections   = getChild<LLCheckBoxCtrl>("Reflections");
+	LLComboBox* ctrl_reflections   = getChild<LLComboBox>("Reflections");
 	LLCheckBoxCtrl* ctrl_avatar_vp     = getChild<LLCheckBoxCtrl>("AvatarVertexProgram");
 	LLCheckBoxCtrl* ctrl_avatar_cloth  = getChild<LLCheckBoxCtrl>("AvatarCloth");
 	LLCheckBoxCtrl* ctrl_shader_enable = getChild<LLCheckBoxCtrl>("BasicShaders");
 	LLCheckBoxCtrl* ctrl_wind_light    = getChild<LLCheckBoxCtrl>("WindLightUseAtmosShaders");
 	LLCheckBoxCtrl* ctrl_avatar_impostors = getChild<LLCheckBoxCtrl>("AvatarImpostors");
+	LLCheckBoxCtrl* ctrl_deferred = getChild<LLCheckBoxCtrl>("UseLightShaders");
+	LLComboBox* ctrl_shadows = getChild<LLComboBox>("ShadowDetail");
+	LLCheckBoxCtrl* ctrl_ssao = getChild<LLCheckBoxCtrl>("UseSSAO");
 
 	// if vertex shaders off, disable all shader related products
 	if(!LLFeatureManager::getInstance()->isFeatureAvailable("VertexShaderEnable"))
@@ -894,13 +956,22 @@ void LLFloaterPreference::disableUnavailableSettings()
 		ctrl_wind_light->setValue(FALSE);
 		
 		ctrl_reflections->setEnabled(FALSE);
-		ctrl_reflections->setValue(FALSE);
+		ctrl_reflections->setValue(0);
 		
 		ctrl_avatar_vp->setEnabled(FALSE);
 		ctrl_avatar_vp->setValue(FALSE);
 		
 		ctrl_avatar_cloth->setEnabled(FALSE);
 		ctrl_avatar_cloth->setValue(FALSE);
+
+		ctrl_shadows->setEnabled(FALSE);
+		ctrl_shadows->setValue(0);
+		
+		ctrl_ssao->setEnabled(FALSE);
+		ctrl_ssao->setValue(FALSE);
+
+		ctrl_deferred->setEnabled(FALSE);
+		ctrl_deferred->setValue(FALSE);
 	}
 	
 	// disabled windlight
@@ -908,10 +979,47 @@ void LLFloaterPreference::disableUnavailableSettings()
 	{
 		ctrl_wind_light->setEnabled(FALSE);
 		ctrl_wind_light->setValue(FALSE);
+
+		//deferred needs windlight, disable deferred
+		ctrl_shadows->setEnabled(FALSE);
+		ctrl_shadows->setValue(0);
+		
+		ctrl_ssao->setEnabled(FALSE);
+		ctrl_ssao->setValue(FALSE);
+
+		ctrl_deferred->setEnabled(FALSE);
+		ctrl_deferred->setValue(FALSE);
+	}
+
+	// disabled deferred
+	if(!LLFeatureManager::getInstance()->isFeatureAvailable("RenderDeferred"))
+	{
+		ctrl_shadows->setEnabled(FALSE);
+		ctrl_shadows->setValue(0);
+		
+		ctrl_ssao->setEnabled(FALSE);
+		ctrl_ssao->setValue(FALSE);
+
+		ctrl_deferred->setEnabled(FALSE);
+		ctrl_deferred->setValue(FALSE);
 	}
 	
+	// disabled deferred SSAO
+	if(!LLFeatureManager::getInstance()->isFeatureAvailable("RenderDeferredSSAO"))
+	{
+		ctrl_ssao->setEnabled(FALSE);
+		ctrl_ssao->setValue(FALSE);
+	}
+	
+	// disabled deferred shadows
+	if(!LLFeatureManager::getInstance()->isFeatureAvailable("RenderShadowDetail"))
+	{
+		ctrl_shadows->setEnabled(FALSE);
+		ctrl_shadows->setValue(0);
+	}
+
 	// disabled reflections
-	if(!LLFeatureManager::getInstance()->isFeatureAvailable("RenderWaterReflections"))
+	if(!LLFeatureManager::getInstance()->isFeatureAvailable("RenderReflectionDetail"))
 	{
 		ctrl_reflections->setEnabled(FALSE);
 		ctrl_reflections->setValue(FALSE);
@@ -925,13 +1033,25 @@ void LLFloaterPreference::disableUnavailableSettings()
 		
 		ctrl_avatar_cloth->setEnabled(FALSE);
 		ctrl_avatar_cloth->setValue(FALSE);
+
+		//deferred needs AvatarVP, disable deferred
+		ctrl_shadows->setEnabled(FALSE);
+		ctrl_shadows->setValue(0);
+		
+		ctrl_ssao->setEnabled(FALSE);
+		ctrl_ssao->setValue(FALSE);
+
+		ctrl_deferred->setEnabled(FALSE);
+		ctrl_deferred->setValue(FALSE);
 	}
+
 	// disabled cloth
 	if(!LLFeatureManager::getInstance()->isFeatureAvailable("RenderAvatarCloth"))
 	{
 		ctrl_avatar_cloth->setEnabled(FALSE);
 		ctrl_avatar_cloth->setValue(FALSE);
 	}
+
 	// disabled impostors
 	if(!LLFeatureManager::getInstance()->isFeatureAvailable("RenderUseImpostors"))
 	{
@@ -969,18 +1089,6 @@ void LLFloaterPreference::onChangeQuality(const LLSD& data)
 	LLFeatureManager::getInstance()->setGraphicsLevel(level, true);
 	refreshEnabledGraphics();
 	refresh();
-}
-
-// static
-// DEV-24146 -  needs to be removed at a later date. jan-2009
-void LLFloaterPreference::cleanupBadSetting()
-{
-	if (gSavedPerAccountSettings.getString("BusyModeResponse2") == "|TOKEN COPY BusyModeResponse|")
-	{
-		llwarns << "cleaning old BusyModeResponse" << llendl;
-		//LLTrans::getString("BusyModeResponseDefault") is used here for localization (EXT-5885)
-		gSavedPerAccountSettings.setString("BusyModeResponse2", LLTrans::getString("BusyModeResponseDefault"));
-	}
 }
 
 void LLFloaterPreference::onClickSetKey()
@@ -1191,31 +1299,6 @@ void LLFloaterPreference::updateSliderText(LLSliderCtrl* ctrl, LLTextBox* text_b
 	}
 }
 
-void LLFloaterPreference::applyResolution()
-{
-	gGL.flush();
-	
-	// Screen resolution
-	S32 num_resolutions;
-	LLWindow::LLWindowResolution* supported_resolutions = 
-	gViewerWindow->getWindow()->getSupportedResolutions(num_resolutions);
-	S32 resIndex = getChild<LLComboBox>("fullscreen combo")->getCurrentIndex();
-	if (resIndex == -1)
-	{
-		// use highest resolution if nothing selected
-		resIndex = num_resolutions - 1;
-	}
-	gSavedSettings.setS32("FullScreenWidth", supported_resolutions[resIndex].mWidth);
-	gSavedSettings.setS32("FullScreenHeight", supported_resolutions[resIndex].mHeight);
-	
-	gViewerWindow->requestResolutionUpdate(gSavedSettings.getBOOL("WindowFullScreen"));
-	
-	send_agent_update(TRUE);
-	
-	// Update enable/disable
-	refresh();
-}
-
 void LLFloaterPreference::onChangeMaturity()
 {
 	U8 sim_access = gSavedSettings.getU32("PreferredMaturity");
@@ -1228,6 +1311,17 @@ void LLFloaterPreference::onChangeMaturity()
 															|| sim_access == SIM_ACCESS_ADULT);
 
 	getChild<LLIconCtrl>("rating_icon_adult")->setVisible(sim_access == SIM_ACCESS_ADULT);
+}
+
+// FIXME: this will stop you from spawning the sidetray from preferences dialog on login screen
+// but the UI for this will still be enabled
+void LLFloaterPreference::onClickBlockList()
+{
+	// don't create side tray on demand
+	if (LLSideTray::instanceCreated())
+	{
+		LLSideTray::getInstance()->showPanel("panel_block_list_sidetray");
+	}
 }
 
 

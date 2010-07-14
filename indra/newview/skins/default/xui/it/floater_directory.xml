@@ -22,16 +22,16 @@
 				/>
 				<combo_box.item name="item2" label="Gruppi"
 				/>
-				<combo_box.item name="item3" label="Gente"
+				<combo_box.item name="item3" label="Persone"
 				/>
-				<combo_box.item name="item4" label="Posti"
+				<combo_box.item name="item4" label="Luoghi"
 				/>
 				<combo_box.item name="item5" label="Wiki"
 				/>
 			</combo_box>
-			<check_box label="Contenuto PG" name="incpg"/>
-			<check_box label="Contenuto Mature" name="incmature"/>
-			<check_box label="Contenuto Adult" name="incadult"/>
+			<check_box label="Contenuti di tipo Generale" name="incpg"/>
+			<check_box label="Contenuti di tipo Moderato" name="incmature"/>
+			<check_box label="Contenuti per Adulti" name="incadult"/>
 			<button label="?" label_selected="?" name="?"/>
 			<string name="loading_text">
 				Attendi...
@@ -56,9 +56,9 @@
 			<text name="find">
 				Trova:
 			</text>
-			<check_box label="Contenuto PG" name="incpg"/>
-			<check_box label="Contenuto Mature" name="incmature"/>
-			<check_box label="Contenuto Adult" name="incadult"/>
+			<check_box label="Contenuti di tipo Generale" name="incpg"/>
+			<check_box label="Contenuti di tipo Moderato" name="incmature"/>
+			<check_box label="Contenuti per Adulti" name="incadult"/>
 			<combo_box name="Category">
 				<combo_box.item name="item0" label="In tutte le categorie"
 				/>
@@ -141,9 +141,9 @@
 				<combo_box.item name="item29" label="Varie"
 				/>
 			</combo_box>
-			<check_box label="Contenuto PG" name="incpg"/>
-			<check_box label="Contenuto Mature" name="incmature"/>
-			<check_box label="Contenuto Adult" name="incadult"/>
+			<check_box label="Contenuti di tipo Generale" name="incpg"/>
+			<check_box label="Contenuti di tipo Moderato" name="incmature"/>
+			<check_box label="Contenuti per Adulti" name="incadult"/>
 			<button label="Cerca" label_selected="Cerca" name="Search" tool_tip="Cerca"/>
 			<button label="Cancella" label_selected="Cancella" name="Delete"/>
 			<scroll_list name="results">
@@ -190,9 +190,9 @@ Per acquistare direttamente, visita la terra e clicca sul nome del terreno nella
 			<text name="find">
 				Trova:
 			</text>
-			<check_box left="440" label="Contenuto PG" name="incpg"/>
-			<check_box left="440" label="Contenuto Mature" name="incmature"/>
-			<check_box left="440" label="Contenuto Adult" name="incadult"/>
+			<check_box left="440" label="Contenuti di tipo Generale" name="incpg"/>
+			<check_box left="440" label="Contenuti di tipo Moderato" name="incmature"/>
+			<check_box left="440" label="Contenuti per Adulti" name="incadult"/>
 			<combo_box name="type" width="148">
 				<combo_box.item name="AllTypes" label="Tutte le tipologie"
 				/>
@@ -234,9 +234,9 @@ Per acquistare direttamente, visita la terra e clicca sul nome del terreno nella
 			<text name="find">
 				Trova:
 			</text>
-			<check_box label="Contenuto PG" name="incpg"/>
-			<check_box label="Contenuto Mature" name="incmature"/>
-			<check_box label="Contenuto Adult" name="incadult"/>
+			<check_box label="Contenuti di tipo Generale" name="incpg"/>
+			<check_box label="Contenuti di tipo Moderato" name="incmature"/>
+			<check_box label="Contenuti per Adulti" name="incadult"/>
 			<combo_box name="Category">
 				<combo_box.item name="item0" label="In tutte le categorie"
 				/>
@@ -268,7 +268,7 @@ Per acquistare direttamente, visita la terra e clicca sul nome del terreno nella
 				/>
 				<combo_box.item name="LindenLocation" label="Luoghi Linden"
 				/>
-				<combo_box.item name="Adult" label="Adult"
+				<combo_box.item name="Adult" label="Adulti"
 				/>
 				<combo_box.item name="Arts&amp;Culture" label="Arte &amp; Cultura"
 				/>
@@ -280,7 +280,7 @@ Per acquistare direttamente, visita la terra e clicca sul nome del terreno nella
 				/>
 				<combo_box.item name="Hangout" label="Divertimento"
 				/>
-				<combo_box.item name="NewcomerFriendly" label="Ospitalità per i nuovi entrati"
+				<combo_box.item name="NewcomerFriendly" label="Adatto ai nuovi utenti"
 				/>
 				<combo_box.item name="Parks&amp;Nature" label="Parchi &amp; Natura"
 				/>
@@ -330,9 +330,9 @@ Per acquistare direttamente, visita la terra e clicca sul nome del terreno nella
 			<button label="Indietro" name="back_btn"/>
 			<button label="Avanti" name="forward_btn"/>
 			<button label="Cerca" name="search_btn"/>
-			<check_box label="Contenuto PG" name="incpg"/>
-			<check_box label="Contenuto Mature" name="incmature"/>
-			<check_box label="Contenuto Adult" name="incadult"/>
+			<check_box label="Contenuti di tipo Generale" name="incpg"/>
+			<check_box label="Contenuti di tipo Moderato" name="incmature"/>
+			<check_box label="Contenuti per Adulti" name="incadult"/>
 			<string name="loading_text">
 				Attendi...
 			</string>

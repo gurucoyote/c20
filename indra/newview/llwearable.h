@@ -39,7 +39,7 @@
 #include "llpermissions.h"
 #include "llsaleinfo.h"
 #include "llassetstorage.h"
-#include "llwearabledictionary.h"
+#include "llwearabletype.h"
 #include "llfile.h"
 #include "lllocaltextureobject.h"
 
@@ -69,8 +69,8 @@ public:
 	const LLUUID&				getItemID() const;
 	const LLAssetID&			getAssetID() const { return mAssetID; }
 	const LLTransactionID&		getTransactionID() const { return mTransactionID; }
-	EWearableType				getType() const	{ return mType; }
-	void						setType(EWearableType type);
+	LLWearableType::EType				getType() const	{ return mType; }
+	void						setType(LLWearableType::EType type);
 	const std::string&			getName() const	{ return mName; }
 	void						setName(const std::string& name) { mName = name; }
 	const std::string&			getDescription() const { return mDescription; }
@@ -82,7 +82,6 @@ public:
 	const std::string&			getTypeLabel() const;
 	const std::string&			getTypeName() const;
 	LLAssetType::EType			getAssetType() const;
-	LLLocalTextureObject*		getLocalTextureObject(S32 index) const;
 	S32							getDefinitionVersion() const { return mDefinitionVersion; }
 	void						setDefinitionVersion( S32 new_version ) { mDefinitionVersion = new_version; }
 
@@ -94,7 +93,7 @@ public:
 
 	void				writeToAvatar();
 	void				removeFromAvatar( BOOL upload_bake )	{ LLWearable::removeFromAvatar( mType, upload_bake ); }
-	static void			removeFromAvatar( EWearableType type, BOOL upload_bake ); 
+	static void			removeFromAvatar( LLWearableType::EType type, BOOL upload_bake ); 
 
 	BOOL				exportFile(LLFILE* file) const;
 	BOOL				importFile(LLFILE* file);
@@ -113,7 +112,7 @@ public:
 	void				setItemID(const LLUUID& item_id);
 
 	LLLocalTextureObject* getLocalTextureObject(S32 index);
-	const LLLocalTextureObject* getConstLocalTextureObject(S32 index) const;
+	const LLLocalTextureObject* getLocalTextureObject(S32 index) const;
 
 	void				setLocalTextureObject(S32 index, LLLocalTextureObject &lto);
 	void				addVisualParam(LLVisualParam *param);
@@ -157,7 +156,7 @@ private:
 	LLSaleInfo			mSaleInfo;
 	LLAssetID mAssetID;
 	LLTransactionID		mTransactionID;
-	EWearableType		mType;
+	LLWearableType::EType		mType;
 
 	typedef std::map<S32, F32> param_map_t;
 	param_map_t mSavedVisualParamMap; // last saved version of visual params
@@ -166,7 +165,7 @@ private:
 
 	te_map_t mTEMap;				// maps TE to LocalTextureObject
 	te_map_t mSavedTEMap;			// last saved version of TEMap
-	LLUUID				mItemID;  // ID of the inventory item in the agent's inventory
+	LLUUID				mItemID;  // ID of the inventory item in the agent's inventory	
 };
 
 #endif  // LL_LLWEARABLE_H

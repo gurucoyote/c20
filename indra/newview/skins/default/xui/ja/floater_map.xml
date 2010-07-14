@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<floater name="Map" title="ミニマップ">
+<floater name="Map" title="">
 	<floater.string name="mini_map_north">
 		北
 	</floater.string>
@@ -26,6 +26,9 @@
 	</floater.string>
 	<floater.string name="ToolTipMsg">
 		[AGENT][REGION] （ダブルクリックで地図を開きます）
+	</floater.string>
+	<floater.string name="mini_map_caption">
+		ミニマップ
 	</floater.string>
 	<text label="北" name="floater_map_north" text="北">
 		北

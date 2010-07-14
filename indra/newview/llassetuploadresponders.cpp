@@ -38,8 +38,9 @@
 // viewer includes
 #include "llagent.h"
 #include "llcompilequeue.h"
-#include "llfloaterbuycurrency.h"
+#include "llbuycurrencyhtml.h"
 #include "llfilepicker.h"
+#include "llinventorydefines.h"
 #include "llinventoryobserver.h"
 #include "llinventorypanel.h"
 #include "llpermissionsflags.h"
@@ -186,7 +187,7 @@ void LLAssetUploadResponder::uploadFailure(const LLSD& content)
 		S32 price = LLGlobalEconomy::Singleton::getInstance()->getPriceUpload();
 		LLStringUtil::format_map_t args;
 		args["AMOUNT"] = llformat("%d", price);
-		LLFloaterBuyCurrency::buyCurrency(LLTrans::getString("uploading_costs", args), price);
+		LLBuyCurrencyHTML::openCurrencyFloater( LLTrans::getString("uploading_costs", args), price );
 	}
 	else
 	{
@@ -283,7 +284,7 @@ void LLNewAgentInventoryResponder::uploadComplete(const LLSD& content)
 										mPostData["name"].asString(),
 										mPostData["description"].asString(),
 										LLSaleInfo::DEFAULT,
-										LLInventoryItem::II_FLAGS_NONE,
+										LLInventoryItemFlags::II_FLAGS_NONE,
 										creation_date_now);
 		gInventory.updateItem(item);
 		gInventory.notifyObservers();
@@ -478,10 +479,10 @@ void LLUpdateAgentInventoryResponder::uploadComplete(const LLSD& content)
 	  {
 		  // If this gesture is active, then we need to update the in-memory
 		  // active map with the new pointer.				
-		  if (LLGestureManager::instance().isGestureActive(item_id))
+		  if (LLGestureMgr::instance().isGestureActive(item_id))
 		  {
 			  LLUUID asset_id = new_item->getAssetUUID();
-			  LLGestureManager::instance().replaceGesture(item_id, asset_id);
+			  LLGestureMgr::instance().replaceGesture(item_id, asset_id);
 			  gInventory.notifyObservers();
 		  }				
 

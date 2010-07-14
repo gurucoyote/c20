@@ -85,15 +85,19 @@ public:
 		Optional<std::string>				sort_order_setting;
 		Optional<LLInventoryModel*>			inventory;
 		Optional<bool>						allow_multi_select;
+		Optional<bool>						show_item_link_overlays;
 		Optional<Filter>					filter;
 		Optional<std::string>               start_folder;
+		Optional<bool>						use_label_suffix;
 
 		Params()
 		:	sort_order_setting("sort_order_setting"),
 			inventory("", &gInventory),
 			allow_multi_select("allow_multi_select", true),
+			show_item_link_overlays("show_item_link_overlays", false),
 			filter("filter"),
-			start_folder("start_folder")
+			start_folder("start_folder"),
+			use_label_suffix("use_label_suffix", true)
 		{}
 	};
 
@@ -102,14 +106,13 @@ public:
 	//--------------------------------------------------------------------
 protected:
 	LLInventoryPanel(const Params&);
+	void initFromParams(const Params&);
 	friend class LLUICtrlFactory;
 public:
 	virtual ~LLInventoryPanel();
 
 public:
 	LLInventoryModel* getModel() { return mInventory; }
-
-	BOOL postBuild();
 
 	// LLView methods
 	void draw();
@@ -134,21 +137,23 @@ public:
 	void clearSelection();
 	LLInventoryFilter* getFilter();
 	void setFilterTypes(U64 filter, LLInventoryFilter::EFilterType = LLInventoryFilter::FILTERTYPE_OBJECT);
-	U32 getFilterObjectTypes() const { return mFolders->getFilterObjectTypes(); }
+	U32 getFilterObjectTypes() const { return mFolderRoot->getFilterObjectTypes(); }
 	void setFilterPermMask(PermissionMask filter_perm_mask);
-	U32 getFilterPermMask() const { return mFolders->getFilterPermissions(); }
+	U32 getFilterPermMask() const { return mFolderRoot->getFilterPermissions(); }
+	void setFilterWearableTypes(U64 filter);
 	void setFilterSubString(const std::string& string);
-	const std::string getFilterSubString() { return mFolders->getFilterSubString(); }
+	const std::string getFilterSubString() { return mFolderRoot->getFilterSubString(); }
 	void setSinceLogoff(BOOL sl);
 	void setHoursAgo(U32 hours);
 	BOOL getSinceLogoff();
-	
+	void setFilterLinks(U64 filter_links);
+
 	void setShowFolderState(LLInventoryFilter::EFolderShow show);
 	LLInventoryFilter::EFolderShow getShowFolderState();
-	void setAllowMultiSelect(BOOL allow) { mFolders->setAllowMultiSelect(allow); }
+	void setAllowMultiSelect(BOOL allow) { mFolderRoot->setAllowMultiSelect(allow); }
 	// This method is called when something has changed about the inventory.
 	void modelChanged(U32 mask);
-	LLFolderView* getRootFolder() { return mFolders; }
+	LLFolderView* getRootFolder() { return mFolderRoot; }
 	LLScrollContainer* getScrollableContainer() { return mScroller; }
 	
 	void onSelectionChange(const std::deque<LLFolderViewItem*> &items, BOOL user_action);
@@ -163,7 +168,7 @@ public:
 	static void dumpSelectionInformation(void* user_data);
 
 	void openSelected();
-	void unSelectAll()	{ mFolders->setSelection(NULL, FALSE, FALSE); }
+	void unSelectAll()	{ mFolderRoot->setSelection(NULL, FALSE, FALSE); }
 	
 	static void onIdle(void* user_data);
 
@@ -177,8 +182,9 @@ protected:
 	LLInventoryModel*			mInventory;
 	LLInventoryObserver*		mInventoryObserver;
 	BOOL 						mAllowMultiSelect;
+	BOOL 						mShowItemLinkOverlays; // Shows link graphic over inventory item icons
 
-	LLFolderView*				mFolders;
+	LLFolderView*				mFolderRoot;
 	LLScrollContainer*			mScroller;
 
 	/**
@@ -200,7 +206,7 @@ public:
 	static const std::string INHERIT_SORT_ORDER;
 	
 	void setSortOrder(U32 order);
-	U32 getSortOrder() const { return mFolders->getSortOrder(); }
+	U32 getSortOrder() const { return mFolderRoot->getSortOrder(); }
 private:
 	std::string					mSortOrderSetting;
 

@@ -35,6 +35,7 @@
 
 #include "llaudioengine.h"
 #include "llagent.h"
+#include "llagentcamera.h"
 #include "llappviewer.h"
 #include "llvieweraudio.h"
 #include "llviewercamera.h"
@@ -52,7 +53,7 @@ void init_audio()
 		llwarns << "Failed to create an appropriate Audio Engine" << llendl;
 		return;
 	}
-	LLVector3d lpos_global = gAgent.getCameraPositionGlobal();
+	LLVector3d lpos_global = gAgentCamera.getCameraPositionGlobal();
 	LLVector3 lpos_global_f;
 
 	lpos_global_f.setVec(lpos_global);
@@ -141,7 +142,7 @@ void audio_update_volume(bool force_update)
 	{		
 		F32 music_volume = gSavedSettings.getF32("AudioLevelMusic");
 		BOOL music_muted = gSavedSettings.getBOOL("MuteMusic");
-		music_volume = mute_volume * master_volume * (music_volume*music_volume);
+		music_volume = mute_volume * master_volume * music_volume;
 		gAudiop->setInternetStreamGain ( music_muted ? 0.f : music_volume );
 	
 	}
@@ -149,25 +150,25 @@ void audio_update_volume(bool force_update)
 	// Streaming Media
 	F32 media_volume = gSavedSettings.getF32("AudioLevelMedia");
 	BOOL media_muted = gSavedSettings.getBOOL("MuteMedia");
-	media_volume = mute_volume * master_volume * (media_volume*media_volume);
+	media_volume = mute_volume * master_volume * media_volume;
 	LLViewerMedia::setVolume( media_muted ? 0.0f : media_volume );
 
 	// Voice
-	if (gVoiceClient)
+	if (LLVoiceClient::getInstance())
 	{
 		F32 voice_volume = gSavedSettings.getF32("AudioLevelVoice");
 		voice_volume = mute_volume * master_volume * voice_volume;
 		BOOL voice_mute = gSavedSettings.getBOOL("MuteVoice");
-		gVoiceClient->setVoiceVolume(voice_mute ? 0.f : voice_volume);
-		gVoiceClient->setMicGain(voice_mute ? 0.f : gSavedSettings.getF32("AudioLevelMic"));
+		LLVoiceClient::getInstance()->setVoiceVolume(voice_mute ? 0.f : voice_volume);
+		LLVoiceClient::getInstance()->setMicGain(voice_mute ? 0.f : gSavedSettings.getF32("AudioLevelMic"));
 
 		if (!gViewerWindow->getActive() && (gSavedSettings.getBOOL("MuteWhenMinimized")))
 		{
-			gVoiceClient->setMuteMic(true);
+			LLVoiceClient::getInstance()->setMuteMic(true);
 		}
 		else
 		{
-			gVoiceClient->setMuteMic(false);
+			LLVoiceClient::getInstance()->setMuteMic(false);
 		}
 	}
 }
@@ -177,7 +178,7 @@ void audio_update_listener()
 	if (gAudiop)
 	{
 		// update listener position because agent has moved	
-		LLVector3d lpos_global = gAgent.getCameraPositionGlobal();		
+		LLVector3d lpos_global = gAgentCamera.getCameraPositionGlobal();		
 		LLVector3 lpos_global_f;
 		lpos_global_f.setVec(lpos_global);
 	
@@ -200,7 +201,7 @@ void audio_update_wind(bool force_update)
 	if (region)
 	{
 		static F32 last_camera_water_height = -1000.f;
-		LLVector3 camera_pos = gAgent.getCameraPositionAgent();
+		LLVector3 camera_pos = gAgentCamera.getCameraPositionAgent();
 		F32 camera_water_height = camera_pos.mV[VZ] - region->getWaterHeight();
 		
 		//

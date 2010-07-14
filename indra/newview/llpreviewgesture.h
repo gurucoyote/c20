@@ -35,10 +35,9 @@
 #define LL_LLPREVIEWGESTURE_H
 
 #include "llassettype.h"
-#include "llmultigesture.h"
 #include "llpreview.h"
+#include "llmultigesture.h"
 
-class LLMultiGesture;
 class LLLineEditor;
 class LLTextBox;
 class LLCheckBoxCtrl;
@@ -46,7 +45,6 @@ class LLComboBox;
 class LLScrollListCtrl;
 class LLScrollListItem;
 class LLButton;
-class LLGestureStep;
 class LLRadioGroup;
 class LLVFS;
 
@@ -141,7 +139,7 @@ protected:
 
 	static void onDonePreview(LLMultiGesture* gesture, void* data);
 
-protected:
+private:
 	// LLPreview contains mDescEditor
 	LLLineEditor*	mTriggerEditor;
 	LLTextBox*		mReplaceText;
@@ -174,4 +172,4 @@ protected:
 	BOOL mDirty;
 };
 
-#endif
+#endif // LL_LLPREVIEWGESTURE_H

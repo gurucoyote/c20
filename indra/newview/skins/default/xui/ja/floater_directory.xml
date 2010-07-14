@@ -16,7 +16,7 @@
 			<button label="進む" name="forward_btn"/>
 			<button label="検索" name="search_btn"/>
 			<combo_box name="Category">
-				<combo_box.item name="item0" label="全カテゴリー"
+				<combo_box.item name="item0" label="全カテゴリ"
 				/>
 				<combo_box.item name="item1" label="イベント"
 				/>
@@ -57,7 +57,7 @@
 			<check_box left="440" label="Matureコンテンツ" name="incmature"/>
 			<check_box left="440" label="Adultコンテンツ" name="incadult"/>
 			<combo_box name="Category">
-				<combo_box.item name="item0" label="全カテゴリー"
+				<combo_box.item name="item0" label="全カテゴリ"
 				/>
 				<combo_box.item name="item1" label="ショッピング"
 				/>
@@ -236,7 +236,7 @@
 			<check_box left="440" label="Matureコンテンツ" name="incmature"/>
 			<check_box left="440" label="Adultコンテンツ" name="incadult"/>
 			<combo_box name="Category">
-				<combo_box.item name="item0" label="全カテゴリー"
+				<combo_box.item name="item0" label="全カテゴリ"
 				/>
 				<combo_box.item name="item1" label="Linden所在地"
 				/>

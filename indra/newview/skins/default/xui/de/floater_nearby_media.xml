@@ -42,8 +42,8 @@
 			</scroll_list>
 		</panel>
 		<panel>
-			<check_box label="Medien aktiviert" name="media_enabled_btn" tool_tip="Medien aktivieren" value="wahr"/>
-			<check_box label="Automatische Wiedergabe zulassen" name="media_auto_play_btn" tool_tip="Automatische Wiedergabe zulassen" value="wahr"/>
+			<check_box label="Medien aktiviert" name="media_enabled_btn" tool_tip="Medien aktivieren" />
+			<check_box label="Automatische Wiedergabe zulassen" name="media_auto_play_btn" tool_tip="Automatische Wiedergabe zulassen" />
 		</panel>
 	</panel>
 </floater>
