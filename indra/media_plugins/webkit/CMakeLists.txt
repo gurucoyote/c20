@@ -40,13 +40,13 @@ set(media_plugin_webkit_HEADER_FILES
     volume_catcher.h
     )
 
-if(NOT CMAKE_SIZEOF_VOID_P MATCHES 4)
-	if(WINDOWS)
-		add_definitions(/FIXED:NO)
-	else(WINDOWS) # not windows therefore gcc LINUX and DARWIN
-		add_definitions(-fPIC)
-	endif(WINDOWS)
-endif (NOT CMAKE_SIZEOF_VOID_P MATCHES 4)
+if(NOT WORD_SIZE EQUALS 32)
+  if(WINDOWS)
+    add_definitions(/FIXED:NO)
+  else(WINDOWS) # not windows therefore gcc LINUX and DARWIN
+    add_definitions(-fPIC)
+  endif(WINDOWS)
+endif(NOT WORD_SIZE EQUALS 32)
 
 set(media_plugin_webkit_LINK_LIBRARIES
   ${LLPLUGIN_LIBRARIES}

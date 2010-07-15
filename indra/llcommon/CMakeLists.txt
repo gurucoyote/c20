@@ -258,13 +258,13 @@ else(LLCOMMON_LINK_SHARED)
 endif(LLCOMMON_LINK_SHARED)
 
 # SNOW-512 64 bit systems require -fPIC to use LL_COMMON as a DSO or in a DSO
-if(NOT CMAKE_SIZEOF_VOID_P MATCHES 4)
+if(NOT WORD_SIZE EQUAL 32)
   if(WINDOWS)
     add_definitions(/FIXED:NO)
   else(WINDOWS) # not windows therefore gcc LINUX and DARWIN
     add_definitions(-fPIC)
   endif(WINDOWS)
-endif(NOT CMAKE_SIZEOF_VOID_P MATCHES 4)
+endif(NOT WORD_SIZE EQUAL 32)
 
 target_link_libraries(
     llcommon
