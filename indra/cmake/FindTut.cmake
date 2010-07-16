@@ -3,12 +3,11 @@
 # - Find Tut
 # Find the Tut unit test framework includes and library
 # This module defines
-#  TUT_INCLUDE_DIR, where to find tut.h, etc.
+#  TUT_INCLUDE_DIR, where to find tut/tut.hpp, etc.
 #  TUT_FOUND, If false, do not try to use Tut.
 
-FIND_PATH(TUT_INCLUDE_DIR tut.h
-/usr/local/include/
-/usr/include
+find_path(TUT_INCLUDE_DIR tut.hpp
+  PATH_SUFFIXES tut
 )
 
 IF (TUT_INCLUDE_DIR)
