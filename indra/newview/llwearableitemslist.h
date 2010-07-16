@@ -70,7 +70,7 @@ public:
 
 protected:
 
-	LLPanelWearableListItem(LLViewerInventoryItem* item);
+	LLPanelWearableListItem(LLViewerInventoryItem* item, const Params& params);
 };
 
 /**
@@ -95,7 +95,7 @@ public:
 
 protected:
 	LLPanelWearableOutfitItem(LLViewerInventoryItem* item,
-							  bool worn_indication_enabled);
+							  bool worn_indication_enabled, const Params& params);
 
 private:
 	bool	mWornIndicationEnabled;
@@ -105,6 +105,13 @@ class LLPanelDeletableWearableListItem : public LLPanelWearableListItem
 {
 	LOG_CLASS(LLPanelDeletableWearableListItem);
 public:
+	struct Params : public LLInitParam::Block<Params, LLPanelWearableListItem::Params>
+	{
+		Optional<LLButton::Params>		delete_btn;
+
+		Params();
+	};
+
 
 	static LLPanelDeletableWearableListItem* create(LLViewerInventoryItem* item);
 
@@ -118,9 +125,7 @@ public:
 	inline void setShowDeleteButton(bool show) { setShowWidget("btn_delete", show); }
 
 protected:
-	LLPanelDeletableWearableListItem(LLViewerInventoryItem* item);
-
-	/*virtual*/ void init();
+	LLPanelDeletableWearableListItem(LLViewerInventoryItem* item, const Params& params);
 };
 
 /** Outfit list item for an attachment */
@@ -136,7 +141,7 @@ public:
 								EItemState item_state = IS_DEFAULT);
 
 protected:
-	LLPanelAttachmentListItem(LLViewerInventoryItem* item) : LLPanelDeletableWearableListItem(item) {};
+	LLPanelAttachmentListItem(LLViewerInventoryItem* item, const Params& params) : LLPanelDeletableWearableListItem(item, params) {};
 };
 
 /**
@@ -148,6 +153,18 @@ class LLPanelClothingListItem : public LLPanelDeletableWearableListItem
 {
 	LOG_CLASS(LLPanelClothingListItem);
 public:
+
+	struct Params : public LLInitParam::Block<Params, LLPanelDeletableWearableListItem::Params>
+	{
+		Optional<LLButton::Params>		up_btn,
+										down_btn,
+										edit_btn;
+		Optional<LLPanel::Params>		lock_panel,
+										edit_panel;
+		Optional<LLIconCtrl::Params>	lock_icon;
+
+		Params();
+	};
 
 	static LLPanelClothingListItem* create(LLViewerInventoryItem* item);
 
@@ -164,18 +181,25 @@ public:
 	inline void setShowLockButton(bool show) { setShowWidget("btn_lock", show); }
 	inline void setShowEditButton(bool show) { setShowWidget("btn_edit_panel", show); }
 
-
 protected:
 
-	LLPanelClothingListItem(LLViewerInventoryItem* item);
-	
-	/*virtual*/ void init();
+	LLPanelClothingListItem(LLViewerInventoryItem* item, const Params& params);
+
 };
 
 class LLPanelBodyPartsListItem : public LLPanelWearableListItem
 {
 	LOG_CLASS(LLPanelBodyPartsListItem);
 public:
+	struct Params : public LLInitParam::Block<Params, LLPanelWearableListItem::Params>
+	{
+		Optional<LLButton::Params>		edit_btn;
+		Optional<LLPanel::Params>		lock_panel,
+										edit_panel;
+		Optional<LLIconCtrl::Params>	lock_icon;
+
+		Params();
+	};
 
 	static LLPanelBodyPartsListItem* create(LLViewerInventoryItem* item);
 
@@ -190,9 +214,7 @@ public:
 	inline void setShowEditButton(bool show) { setShowWidget("btn_edit_panel", show); }
 
 protected:
-	LLPanelBodyPartsListItem(LLViewerInventoryItem* item);
-
-	/*virtual*/ void init();
+	LLPanelBodyPartsListItem(LLViewerInventoryItem* item, const Params& params);
 };
 
 
@@ -204,15 +226,19 @@ protected:
 class LLPanelDummyClothingListItem : public LLPanelWearableListItem
 {
 public:
+	struct Params : public LLInitParam::Block<Params, LLPanelWearableListItem::Params>
+	{
+		Optional<LLPanel::Params> add_panel;
+		Optional<LLButton::Params> add_btn;
+		Params();
+	};
 	static LLPanelDummyClothingListItem* create(LLWearableType::EType w_type);
 
 	/*virtual*/ BOOL postBuild();
 	LLWearableType::EType getWearableType() const;
 
 protected:
-	LLPanelDummyClothingListItem(LLWearableType::EType w_type);
-
-	/*virtual*/ void init();
+	LLPanelDummyClothingListItem(LLWearableType::EType w_type, const Params& params);
 
 	static std::string wearableTypeToString(LLWearableType::EType w_type);
 
@@ -313,6 +339,19 @@ private:
 };
 
 /**
+ * @class LLWearableItemCreationDateComparator
+ *
+ * Comparator for sorting wearable list items by creation date (newest go first).
+ */
+class LLWearableItemCreationDateComparator : public LLWearableItemNameComparator
+{
+	LOG_CLASS(LLWearableItemCreationDateComparator);
+
+protected:
+	/*virtual*/ bool doCompare(const LLPanelInventoryListItemBase* item1, const LLPanelInventoryListItemBase* item2) const;
+};
+
+/**
  * @class LLWearableItemsList
  *
  * A flat list of wearable inventory items.
@@ -364,6 +403,13 @@ public:
 		Params();
 	};
 
+	typedef enum e_sort_order {
+		// Values should be compatible with InventorySortOrder setting.
+		E_SORT_BY_NAME			= 0,
+		E_SORT_BY_MOST_RECENT	= 1,
+		E_SORT_BY_TYPE			= 2,
+	} ESortOrder;
+
 	virtual ~LLWearableItemsList();
 
 	/*virtual*/ void addNewItem(LLViewerInventoryItem* item, bool rearrange = true);
@@ -378,6 +424,10 @@ public:
 
 	bool isStandalone() const { return mIsStandalone; }
 
+	ESortOrder getSortOrder() const { return mSortOrder; }
+
+	void setSortOrder(ESortOrder sort_order, bool sort_now = true);
+
 protected:
 	friend class LLUICtrlFactory;
 	LLWearableItemsList(const LLWearableItemsList::Params& p);
@@ -386,6 +436,8 @@ protected:
 
 	bool mIsStandalone;
 	bool mWornIndicationEnabled;
+
+	ESortOrder		mSortOrder;
 };
 
 #endif //LL_LLWEARABLEITEMSLIST_H

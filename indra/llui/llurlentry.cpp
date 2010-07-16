@@ -327,6 +327,11 @@ void LLUrlEntryAgent::onAgentNameReceived(const LLUUID& id,
 	callObservers(id.asString(), first + " " + last);
 }
 
+LLUUID	LLUrlEntryAgent::getID(const std::string &string) const
+{
+	return LLUUID(getIDStringFromUrl(string));
+}
+
 std::string LLUrlEntryAgent::getTooltip(const std::string &string) const
 {
 	// return a tooltip corresponding to the URL type instead of the generic one
@@ -435,6 +440,8 @@ LLUrlEntryGroup::LLUrlEntryGroup()
 	mColor = LLUIColorTable::instance().getColor("GroupLinkColor");
 }
 
+
+
 void LLUrlEntryGroup::onGroupNameReceived(const LLUUID& id,
 										  const std::string& first,
 										  const std::string& last,
@@ -443,6 +450,12 @@ void LLUrlEntryGroup::onGroupNameReceived(const LLUUID& id,
 	// received the group name from the server - tell our observers
 	callObservers(id.asString(), first);
 }
+
+LLUUID	LLUrlEntryGroup::getID(const std::string &string) const
+{
+	return LLUUID(getIDStringFromUrl(string));
+}
+
 
 std::string LLUrlEntryGroup::getLabel(const std::string &url, const LLUrlLabelCallback &cb)
 {

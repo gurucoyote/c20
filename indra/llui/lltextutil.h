@@ -37,6 +37,8 @@
 #include "llstyle.h"
 
 class LLTextBox;
+class LLUrlMatch;
+class LLTextBase;
 
 namespace LLTextUtil
 {
@@ -68,6 +70,19 @@ namespace LLTextUtil
 	 * @return reference to string with formatted phone number
 	 */
 	const std::string& formatPhoneNumber(const std::string& phone_str);
+
+	bool processUrlMatch(LLUrlMatch* match,LLTextBase* text_base);
+
+	class TextHelpers
+	{
+
+		//we need this special callback since we need to create LLAvataIconCtrls while parsing
+		//avatar/group url but can't create LLAvataIconCtrl from LLUI
+		public:
+			static boost::function<bool(LLUrlMatch*,LLTextBase*)> iconCallbackCreationFunction;
+	};
+
+	
 }
 
 #endif // LL_LLTEXTUTIL_H

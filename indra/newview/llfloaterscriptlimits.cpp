@@ -558,8 +558,6 @@ BOOL LLPanelScriptLimitsRegionMemory::getLandScriptResources()
 
 void LLPanelScriptLimitsRegionMemory::processParcelInfo(const LLParcelData& parcel_data)
 {
-	mParcelId = parcel_data.parcel_id;
-
 	if(!getLandScriptResources())
 	{
 		std::string msg_error = LLTrans::getString("ScriptLimitsRequestError");
@@ -581,6 +579,7 @@ void LLPanelScriptLimitsRegionMemory::setParcelID(const LLUUID& parcel_id)
 			LLRemoteParcelInfoProcessor::getInstance()->removeObserver(mParcelId, this);
 			mParcelId.setNull();
 		}
+		mParcelId = parcel_id;
 		LLRemoteParcelInfoProcessor::getInstance()->addObserver(parcel_id, this);
 		LLRemoteParcelInfoProcessor::getInstance()->sendParcelInfoRequest(parcel_id);
 	}

@@ -41,6 +41,7 @@
 #include "llappearancemgr.h"
 #include "llinventorymodel.h"
 
+class LLAccordionCtrlTab;
 class LLListContextMenu;
 class LLPanelClothingListItem;
 class LLPanelBodyPartsListItem;
@@ -81,10 +82,12 @@ public:
 	LLPanel* getSelectedItem();
 	void getSelectedItems(std::vector<LLPanel*>& selected_items) const;
 
+	/* Repopulate the COF wearables list if the COF category has been changed since the last refresh */
 	void refresh();
 	void clear();
 
 	LLAssetType::EType getExpandedAccordionAssetType();
+	LLAssetType::EType getSelectedAccordionAssetType();
 
 	LLCOFCallbacks& getCOFCallbacks() { return mCOFCallbacks; }
 
@@ -95,6 +98,7 @@ protected:
 	
 	void addClothingTypesDummies(const LLAppearanceMgr::wearables_by_type_t& clothing_by_type);
 	void onSelectionChange(LLFlatListView* selected_list);
+	void onAccordionTabStateChanged(LLUICtrl* ctrl, const LLSD& expanded);
 
 	LLPanelClothingListItem* buildClothingListItem(LLViewerInventoryItem* item, bool first, bool last);
 	LLPanelBodyPartsListItem* buildBodypartListItem(LLViewerInventoryItem* item);
@@ -108,11 +112,22 @@ protected:
 
 	LLFlatListView* mLastSelectedList;
 
+	LLAccordionCtrlTab* mClothingTab;
+	LLAccordionCtrlTab* mAttachmentsTab;
+	LLAccordionCtrlTab* mBodyPartsTab;
+
+	LLAccordionCtrlTab* mLastSelectedTab;
+
+	std::map<const LLAccordionCtrlTab*, LLAssetType::EType> mTab2AssetType;
+
 	LLCOFCallbacks mCOFCallbacks;
 
 	LLListContextMenu* mClothingMenu;
 	LLListContextMenu* mAttachmentMenu;
 	LLListContextMenu* mBodyPartMenu;
+
+	/* COF category version since last refresh */
+	S32 mCOFVersion;
 };
 
 

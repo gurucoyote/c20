@@ -283,7 +283,7 @@ public:
 	{
 		bool operator()(const LLFace* const& lhs, const LLFace* const& rhs)
 		{
-			return lhs->mDistance > rhs->mDistance; // farthest = first
+			return !lhs || (rhs && (lhs->mDistance > rhs->mDistance)); // farthest = first
 		}
 	};
 	

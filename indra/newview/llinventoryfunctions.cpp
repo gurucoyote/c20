@@ -434,13 +434,12 @@ void show_item_original(const LLUUID& item_uuid)
 				LLPanelMainInventory* main_inventory = floater_inventory->getMainInventoryPanel();
 
 				main_inventory->onFilterEdit("");
-			}
 
-			if(floater_inventory->getVisible())
-			{
-				floater_inventory_visible = true;
+				if(floater_inventory->getVisible())
+				{
+					floater_inventory_visible = true;
+				}
 			}
-
 		}
 		if(sidepanel_inventory && !floater_inventory_visible)
 		{
@@ -507,6 +506,19 @@ bool LLIsNotType::operator()(LLInventoryCategory* cat, LLInventoryItem* item)
 		else return TRUE;
 	}
 	return TRUE;
+}
+
+bool LLIsOfAssetType::operator()(LLInventoryCategory* cat, LLInventoryItem* item)
+{
+	if(mType == LLAssetType::AT_CATEGORY)
+	{
+		if(cat) return TRUE;
+	}
+	if(item)
+	{
+		if(item->getActualType() == mType) return TRUE;
+	}
+	return FALSE;
 }
 
 bool LLIsTypeWithPermissions::operator()(LLInventoryCategory* cat, LLInventoryItem* item)

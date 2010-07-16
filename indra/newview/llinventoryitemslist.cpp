@@ -87,6 +87,37 @@ boost::signals2::connection LLInventoryItemsList::setRefreshCompleteCallback(con
 	return mRefreshCompleteSignal.connect(cb);
 }
 
+bool LLInventoryItemsList::selectItemByValue(const LLSD& value, bool select)
+{
+	if (!LLFlatListView::selectItemByValue(value, select) && !value.isUndefined())
+	{
+		mSelectTheseIDs.push_back(value);
+		return false;
+	}
+	return true;
+}
+
+void LLInventoryItemsList::updateSelection()
+{
+	if(mSelectTheseIDs.empty()) return;
+
+	std::vector<LLSD> cur;
+	getValues(cur);
+
+	for(std::vector<LLSD>::const_iterator cur_id_it = cur.begin(); cur_id_it != cur.end() && !mSelectTheseIDs.empty(); ++cur_id_it)
+	{
+		uuid_vec_t::iterator select_ids_it = std::find(mSelectTheseIDs.begin(), mSelectTheseIDs.end(), *cur_id_it);
+		if(select_ids_it != mSelectTheseIDs.end())
+		{
+			selectItemByUUID(*select_ids_it);
+			mSelectTheseIDs.erase(select_ids_it);
+		}
+	}
+
+	scrollToShowFirstSelectedItem();
+	mSelectTheseIDs.clear();
+}
+
 void LLInventoryItemsList::doIdle()
 {
 	if (!mNeedsRefresh) return;
@@ -109,9 +140,12 @@ void LLInventoryItemsList::idle(void* user_data)
 	}
 }
 
+LLFastTimer::DeclareTimer FTM_INVENTORY_ITEMS_REFRESH("Inventory List Refresh");
+
 void LLInventoryItemsList::refresh()
 {
-	static const unsigned ADD_LIMIT = 50;
+	LLFastTimer _(FTM_INVENTORY_ITEMS_REFRESH);
+	static const unsigned ADD_LIMIT = 20;
 
 	uuid_vec_t added_items;
 	uuid_vec_t removed_items;
@@ -142,7 +176,8 @@ void LLInventoryItemsList::refresh()
 	it = removed_items.begin();
 	for( ; removed_items.end() != it; ++it)
 	{
-		removeItemByUUID(*it);
+		// don't filter items right away
+		removeItemByUUID(*it, false);
 	}
 
 	// Filter, rearrange and notify parent about shape changes
@@ -151,6 +186,12 @@ void LLInventoryItemsList::refresh()
 	bool needs_refresh = add_limit_exceeded;
 	setNeedsRefresh(needs_refresh);
 	setForceRefresh(needs_refresh);
+
+	// After list building completed, select items that had been requested to select before list was build
+	if(!needs_refresh)
+	{
+		updateSelection();
+	}
 }
 
 void LLInventoryItemsList::computeDifference(

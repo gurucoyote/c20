@@ -265,8 +265,6 @@ LLTextEditor::LLTextEditor(const LLTextEditor::Params& p) :
 	mContextMenu(NULL),
 	mShowContextMenu(p.show_context_menu)
 {
-	mDefaultFont = p.font;
-
 	mSourceID.generate();
 
 	//FIXME: use image?
@@ -291,6 +289,9 @@ LLTextEditor::LLTextEditor(const LLTextEditor::Params& p) :
 void LLTextEditor::initFromParams( const LLTextEditor::Params& p)
 {
 	LLTextBase::initFromParams(p);
+
+	// HACK:  text editors always need to be enabled so that we can scroll
+	LLView::setEnabled(true);
 
 	if (p.commit_on_focus_lost.isProvided())
 	{

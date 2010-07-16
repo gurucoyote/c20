@@ -44,8 +44,8 @@
 #include "llremoteparcelrequest.h"
 #include "llinventory.h"
 #include "llinventoryfunctions.h"
-#include "llinventoryitemslist.h"
 #include "llinventorymodel.h"
+#include "llwearableitemslist.h"
 
 class LLButton;
 class LLCOFWearables;
@@ -141,13 +141,21 @@ public:
 	void showWearablesListView();
 	void showWearablesFolderView();
 
+	/**
+	 * Method preserves selection while switching between folder/list view modes
+	*/
+	void saveListSelection();
+
+	void updateWearablesPanelVerbButtons();
 	void updateFiltersVisibility();
 
 	void onFolderViewFilterCommitted(LLUICtrl* ctrl);
 	void onListViewFilterCommitted(LLUICtrl* ctrl);
 	void onSearchEdit(const std::string& string);
-	void onInventorySelectionChange();
+	void updatePlusButton();
 	void onPlusBtnClicked(void);
+
+	void onVisibilityChange(const LLSD &in_visible_chain);
 
 	void applyFolderViewFilter(EFolderViewItemType type);
 	void applyListViewFilter(EListViewItemType type);
@@ -195,6 +203,11 @@ private:
 	void onOutfitChanging(bool started);
 	void getSelectedItemsUUID(uuid_vec_t& uuid_list);
 	void getCurrentItemUUID(LLUUID& selected_id);
+	void onCOFChanged();
+
+	LLWearableType::EType getCOFWearablesSelectionType() const;
+	LLWearableType::EType getAddMorePanelSelectionType() const;
+	LLWearableType::EType getWearableTypeByItemUUID(const LLUUID& item_uuid) const;
 
 	LLTextBox*			mCurrentOutfitName;
 	LLTextBox*			mStatus;
@@ -212,7 +225,7 @@ private:
 	LLComboBox*			mListViewFilterCmbBox;
 
 	LLFilteredWearableListManager* 	mWearableListManager;
-	LLInventoryItemsList* 			mWearableItemsList;
+	LLWearableItemsList* 			mWearableItemsList;
 	LLPanel*						mWearablesListViewPanel;
 
 	LLCOFDragAndDropObserver* mCOFDragAndDropObserver;
@@ -222,6 +235,7 @@ private:
 
 	LLCOFWearables*		mCOFWearables;
 	LLMenuGL*			mGearMenu;
+	LLMenuGL*			mAddWearablesGearMenu;
 	bool				mInitialized;
 	std::auto_ptr<LLSaveOutfitComboBtn> mSaveComboBtn;
 

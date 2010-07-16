@@ -41,6 +41,7 @@
 #include "llscrollcontainer.h"
 #include "llstl.h"
 #include "lltextparser.h"
+#include "lltextutil.h"
 #include "lltooltip.h"
 #include "lluictrl.h"
 #include "llurlaction.h"
@@ -66,7 +67,10 @@ bool LLTextBase::compare_segment_end::operator()(const LLTextSegmentPtr& a, cons
 	{
 		return a->getStart() < b->getStart();
 	}
-	return a->getEnd() < b->getEnd();
+	else
+	{
+		return a->getEnd() < b->getEnd();
+	}
 }
 
 
@@ -174,7 +178,7 @@ LLTextBase::Params::Params()
 
 LLTextBase::LLTextBase(const LLTextBase::Params &p) 
 :	LLUICtrl(p, LLTextViewModelPtr(new LLTextViewModel)),
-	mURLClickSignal(),
+	mURLClickSignal(NULL),
 	mMaxTextByteLength( p.max_text_length ),
 	mDefaultFont(p.font),
 	mFontShadow(p.font_shadow),
@@ -209,7 +213,8 @@ LLTextBase::LLTextBase(const LLTextBase::Params &p)
 	mParseHTML(p.allow_html),
 	mParseHighlights(p.parse_highlights),
 	mBGVisible(p.bg_visible),
-	mScroller(NULL)
+	mScroller(NULL),
+	mStyleDirty(true)
 {
 	if(p.allow_scroll)
 	{
@@ -248,9 +253,8 @@ LLTextBase::LLTextBase(const LLTextBase::Params &p)
 
 LLTextBase::~LLTextBase()
 {
-	// Menu, like any other LLUICtrl, is deleted by its parent - gMenuHolder
-
 	mSegments.clear();
+	delete mURLClickSignal;
 }
 
 void LLTextBase::initFromParams(const LLTextBase::Params& p)
@@ -266,9 +270,6 @@ void LLTextBase::initFromParams(const LLTextBase::Params& p)
 	{
 		mReadOnly = p.read_only;
 	}
-
-	// HACK:  text editors always need to be enabled so that we can scroll
-	LLView::setEnabled(true);
 }
 
 bool LLTextBase::truncate()
@@ -296,13 +297,18 @@ bool LLTextBase::truncate()
 	return did_truncate;
 }
 
-LLStyle::Params LLTextBase::getDefaultStyleParams()
+const LLStyle::Params& LLTextBase::getDefaultStyleParams()
 {
-	return LLStyle::Params()
-		.color(LLUIColor(&mFgColor))
-		.readonly_color(LLUIColor(&mReadOnlyFgColor))
-		.font(mDefaultFont)
-		.drop_shadow(mFontShadow);
+	if (mStyleDirty)
+	{
+		  mDefaultStyle
+				  .color(LLUIColor(&mFgColor))
+				  .readonly_color(LLUIColor(&mReadOnlyFgColor))
+				  .font(mDefaultFont)
+				  .drop_shadow(mFontShadow);
+		  mStyleDirty = false;
+	}
+	return mDefaultStyle;
 }
 
 void LLTextBase::onValueChange(S32 start, S32 end)
@@ -861,11 +867,12 @@ BOOL LLTextBase::handleMouseUp(S32 x, S32 y, MASK mask)
 	if (cur_segment && cur_segment->handleMouseUp(x, y, mask))
 	{
 		// Did we just click on a link?
-		if (cur_segment->getStyle()
+		if (mURLClickSignal
+			&& cur_segment->getStyle()
 		    && cur_segment->getStyle()->isLink())
 		{
 			// *TODO: send URL here?
-			mURLClickSignal(this, LLSD() );
+			(*mURLClickSignal)(this, LLSD() );
 		}
 		return TRUE;
 	}
@@ -1039,12 +1046,14 @@ void LLTextBase::draw()
 void LLTextBase::setColor( const LLColor4& c )
 {
 	mFgColor = c;
+	mStyleDirty = true;
 }
 
 //virtual 
 void LLTextBase::setReadOnlyColor(const LLColor4 &c)
 {
 	mReadOnlyFgColor = c;
+	mStyleDirty = true;
 }
 
 //virtual
@@ -1488,12 +1497,22 @@ void LLTextBase::getSegmentAndOffset( S32 startpos, segment_set_t::iterator* seg
 
 LLTextBase::segment_set_t::iterator LLTextBase::getSegIterContaining(S32 index)
 {
+	if (index > getLength()) { return mSegments.end(); }
+
+	// when there are no segments, we return the end iterator, which must be checked by caller
+	if (mSegments.size() <= 1) { return mSegments.begin(); }
+
 	segment_set_t::iterator it = mSegments.upper_bound(new LLIndexSegment(index));
 	return it;
 }
 
 LLTextBase::segment_set_t::const_iterator LLTextBase::getSegIterContaining(S32 index) const
 {
+	if (index > getLength()) { return mSegments.end(); }
+
+	// when there are no segments, we return the end iterator, which must be checked by caller
+	if (mSegments.size() <= 1) { return mSegments.begin(); }
+
 	LLTextBase::segment_set_t::const_iterator it =  mSegments.upper_bound(new LLIndexSegment(index));
 	return it;
 }
@@ -1596,6 +1615,9 @@ void LLTextBase::appendTextImpl(const std::string &new_text, const LLStyle::Para
 		while ( LLUrlRegistry::instance().findUrl(text, match,
 		        boost::bind(&LLTextBase::replaceUrlLabel, this, _1, _2)) )
 		{
+			
+			LLTextUtil::processUrlMatch(&match,this);
+
 			start = match.getStart();
 			end = match.getEnd()+1;
 
@@ -1620,22 +1642,6 @@ void LLTextBase::appendTextImpl(const std::string &new_text, const LLStyle::Para
 				std::string subtext=text.substr(0,start);
 				appendAndHighlightText(subtext, part, style_params); 
 			}
-
-			// output an optional icon before the Url
-			if (! match.getIcon().empty())
-			{
-				LLUIImagePtr image = LLUI::getUIImage(match.getIcon());
-				if (image)
-				{
-					LLStyle::Params icon;
-					icon.image = image;
-					// Text will be replaced during rendering with the icon,
-					// but string cannot be empty or the segment won't be
-					// added (or drawn).
-					appendImageSegment(icon);
-				}
-			}
-
 			// output the styled Url (unless we've been asked to suppress hyperlinking)
 			if (match.isLinkDisabled())
 			{
@@ -1717,7 +1723,14 @@ void LLTextBase::appendImageSegment(const LLStyle::Params& style_params)
 	insertStringNoUndo(getLength(), utf8str_to_wstring(" "), &segments);
 }
 
+void LLTextBase::appendWidget(const LLInlineViewSegment::Params& params, const std::string& text, bool allow_undo)
+{
+	segment_vec_t segments;
+	LLWString widget_wide_text = utf8str_to_wstring(text);
+	segments.push_back(new LLInlineViewSegment(params, getLength(), getLength() + widget_wide_text.size()));
 
+	insertStringNoUndo(getLength(), widget_wide_text, &segments);
+}
 
 void LLTextBase::appendAndHighlightTextImpl(const std::string &new_text, S32 highlight_part, const LLStyle::Params& style_params)
 {
@@ -2328,6 +2341,15 @@ LLRect LLTextBase::getVisibleDocumentRect() const
 		doc_rect.mBottom = doc_rect.getHeight() - mVisibleTextRect.getHeight();
 		return doc_rect;
 	}
+}
+
+boost::signals2::connection LLTextBase::setURLClickedCallback(const commit_signal_t::slot_type& cb)
+{
+	if (!mURLClickSignal)
+	{
+		mURLClickSignal = new commit_signal_t();
+	}
+	return mURLClickSignal->connect(cb);
 }
 
 //

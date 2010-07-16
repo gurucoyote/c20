@@ -38,6 +38,7 @@
 #include "llpanelimcontrolpanel.h"
 
 #include "llagent.h"
+#include "llappviewer.h" // for gDisconnected
 #include "llavataractions.h"
 #include "llavatariconctrl.h"
 #include "llbutton.h"
@@ -164,7 +165,7 @@ BOOL LLPanelIMControlPanel::postBuild()
 	childSetAction("pay_btn", boost::bind(&LLPanelIMControlPanel::onPayButtonClicked, this));
 	childSetEnabled("add_friend_btn", !LLAvatarActions::isFriend(getChild<LLAvatarIconCtrl>("avatar_icon")->getAvatarId()));
 
-	
+	setFocusReceivedCallback(boost::bind(&LLPanelIMControlPanel::onFocusReceived, this));
 	
 	return LLPanelChatControlPanel::postBuild();
 }
@@ -193,6 +194,15 @@ void LLPanelIMControlPanel::onAddFriendButtonClicked()
 void LLPanelIMControlPanel::onShareButtonClicked()
 {
 	LLAvatarActions::share(mAvatarID);
+}
+
+void LLPanelIMControlPanel::onFocusReceived()
+{
+	// Disable all the buttons (Call, Teleport, etc) if disconnected.
+	if (gDisconnected)
+	{
+		setAllChildrenEnabled(FALSE);
+	}
 }
 
 void LLPanelIMControlPanel::setSessionId(const LLUUID& session_id)

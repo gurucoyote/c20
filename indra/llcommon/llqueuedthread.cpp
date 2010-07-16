@@ -429,9 +429,11 @@ S32 LLQueuedThread::processNextRequest()
 		llassert_always(req->getStatus() == STATUS_QUEUED);
 		break;
 	}
+	U32 start_priority = 0 ;
 	if (req)
 	{
 		req->setStatus(STATUS_INPROGRESS);
+		start_priority = req->getPriority();
 	}
 	unlockData();
 
@@ -440,8 +442,7 @@ S32 LLQueuedThread::processNextRequest()
 	// safe to access req.
 	if (req)
 	{
-		// process request
-		U32 start_priority = req->getPriority();
+		// process request		
 		bool complete = req->processRequest();
 
 		if (complete)

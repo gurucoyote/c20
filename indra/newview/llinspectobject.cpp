@@ -162,8 +162,7 @@ BOOL LLInspectObject::postBuild(void)
 
 	// Hide floater when name links clicked
 	LLTextBox* textbox = getChild<LLTextBox>("object_creator");
-	textbox->mURLClickSignal.connect(
-		boost::bind(&LLInspectObject::closeFloater, this, false) );
+	textbox->setURLClickedCallback(boost::bind(&LLInspectObject::closeFloater, this, false) );
 
 	// Hook up functionality
 	getChild<LLUICtrl>("buy_btn")->setCommitCallback(

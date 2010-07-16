@@ -15,6 +15,6 @@
 		<button label="Bauen" name="build_btn" tool_tip="Neue Objekte erstellen."/>
 		<button label="Karte" name="map_btn" tool_tip="Die Weltkarte (Strg+M)"/>
 		<button label="Minikarte" name="radar_btn" tool_tip="Die Umgebungskarte (Strg+Umschalt+M)"/>
-		<button label="Inventar" name="inventory_btn" tool_tip="Ihre Objektte (Strg+I)"/>
+		<button label="Inventar" name="inventory_btn" tool_tip="Ihre Objekte (Strg+I)"/>
 	</layout_stack>
 </panel>

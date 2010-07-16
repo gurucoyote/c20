@@ -130,6 +130,8 @@ void LLPanelVoiceEffect::update(bool list_updated)
 	if (mVoiceEffectCombo)
 	{
 		LLVoiceEffectInterface* effect_interface = LLVoiceClient::instance().getVoiceEffectInterface();
+		llassert(effect_interface);
+		if (!effect_interface) return;
 		if (list_updated)
 		{
 			// Add the default "No Voice Morph" entry.

@@ -14,10 +14,10 @@
 		<combo_box.item label="Personnalisée" name="Custom"/>
 	</combo_box>
 	<text name="label_width">
-		Largeur :
+		Larg. :
 	</text>
 	<text name="label_height">
-		Hauteur :
+		Haut. :
 	</text>
 	<check_box label="Contraindre proportions" name="keep_aspect_check"/>
 	<text name="layer_type_label">

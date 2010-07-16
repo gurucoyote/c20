@@ -817,6 +817,17 @@ Delete pick &lt;nolink&gt;[PICK]&lt;/nolink&gt;?
 
   <notification
    icon="alertmodal.tga"
+   name="DeleteOutfits"
+   type="alertmodal">
+    Delete the selected outfit?
+    <usetemplate
+     name="okcancelbuttons"
+     notext="Cancel"
+     yestext="OK"/>
+  </notification>
+
+  <notification
+   icon="alertmodal.tga"
    name="PromptGoToEventsPage"
    type="alertmodal">
 Go to the [SECOND_LIFE] events web page?
@@ -5482,7 +5493,6 @@ If you stay in this region you will be logged out.
   <notification
    icon="notify.tga"
    name="LoadWebPage"
-   persist="true"
    type="notify">
 Load web page [URL]?
 
@@ -5582,7 +5592,6 @@ Grant this request?
   <notification
    icon="notify.tga"
    name="ScriptDialog"
-   persist="true"
    type="notify">
 [FIRST] [LAST]&apos;s &apos;[TITLE]&apos;
 [MESSAGE]
@@ -5597,7 +5606,6 @@ Grant this request?
   <notification
    icon="notify.tga"
    name="ScriptDialogGroup"
-   persist="true"
    type="notify">
 [GROUPNAME]&apos;s &apos;[TITLE]&apos;
 [MESSAGE]

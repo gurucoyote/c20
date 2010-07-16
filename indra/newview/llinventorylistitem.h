@@ -43,12 +43,12 @@
 // llui
 #include "llpanel.h"
 #include "llstyle.h"
+#include "lliconctrl.h"
+#include "lltextbox.h"
 
 // newview
 #include "llwearabletype.h"
 
-class LLIconCtrl;
-class LLTextBox;
 class LLViewerInventoryItem;
 
 /**
@@ -72,6 +72,11 @@ public:
 	{
 		Optional<LLStyle::Params>	default_style,
 									worn_style;
+		Optional<LLUIImage*>		hover_image,
+									selected_image,
+									separator_image;
+		Optional<LLIconCtrl::Params>	item_icon;
+		Optional<LLTextBox::Params>		item_name;
 		Params();
 	};
 
@@ -148,32 +153,27 @@ public:
 	/** Get the description of a corresponding inventory item */
 	const std::string& getDescription() const;
 
+	/** Get the creation date of a corresponding inventory item */
+	time_t getCreationDate() const;
+
 	/** Get the associated inventory item */
 	LLViewerInventoryItem* getItem() const;
+
+	void setSeparatorVisible(bool visible) { mSeparatorVisible = visible; }
 
 	virtual ~LLPanelInventoryListItemBase(){}
 
 protected:
 
-	LLPanelInventoryListItemBase(LLViewerInventoryItem* item);
+	LLPanelInventoryListItemBase(LLViewerInventoryItem* item, const Params& params);
 
 	typedef std::vector<LLUICtrl*> widget_array_t;
-
-	/**
-	 * Use it from a factory function to build panel, do not build panel in constructor
-	 */
-	virtual void init();
 
 	/**
 	 * Called after inventory item was updated, update panel widgets to reflect inventory changes.
 	 */
 	virtual void updateItem(const std::string& name,
 							EItemState item_state = IS_DEFAULT);
-
-	/** setter for mIconCtrl */
-	void setIconCtrl(LLIconCtrl* icon) { mIconCtrl = icon; }
-	/** setter for MTitleCtrl */
-	void setTitleCtrl(LLTextBox* tb) { mTitleCtrl = tb; }
 
 	void setLeftWidgetsWidth(S32 width) { mLeftWidgetsWidth = width; }
 	void setRightWidgetsWidth(S32 width) { mRightWidgetsWidth = width; }
@@ -223,6 +223,14 @@ private:
 	LLTextBox*		mTitleCtrl;
 
 	LLUIImagePtr	mIconImage;
+	LLUIImagePtr	mHoverImage;
+	LLUIImagePtr	mSelectedImage;
+	LLUIImagePtr	mSeparatorImage;
+
+	bool			mHovered;
+	bool			mSelected;
+	bool			mSeparatorVisible;
+
 	std::string		mHighlightedText;
 
 	widget_array_t	mLeftSideWidgets;
