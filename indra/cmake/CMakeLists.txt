@@ -30,6 +30,7 @@ set(cmake_SOURCE_FILES
     FindMono.cmake
     FindMT.cmake
     FindMySQL.cmake
+    FindNDOF.cmake
     FindOpenJPEG.cmake
     FindXmlRpcEpi.cmake
     FMOD.cmake
