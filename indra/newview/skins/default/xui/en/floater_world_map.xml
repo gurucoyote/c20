@@ -395,7 +395,7 @@
 
     <panel
      follows="right|top|bottom"
-	 height="310"
+	 height="330"
 	 top_pad="0"
 	 width="238"
 	 name="layout_panel_4">
@@ -534,6 +534,54 @@
 		<scroll_list.commit_callback
 		function="WMap.SearchResult" />
     </scroll_list>
+    <spinner
+     decimal_digits="0"
+     follows="bottom|right"
+     height="23"
+     increment="1"
+     initial_value="128"
+     layout="topleft"
+     top_pad="7"
+     left="25"
+     max_val="255"
+     name="spin x"
+     tool_tip="X coordinate of location to show on map"
+     width="64">
+		<spinner.commit_callback
+		function="WMap.CommitLocation" />
+    </spinner>
+    <spinner
+     decimal_digits="0"
+     follows="bottom|right"
+     height="23"
+     increment="1"
+     initial_value="128"
+     layout="topleft"
+     left_pad="8"
+     max_val="255"
+     name="spin y"
+     tool_tip="Y coordinate of location to show on map"
+     top_delta="0"
+     width="64" >
+		<spinner.commit_callback
+		function="WMap.CommitLocation" />
+    </spinner>
+    <spinner
+     decimal_digits="0"
+     follows="bottom|right"
+     height="23"
+     increment="1"
+     initial_value="0"
+     layout="topleft"
+     left_pad="8"
+     max_val="4096"
+     name="spin z"
+     tool_tip="Z coordinate of location to show on map"
+     top_delta="0"
+     width="64">
+		<spinner.commit_callback
+		function="WMap.CommitLocation" />
+    </spinner>
     <button
      follows="right|bottom"
      height="23"
@@ -587,53 +635,7 @@
      name="land_sale_label"
      width="250">
         Location:
-    </text>
-      <spinner
-     decimal_digits="0"
-     follows="bottom|right"
-     increment="1"
-     initial_value="128"
-     layout="topleft"
-     top_pad="0"
-     left="25"
-     max_val="255"
-     name="spin x"
-     tool_tip="X coordinate of location to show on map"
-     width="48">
-		<spinner.commit_callback
-		function="WMap.CommitLocation" />
-    </spinner>
-    <spinner
-     decimal_digits="0"
-     follows="bottom|right"
-     height="16"
-     increment="1"
-     initial_value="128"
-     layout="topleft"
-     left_pad="2"
-     max_val="255"
-     name="spin y"
-     tool_tip="Y coordinate of location to show on map"
-     top_delta="0"
-     width="48" >
-		<spinner.commit_callback
-		function="WMap.CommitLocation" />
-    </spinner>
-    <spinner
-     decimal_digits="0"
-     follows="bottom|right"
-     increment="1"
-     initial_value="0"
-     layout="topleft"
-     left_pad="2"
-     max_val="4096"
-     name="spin z"
-     tool_tip="Z coordinate of location to show on map"
-     top_delta="0"
-     width="48">
-		<spinner.commit_callback
-		function="WMap.CommitLocation" />
-    </spinner>-->
+    </text> -->
     </panel>
       <panel
     follows="right|bottom"

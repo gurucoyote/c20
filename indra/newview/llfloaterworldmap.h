@@ -151,6 +151,9 @@ protected:
 	void			onLocationFocusChanged( LLFocusableElement* ctrl );
 	void		    onLocationCommit();
 	void		    onCommitSearchResult();
+// [SL:KB] - Checked: 2010-06-01 (Catznip-2.0.1a) | Added: Catznip-2.0.1a
+	void		    onCommitLocation();
+// [/SL:KB]
 
 	void			cacheLandmarkPosition();
 
