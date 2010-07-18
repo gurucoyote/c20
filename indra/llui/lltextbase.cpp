@@ -169,6 +169,9 @@ LLTextBase::Params::Params()
 	wrap("wrap"),
 	use_ellipses("use_ellipses", false),
 	allow_html("allow_html", false),
+// [SL:KB] - Checked: 2010-06-05 (Catznip-2.0.1a) | Added: Catznip-2.0.1a
+	show_url_icons("show_url_icons", true),
+// [/SL:KB]
 	parse_highlights("parse_highlights", false)
 {
 	addSynonym(track_end, "track_bottom");
@@ -212,6 +215,9 @@ LLTextBase::LLTextBase(const LLTextBase::Params &p)
 	mUseEllipses( p.use_ellipses ),
 	mParseHTML(p.allow_html),
 	mParseHighlights(p.parse_highlights),
+// [SL:KB] - Checked: 2010-06-05 (Catznip-2.0.1a) | Added: Catznip-2.0.1a
+	mShowURLIcons(p.show_url_icons),
+// [/SL:KB]
 	mBGVisible(p.bg_visible),
 	mScroller(NULL),
 	mStyleDirty(true)
@@ -1642,6 +1648,25 @@ void LLTextBase::appendTextImpl(const std::string &new_text, const LLStyle::Para
 				std::string subtext=text.substr(0,start);
 				appendAndHighlightText(subtext, part, style_params); 
 			}
+
+			// output an optional icon before the Url
+//			if (! match.getIcon().empty())
+// [SL:KB] - Checked: 2010-06-05 (Catznip-2.0.1a) | Added: Catznip-2.0.1a
+			if ( (mShowURLIcons) && (!match.getIcon().empty()) )
+// [/SL:KB]
+			{
+				LLUIImagePtr image = LLUI::getUIImage(match.getIcon());
+				if (image)
+				{
+					LLStyle::Params icon;
+					icon.image = image;
+					// Text will be replaced during rendering with the icon,
+					// but string cannot be empty or the segment won't be
+					// added (or drawn).
+					appendImageSegment(icon);
+				}
+			}
+
 			// output the styled Url (unless we've been asked to suppress hyperlinking)
 			if (match.isLinkDisabled())
 			{

@@ -254,6 +254,9 @@ public:
 								use_ellipses,
 								allow_html,
 								parse_highlights,
+// [SL:KB] - Checked: 2010-06-05 (Catznip-2.0.1a) | Added: Catznip-2.0.1a
+								show_url_icons,
+// [/SL:KB]
 								clip_partial;
 								
 		Optional<S32>			v_pad,
@@ -530,6 +533,9 @@ protected:
 	bool						mBorderVisible;
 	bool                		mParseHTML;			// make URLs interactive
 	bool						mParseHighlights;	// highlight user-defined keywords
+// [SL:KB] - Checked: 2010-06-05 (Catznip-2.0.1a) | Added: Catznip-2.0.1a
+	bool                		mShowURLIcons;
+// [/SL:KB]
 	bool                		mWordWrap;
 	bool						mUseEllipses;
 	bool						mTrackEnd;			// if true, keeps scroll position at end of document during resize
