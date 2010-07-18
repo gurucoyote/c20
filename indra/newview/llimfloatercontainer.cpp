@@ -41,6 +41,9 @@
 #include "llgroupiconctrl.h"
 #include "llagent.h"
 #include "lltransientfloatermgr.h"
+// [SL:KB] - Checked: 2010-06-05 (Catznip-2.0.1a) | Added: Catznip-2.0.1a
+#include "llviewercontrol.h"
+// [/SL:KB]
 
 //
 // LLIMFloaterContainer
@@ -62,6 +65,10 @@ BOOL LLIMFloaterContainer::postBuild()
 	LLIMModel::instance().mNewMsgSignal.connect(boost::bind(&LLIMFloaterContainer::onNewMessageReceived, this, _1));
 	// Do not call base postBuild to not connect to mCloseSignal to not close all floaters via Close button
 	// mTabContainer will be initialized in LLMultiFloater::addChild()
+// [SL:KB] - Checked: 2010-06-05 (Catznip-2.0.1a) | Added: Catznip-2.0.1a
+	if (gSavedSettings.getBOOL("CatznipRearrangeIMTabs"))
+		mTabContainer->setAllowRearrange(true);
+// [/SL:KB]
 	return TRUE;
 }
 
