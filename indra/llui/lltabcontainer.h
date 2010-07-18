@@ -90,6 +90,9 @@ public:
 											label_pad_left;
 
 		Optional<bool>						hide_tabs;
+// [SL:KB] - Checked: 2010-06-05 (Catznip-2.0.1a) | Added: Catznip-2.0.1a
+		Optional<bool>						tab_allow_rearrange;
+// [/SL:KB]
 		Optional<S32>						tab_padding_right;
 
 		Optional<TabParams>					first_tab,
@@ -225,6 +228,11 @@ public:
 	void onJumpFirstBtn( const LLSD& data );
 	void onJumpLastBtn( const LLSD& data );
 
+// [SL:KB] - Checked: 2010-06-05 (Catznip-2.0.1a) | Added: Catznip-2.0.1a
+	void setAllowRearrange(BOOL enable)	{ mAllowRearrange = enable; }
+	BOOL getAllowRearrange() const		{ return mAllowRearrange; }
+// [/SL:KB]
+
 private:
 
 	void initButtons();
@@ -264,6 +272,9 @@ private:
 	
 	S32								mCurrentTabIdx;
 	BOOL							mTabsHidden;
+// [SL:KB] - Checked: 2010-06-05 (Catznip-2.0.1a) | Added: Catznip-2.0.1a
+	BOOL							mAllowRearrange;
+// [/SL:KB]
 
 	BOOL							mScrolled;
 	LLFrameTimer					mScrollTimer;
