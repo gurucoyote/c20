@@ -19,6 +19,15 @@
         <menu_item_call.on_enable
          function="Avatar.EnableAddFriend" />
     </menu_item_call>
+   <menu_item_call
+     enabled="false"
+     label="Add Contact"
+     name="Add Contact">
+        <menu_item_call.on_click
+         function="Avatar.AddContact" />
+        <menu_item_call.on_visible
+         function="Avatar.EnableAddFriend" />
+    </menu_item_call>
     <menu_item_call
      label="IM"
      name="Send IM...">
