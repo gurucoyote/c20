@@ -217,6 +217,9 @@ LLFloaterWorldMap::LLFloaterWorldMap(const LLSD& key)
 	mCommitCallbackRegistrar.add("WMap.ShowAgent",		boost::bind(&LLFloaterWorldMap::onShowAgentBtn, this));		
 	mCommitCallbackRegistrar.add("WMap.Clear",			boost::bind(&LLFloaterWorldMap::onClearBtn, this));		
 	mCommitCallbackRegistrar.add("WMap.CopySLURL",		boost::bind(&LLFloaterWorldMap::onCopySLURL, this));
+// [SL:KB] - Checked: 2010-06-01 (Catznip-2.0.1a) | Added: Catznip-2.0.1a
+	mCommitCallbackRegistrar.add("WMap.CommitLocation",	boost::bind(&LLFloaterWorldMap::onCommitLocation, this));
+// [/SL:KB]
 
 	gSavedSettings.getControl("PreferredMaturity")->getSignal()->connect(boost::bind(&LLFloaterWorldMap::onChangeMaturity, this));
 }
@@ -642,6 +645,16 @@ void LLFloaterWorldMap::updateLocation()
 				// Figure out where user is
 				// Set the current SLURL
 				mSLURL = LLSLURL(agent_sim_name, gAgent.getPositionGlobal());
+
+// [SL:KB] - Checked: 2010-06-01 (Catznip-2.0.1a) | Added: Catznip-2.0.1a
+				const LLVector3& pos = mSLURL.getPosition();
+				childSetEnabled("spin x", false);
+				childSetValue("spin x", pos.mV[VX]);
+				childSetEnabled("spin y", false);
+				childSetValue("spin y", pos.mV[VY]);
+				childSetEnabled("spin z", false);
+				childSetValue("spin z", pos.mV[VZ]);
+// [/SL:KB]
 			}
 		}
 
@@ -678,6 +691,16 @@ void LLFloaterWorldMap::updateLocation()
 		{	// Empty SLURL will disable the "Copy SLURL to clipboard" button
 			mSLURL = LLSLURL();
 		}
+
+// [SL:KB] - Checked: 2010-06-01 (Catznip-2.0.1a) | Added: Catznip-2.0.1a
+		const LLVector3& pos = mSLURL.getPosition();
+		childSetEnabled("spin x", true);
+		childSetValue("spin x", LLSD(pos.mV[VX]));
+		childSetEnabled("spin y", true);
+		childSetValue("spin y", LLSD(pos.mV[VY]));
+		childSetEnabled("spin z", true);
+		childSetValue("spin z", LLSD(pos.mV[VZ]));
+// [/SL:KB]
 	}
 }
 
@@ -1036,6 +1059,24 @@ void LLFloaterWorldMap::onLandmarkComboCommit()
 	mSetToUserPosition = ( LLTracker::getTrackingStatus() == LLTracker::TRACKING_NOTHING );
 }
 
+// [SL:KB] - Checked: 2010-06-01 (Catznip-2.0.1a) | Added: Catznip-2.0.1a
+void LLFloaterWorldMap::onCommitLocation()
+{
+	LLTracker::ETrackingStatus tracking_status = LLTracker::getTrackingStatus(); 
+	if (LLTracker::TRACKING_LOCATION == tracking_status)
+	{
+		LLVector3d pos_global = LLTracker::getTrackedPositionGlobal();
+		F64 local_x = childGetValue("spin x");
+		F64 local_y = childGetValue("spin y");
+		F64 local_z = childGetValue("spin z");
+		pos_global.mdV[VX] += -fmod(pos_global.mdV[VX], 256.0) + local_x;
+		pos_global.mdV[VY] += -fmod(pos_global.mdV[VY], 256.0) + local_y;
+		pos_global.mdV[VZ] = local_z;
+		trackLocation(pos_global);
+	}
+}
+// [/SL:KB]
+
 // static 
 void LLFloaterWorldMap::onAvatarComboPrearrange( )
 {
@@ -1146,6 +1187,14 @@ void LLFloaterWorldMap::onClearBtn()
 	LLTracker::stopTracking((void *)(intptr_t)TRUE);
 	LLWorldMap::getInstance()->cancelTracking();
 	mSLURL = LLSLURL();					// Clear the SLURL since it's invalid
+// [SL:KB] - Checked: 2010-06-01 (Catznip-2.0.1a) | Added: Catznip-2.0.1a
+	childSetEnabled("spin x", false);
+	childSetValue("spin x", 0);
+	childSetEnabled("spin y", false);
+	childSetValue("spin y", 0);
+	childSetEnabled("spin z", false);
+	childSetValue("spin z", 0);
+// [/SL:KB]
 	mSetToUserPosition = TRUE;	// Revert back to the current user position
 }
 
