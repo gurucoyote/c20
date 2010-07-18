@@ -61,6 +61,10 @@ public:
 private:
 	void handleZoom(const LLSD& userdata);
 	void handleStopTracking (const LLSD& userdata);
+// [SL:KB] - Checked: 2010-06-01 (Catznip-2.0.1a) | Added: Catznip-2.0.1a
+	void handleShowProfile();
+	bool handleEnableShowProfile();
+// [/SL:KB]
 	void setDirectionPos( LLTextBox* text_box, F32 rotation );
 	void updateMinorDirections();
 
@@ -79,6 +83,10 @@ private:
 	LLTextBox*		mTextBoxSouthWest;
 	
 	LLNetMap*		mMap;
+
+// [SL:KB] - Checked: 2010-06-01 (Catznip-2.0.1a) | Added: Catznip-2.0.1a
+	LLUUID			mClosestAgentAtLastRightClick;
+// [/SL:KB]
 };
 
 #endif  // LL_LLFLOATERMAP_H

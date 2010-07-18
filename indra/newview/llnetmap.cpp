@@ -97,7 +97,7 @@ LLNetMap::LLNetMap (const Params & p)
 	mObjectRawImagep(),
 	mObjectImagep(),
 	mClosestAgentToCursor(),
-	mClosestAgentAtLastRightClick(),
+//	mClosestAgentAtLastRightClick(),
 	mToolTipMsg()
 {
 	mDotRadius = llmax(DOT_SCALE * mPixelsPerMeter, MIN_DOT_RADIUS);

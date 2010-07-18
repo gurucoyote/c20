@@ -82,6 +82,9 @@ public:
 	void			setScale( F32 scale );
 	void			setToolTipMsg(const std::string& msg) { mToolTipMsg = msg; }
 	void			renderScaledPointGlobal( const LLVector3d& pos, const LLColor4U &color, F32 radius );
+// [SL:KB] - Checked: 2010-06-01 (Catznip-2.0.1a) | Added: Catznip-2.0.1a
+	const LLUUID&   getClosestAgentToCursor() { return mClosestAgentToCursor; }
+// [/SL:KB]
 
 private:
 	const LLVector3d& getObjectImageCenterGlobal()	{ return mObjectImageCenterGlobal; }
@@ -122,7 +125,7 @@ private:
 	LLPointer<LLViewerTexture>	mObjectImagep;
 
 	LLUUID			mClosestAgentToCursor;
-	LLUUID			mClosestAgentAtLastRightClick;
+//	LLUUID			mClosestAgentAtLastRightClick;
 
 	std::string		mToolTipMsg;
 };

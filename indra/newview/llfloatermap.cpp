@@ -43,6 +43,9 @@
 
 // Viewer includes
 #include "llagentcamera.h"
+// [SL:KB] - Checked: 2010-06-01 (Catznip-2.0.1a) | Added: Catznip-2.0.1a
+#include "llavataractions.h"
+// [/SL:KB]
 #include "llviewercontrol.h"
 #include "llnetmap.h"
 #include "lltracker.h"
@@ -77,7 +80,11 @@ LLFloaterMap::LLFloaterMap(const LLSD& key)
 	  mTextBoxNorthEast(NULL),
 	  mTextBoxNorthWest(NULL),
 	  mTextBoxSouthWest(NULL),
-	  mMap(NULL)
+//	  mMap(NULL)
+// [SL:KB] - Checked: 2010-06-01 (Catznip-2.0.1a) | Added: Catznip-2.0.1a
+	  mMap(NULL),
+	  mClosestAgentAtLastRightClick()
+// [/SL:KB]
 {
 	//Called from floater reg: LLUICtrlFactory::getInstance()->buildFloater(this, "floater_map.xml", FALSE);
 }
@@ -106,6 +113,12 @@ BOOL LLFloaterMap::postBuild()
 
 	registrar.add("Minimap.Zoom", boost::bind(&LLFloaterMap::handleZoom, this, _2));
 	registrar.add("Minimap.Tracker", boost::bind(&LLFloaterMap::handleStopTracking, this, _2));
+// [SL:KB] - Checked: 2010-06-01 (Catznip-2.0.1a) | Added: Catznip-2.0.1a
+	registrar.add("Minimap.ShowProfile", boost::bind(&LLFloaterMap::handleShowProfile, this));
+
+	LLUICtrl::EnableCallbackRegistry::ScopedRegistrar registrarEnable;
+	registrarEnable.add("Minimap.EnableShowProfile", boost::bind(&LLFloaterMap::handleEnableShowProfile, this));
+// [/SL:KB]
 
 	mPopupMenu = LLUICtrlFactory::getInstance()->createFromFile<LLMenuGL>("menu_mini_map.xml", gMenuHolder, LLViewerMenuHolderGL::child_registry_t::instance());
 	if (mPopupMenu && !LLTracker::isTracking(0))
@@ -136,6 +149,9 @@ BOOL LLFloaterMap::handleRightMouseDown(S32 x, S32 y, MASK mask)
 	{
 		mPopupMenu->buildDrawLabels();
 		mPopupMenu->updateParent(LLMenuGL::sMenuContainer);
+// [SL:KB] - Checked: 2010-06-01 (Catznip-2.0.1a) | Added: Catznip-2.0.1a
+		mClosestAgentAtLastRightClick = mMap->getClosestAgentToCursor();
+// [/SL:KB]
 		LLMenuGL::showPopup(this, mPopupMenu, x, y);
 	}
 	return TRUE;
@@ -273,6 +289,21 @@ void LLFloaterMap::handleZoom(const LLSD& userdata)
 		mMap->setScale(scale);
 	}
 }
+
+// [SL:KB] - Checked: 2010-06-01 (Catznip-2.0.1a) | Added: Catznip-2.0.1a
+void LLFloaterMap::handleShowProfile()
+{
+	if (mClosestAgentAtLastRightClick.notNull())
+	{
+		LLAvatarActions::showProfile(mClosestAgentAtLastRightClick);
+	}
+}
+
+bool LLFloaterMap::handleEnableShowProfile()
+{
+	return mClosestAgentAtLastRightClick.notNull();
+}
+// [/SL:KB]
 
 void LLFloaterMap::handleStopTracking (const LLSD& userdata)
 {
