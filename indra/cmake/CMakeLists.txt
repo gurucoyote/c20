@@ -6,6 +6,7 @@ project(cmake)
 
 set(cmake_SOURCE_FILES
     CMakeLists.txt
+    run_build_test.py
 
     00-Common.cmake
     APR.cmake
@@ -14,31 +15,49 @@ set(cmake_SOURCE_FILES
     Boost.cmake
     BuildVersion.cmake
     CARes.cmake
-    CURL.cmake
     CMakeCopyIfDifferent.cmake
     Copy3rdPartyLibs.cmake
+    CopyBackToSource.cmake
     CSharpMacros.cmake
+    CURL.cmake
     DBusGlib.cmake
+    DeploySharedLibs.cmake
     DirectX.cmake
+    DragDrop.cmake
     ELFIO.cmake
+    ExamplePlugin.cmake
     EXPAT.cmake
+    Externals.cmake
     FindAPR.cmake
     FindBerkeleyDB.cmake
     FindCARes.cmake
     FindELFIO.cmake
+    FindGoogleBreakpad.cmake
     FindGooglePerfTools.cmake
+    FindJsonCpp.cmake
+    FindLLQtWebkit.cmake
     FindMono.cmake
     FindMT.cmake
     FindMySQL.cmake
     FindNDOF.cmake
     FindOpenJPEG.cmake
+    FindSCP.cmake
+    FindSVN.cmake
+    FindTut.cmake
     FindXmlRpcEpi.cmake
     FindZLIB.cmake
     FMOD.cmake
     FreeType.cmake
-    GStreamer010Plugin.cmake
+    GetPrerequisites_2_8.cmake
+    Glui.cmake
+    Glut.cmake
+    GoogleBreakpad.cmake
+    GoogleMock.cmake
     GooglePerfTools.cmake
+    GStreamer010Plugin.cmake
     JPEG.cmake
+    JsonCpp.cmake
+    Linking.cmake
     LLAddBuildTest.cmake
     LLAudio.cmake
     LLCharacter.cmake
@@ -49,19 +68,23 @@ set(cmake_SOURCE_FILES
     LLImageJ2COJ.cmake
     LLInventory.cmake
     LLKDU.cmake
+    LLLogin.cmake
     LLMath.cmake
     LLMessage.cmake
     LLPlugin.cmake
     LLPrimitive.cmake
     LLRender.cmake
     LLScene.cmake
+    LLSharedLibs.cmake
     LLTestCommand.cmake
     LLUI.cmake
     LLVFS.cmake
     LLWindow.cmake
     LLXML.cmake
+    LLXUIXML.cmake
     LScript.cmake
-    Linking.cmake
+    MediaPluginBase.cmake
+    MonoDeps.cmake
     MonoEmbed.cmake
     MySQL.cmake
     NDOF.cmake
@@ -69,14 +92,20 @@ set(cmake_SOURCE_FILES
     OpenGL.cmake
     OpenJPEG.cmake
     OpenSSL.cmake
+    PluginAPI.cmake
     PNG.cmake
-    Python.cmake
     Prebuilt.cmake
+    Pth.cmake
+    PulseAudio.cmake
+    Python.cmake
+    QuickTimePlugin.cmake
     TemplateCheck.cmake
     Tut.cmake
     UI.cmake
     UnixInstall.cmake
     Variables.cmake
+    ViewerMiscLibs.cmake
+    WebKitLibPlugin.cmake
     XmlRpcEpi.cmake
     ZLIB.cmake
     )
