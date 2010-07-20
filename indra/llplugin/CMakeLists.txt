@@ -12,7 +12,9 @@ include(LLRender)
 include(LLXML)
 include(LLWindow)
 
+if (STANDALONE)
 find_package(LLQtWebkit REQUIRED)
+endif (STANDALONE)
 
 include_directories(
     ${LLCOMMON_INCLUDE_DIRS}
