@@ -6,8 +6,8 @@
 #  TUT_INCLUDE_DIR, where to find tut/tut.hpp, etc.
 #  TUT_FOUND, If false, do not try to use Tut.
 
-find_path(TUT_INCLUDE_DIR tut.hpp
-  PATH_SUFFIXES tut
+find_path(TUT_INCLUDE_DIR tut/tut.hpp
+  NO_SYSTEM_ENVIRONMENT_PATH
 )
 
 IF (TUT_INCLUDE_DIR)
