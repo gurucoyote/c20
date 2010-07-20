@@ -283,6 +283,9 @@ target_link_libraries(
 add_dependencies(llcommon stage_third_party_libs)
 
 if (LL_TESTS)
+  if (STANDALONE)
+    find_package(Tut)
+  endif (STANDALONE)
   include(LLAddBuildTest)
   SET(llcommon_TEST_SOURCE_FILES
     # unit-testing llcommon is not possible right now as the test-harness *itself* depends upon llcommon, causing a circular dependency.  Add your 'unit' tests as integration tests for now.

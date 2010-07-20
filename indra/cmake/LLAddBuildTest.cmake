@@ -198,6 +198,15 @@ FUNCTION(LL_ADD_INTEGRATION_TEST
   ADD_EXECUTABLE(INTEGRATION_TEST_${testname} ${source_files})
   SET_TARGET_PROPERTIES(INTEGRATION_TEST_${testname} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${EXE_STAGING_DIR}")
 
+  # Add include directory for tut/tut.hpp.
+  IF (STANDALONE AND TUT_INCLUDE_DIR)
+	# This is a hack: TARGET_INCLUDE_DIRECTORIES doesn't exist for some reason.
+	# Unfortunately this means that other -I arguments come first and the correct
+	# tut will only be used if it's not ALSO installed in the path of another
+	# library that we need (ie, /usr/local/include). --Aleric
+    SET_TARGET_PROPERTIES(INTEGRATION_TEST_${testname} PROPERTIES COMPILE_FLAGS "-I${TUT_INCLUDE_DIR}")
+  ENDIF (STANDALONE AND TUT_INCLUDE_DIR)
+
   # Add link deps to the executable
   if(TEST_DEBUG)
     message(STATUS "TARGET_LINK_LIBRARIES(INTEGRATION_TEST_${testname} ${libraries})")
