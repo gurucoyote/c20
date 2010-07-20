@@ -681,7 +681,7 @@ Techwolf Lupindo
 	SNOW-592
 	SNOW-599
 	SNOW-649
-    SNOW-654
+	SNOW-654
 	SNOW-680
 	SNOW-681
 	SNOW-682
@@ -692,6 +692,7 @@ Techwolf Lupindo
 	SNOW-687
 	SNOW-690
 	SNOW-691
+	SNOW-746
 	SNOW-747
 	VWR-12385
 tenebrous pau
