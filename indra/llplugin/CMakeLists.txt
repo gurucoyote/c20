@@ -12,6 +12,8 @@ include(LLRender)
 include(LLXML)
 include(LLWindow)
 
+find_package(LLQtWebkit REQUIRED)
+
 include_directories(
     ${LLCOMMON_INCLUDE_DIRS}
     ${LLIMAGE_INCLUDE_DIRS}
@@ -20,6 +22,7 @@ include_directories(
     ${LLRENDER_INCLUDE_DIRS}
     ${LLXML_INCLUDE_DIRS}
     ${LLWINDOW_INCLUDE_DIRS}
+    ${LLQTWEBKIT_INCLUDE_DIR}
     )
 
 set(llplugin_SOURCE_FILES
