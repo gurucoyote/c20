@@ -1,5 +1,5 @@
 # -*- cmake -*-
-message(FATAL_ERROR "WTF!")
+
 # - Find llqtwebkit
 # Find the llqtwebkit includes and library
 # This module defines
