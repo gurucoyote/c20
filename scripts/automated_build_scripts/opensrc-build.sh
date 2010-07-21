@@ -396,7 +396,7 @@ then
          "$S3GET_URL/$branch/$revision/$arch"\
           $other_archs > message
     then
-      subject="Successful Build for $branch ($revision)"
+      subject="Successful Build for $year/$branch ($revision)"
     fi
   else
     true s3 is not available
@@ -406,7 +406,7 @@ else
   then
     "$s3put" build.log "$S3PUT_URL/$branch/$revision/failed-build.$arch" text/plain public-read\
        || fail Uploading build.log
-    subject="Failed Build for $branch ($revision) on $arch"
+    subject="Failed Build for $year/$branch ($revision) on $arch"
     cat >message <<EOF
 Build for $branch ($revision) failed for $arch.
 Please see the build log for details:
