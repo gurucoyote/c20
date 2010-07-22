@@ -313,6 +313,35 @@ void addDeferredAttachments(LLRenderTarget& target)
 	target.addColorAttachment(GL_RGBA); //normal+z	
 }
 
+bool LLPipeline::compare_pools::operator()(const LLDrawPool* a, const LLDrawPool* b) const
+{
+	if (!a)
+	{
+		return true;
+	}
+	else if (!b)
+	{
+		return false;
+	}
+	else
+	{
+		LLRenderType atype = a->getType();
+		LLRenderType btype = b->getType();
+		if (atype < btype)
+		{
+			return true;
+		}
+		else if (btype < atype)
+		{
+			return false;
+		}
+		else
+		{
+			return a->getId() < b->getId();
+		}
+	}
+}
+
 LLPipeline::LLPipeline() :
 	mBackfaceCull(FALSE),
 	mBatchCount(0),

@@ -655,24 +655,7 @@ protected:
 	//
 	struct compare_pools
 	{
-		bool operator()(const LLDrawPool* a, const LLDrawPool* b) const
-		{
-			if (!a)
-				return true;
-			else if (!b)
-				return false;
-			else
-			{
-				LLRenderType atype = a->getType();
-				LLRenderType btype = b->getType();
-				if (atype < btype)
-					return true;
-				else if (btype < atype)
-					return false;
-				else
-					return a->getId() < b->getId();
-			}
-		}
+		bool operator()(const LLDrawPool* a, const LLDrawPool* b) const;
 	};
  	typedef std::set<LLDrawPool*, compare_pools > pool_set_t;
 	pool_set_t mPools;
