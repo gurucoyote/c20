@@ -2631,7 +2631,7 @@ void process_improved_im(LLMessageSystem *msg, void **user_data)
 			{
 				LLVector3 pos, look_at;
 				U64 region_handle;
-				U8 region_access;
+				U8 region_access = SIM_ACCESS_MIN;	// Just stop 'used uninitialized' warning (overwritten by parse_lure_bucket).
 				std::string region_info = ll_safe_string((char*)binary_bucket, binary_bucket_size);
 				std::string region_access_str = LLStringUtil::null;
 				std::string region_access_icn = LLStringUtil::null;
