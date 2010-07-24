@@ -4,6 +4,7 @@
 #   svn propset svn:ignore -F .svnignore .
 #
 
-include
-mono
-x86_64-linux
+#
+#
+# Installed by SNOW-173 patch
+Cwdebug.cmake

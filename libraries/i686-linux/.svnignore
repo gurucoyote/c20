@@ -4,6 +4,4 @@
 #   svn propset svn:ignore -F .svnignore .
 #
 
-include
-mono
-x86_64-linux
+bin

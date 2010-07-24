@@ -6,3 +6,8 @@
 
 viewer-*
 .distcc
+
+#
+#
+# Installed by SNOW-173 patch
+cwdebug
