@@ -4,7 +4,8 @@
 #   svn propset svn:ignore -F .svnignore .
 #
 
-viewer-*
+build-*
+viewer-linux-*
 .distcc
 
 #
