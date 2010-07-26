@@ -59,7 +59,7 @@
 
   <font name="Monospace"
 	comment="Name of monospace font">
-    <file>DejaVuSansMono.ttf</file>
+    <file>profontwindows.ttf</file>
   </font>
 
   <font name="DejaVu"
